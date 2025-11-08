@@ -19,25 +19,13 @@ class ActivityNotificationUseCase {
     if (_initialized) return;
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@mipmap/launcher_icon',
     );
-
-    final List<DarwinNotificationCategory> darwinCategories = [
-      DarwinNotificationCategory(
-        'activity_actions',
-        actions: [
-          DarwinNotificationAction.plain('pause', 'Pause'),
-          DarwinNotificationAction.plain('resume', 'Resume'),
-          DarwinNotificationAction.plain('stop', 'Stop'),
-        ],
-      ),
-    ];
 
     final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: false,
-      notificationCategories: darwinCategories,
     );
 
     final initSettings = InitializationSettings(

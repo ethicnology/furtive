@@ -57,12 +57,17 @@ class LocationGpsDataSource {
         useMSLAltitude: true,
         //(Optional) Set foreground notification config to keep the app alive
         //when going to the background
-        // foregroundNotificationConfig: const ForegroundNotificationConfig(
-        //   notificationText:
-        //       "This app will continue to receive your location when your phone is locked",
-        //   notificationTitle: "Running in background",
-        //   enableWakeLock: false,
-        // ),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText:
+              "We will continue to update your location when your phone is locked",
+          notificationTitle: "Running in background",
+          enableWakeLock: false,
+          setOngoing: true,
+          notificationIcon: AndroidResource(
+            name: 'launcher_icon',
+            defType: 'com.example.furtive',
+          ),
+        ),
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
@@ -72,8 +77,8 @@ class LocationGpsDataSource {
         distanceFilter: accuracyInMeters,
         pauseLocationUpdatesAutomatically: true,
         // Only set to true if our app will be started up in the background.
-        showBackgroundLocationIndicator: false,
-        allowBackgroundLocationUpdates: false,
+        showBackgroundLocationIndicator: true,
+        allowBackgroundLocationUpdates: true,
       );
     } else {
       locationSettings = LocationSettings(
