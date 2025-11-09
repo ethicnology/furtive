@@ -17,6 +17,7 @@ void main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       await dotenv.load();
+      await Global.init();
 
       final appDir = await getApplicationDocumentsDirectory();
       logs = MyLogs.init(directory: appDir);
