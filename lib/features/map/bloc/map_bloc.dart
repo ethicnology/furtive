@@ -31,6 +31,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   late StreamSubscription<PositionEntity> _positionStream;
   Timer? _elapsedTimer;
   DateTime? _activityStartTime;
+  DateTime? _pauseStartTime;
+  Duration _totalPausedDuration = Duration.zero;
 
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
@@ -93,6 +95,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     try {
       _elapsedTimer?.cancel();
+      _pauseStartTime = null;
+      _totalPausedDuration = Duration.zero;
 
       final activity = await _beginActivityUseCase();
       _activityStartTime = activity.startedAt;
@@ -147,6 +151,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   void _onPauseActivity(PauseActivity event, Emitter<MapState> emit) {
     try {
       if (state.activity == null) throw ActivityNotStartedError();
+
+      final wasPaused = state.isPaused;
+
+      if (wasPaused) {
+        if (_pauseStartTime != null) {
+          _totalPausedDuration += DateTime.now().difference(_pauseStartTime!);
+          _pauseStartTime = null;
+        }
+        _elapsedTimer = Timer.periodic(
+          const Duration(seconds: 1),
+          (_) => add(const UpdateElapsedTime()),
+        );
+      } else {
+        _pauseStartTime = DateTime.now();
+        _elapsedTimer?.cancel();
+      }
+
       emit(state.copyWith(isPaused: !state.isPaused));
     } catch (e) {
       logs.severe('$PauseActivity: $e');
@@ -160,6 +181,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
       _activityStartTime = null;
+      _pauseStartTime = null;
+      _totalPausedDuration = Duration.zero;
 
       _activityNotificationUseCase.cancelActivityNotification();
 
@@ -182,8 +205,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   void _onUpdateElapsedTime(UpdateElapsedTime event, Emitter<MapState> emit) {
     try {
-      if (_activityStartTime != null && !state.isPaused) {
-        final elapsed = DateTime.now().difference(_activityStartTime!);
+      if (_activityStartTime != null) {
+        final elapsed =
+            DateTime.now().difference(_activityStartTime!) -
+            _totalPausedDuration;
         emit(state.copyWith(elapsedTime: elapsed));
 
         _activityNotificationUseCase.showActivityNotification(
