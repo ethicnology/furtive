@@ -144,7 +144,7 @@ Widget _buildStatsPage({
                     Icon(Icons.terrain, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      '+${elevation.gain.toStringAsFixed(0)}m / -${elevation.loss.toStringAsFixed(0)}m',
+                      '+${elevation.gain.toStringAsFixed(0)}m / ${elevation.loss.toStringAsFixed(0)}m',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
