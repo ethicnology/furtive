@@ -52,7 +52,7 @@ class ActivityStatsWidget extends StatelessWidget {
                 _buildStatsPage(
                   label: 'Active',
                   duration: activity.activeDuration.toHHMMSS(),
-                  distance: activity.activeDistanceInKm.toStringAsFixed(2),
+                  distance: activity.activeDistanceInKm.toStringAsFixed(1),
                   speed: activity.activeSpeedKmh.toStringAsFixed(1),
                   pace: activity.activePaceMinPerKm,
                   elevation: activity.activeElevation,
@@ -60,7 +60,7 @@ class ActivityStatsWidget extends StatelessWidget {
                 _buildStatsPage(
                   label: 'Paused',
                   duration: activity.pausedDuration.toHHMMSS(),
-                  distance: activity.pausedDistanceInKm.toStringAsFixed(2),
+                  distance: activity.pausedDistanceInKm.toStringAsFixed(1),
                   speed: activity.pausedSpeedKmh.toStringAsFixed(1),
                   pace: activity.pausedPaceMinPerKm,
                   elevation: null,
@@ -91,71 +91,65 @@ Widget _buildStatsPage({
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Tooltip(
-              message: 'Distance',
-              child: Row(
-                children: [
-                  Icon(Icons.straighten, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    distance,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
+            _StatItem(
+              icon: Icons.straighten,
+              label: 'Distance',
+              value: '$distance km',
             ),
-            Tooltip(
-              message: 'Pace: Minutes per kilometer',
-              child: Row(
-                children: [
-                  Icon(Icons.timer, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    pace,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
+            _StatItem(icon: Icons.timer, label: 'Pace', value: pace),
           ],
         ),
         SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Tooltip(
-              message: 'Speed: Kilometers per hour',
-              child: Row(
-                children: [
-                  Icon(Icons.speed, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    speed,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
+            _StatItem(icon: Icons.speed, label: 'Speed', value: '$speed km/h'),
             if (elevation != null)
-              Tooltip(
-                message: 'Elevation gain / Elevation loss',
-                child: Row(
-                  children: [
-                    Icon(Icons.terrain, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '+${elevation.gain.toStringAsFixed(0)}m / ${elevation.loss.toStringAsFixed(0)}m',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+              _StatItem(
+                icon: Icons.terrain,
+                label: 'Elevation',
+                value:
+                    '${elevation.gain.toStringAsFixed(0)}/${elevation.loss.toStringAsFixed(0)}m',
               ),
           ],
         ),
       ],
     ),
   );
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20),
+        SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+            Text(
+              value,
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
