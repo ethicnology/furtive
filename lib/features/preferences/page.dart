@@ -78,7 +78,7 @@ class PreferencesPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<MapThemeEntity>(
-          value: state.preferences.mapTheme,
+          initialValue: state.preferences.mapTheme,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -113,7 +113,7 @@ class PreferencesPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<MapLanguageEntity>(
-          value: state.preferences.mapLanguage,
+          initialValue: state.preferences.mapLanguage,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
