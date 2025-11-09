@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/check_version_service.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
@@ -25,6 +26,8 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
   void _navigate(bool allGranted) {
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
+
+    checkNewVersion(context);
 
     if (allGranted) {
       Navigator.of(context).pushReplacement(
