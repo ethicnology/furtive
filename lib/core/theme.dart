@@ -13,6 +13,10 @@ enum AppColors {
 ThemeData get appTheme => ThemeData.dark().copyWith(
   appBarTheme: const AppBarTheme(backgroundColor: Colors.black, elevation: 0),
   scaffoldBackgroundColor: Colors.black,
+  iconTheme: IconThemeData(color: AppColors.primary.background),
+  progressIndicatorTheme: ProgressIndicatorThemeData(
+    color: AppColors.primary.background,
+  ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.primary.background,

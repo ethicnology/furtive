@@ -28,8 +28,8 @@ class ActivityStatsWidget extends StatelessWidget {
                   'Recording Activity',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -37,8 +37,8 @@ class ActivityStatsWidget extends StatelessWidget {
                 elapsedTime.toHHMMSS(),
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -91,60 +91,68 @@ Widget _buildStatsPage({
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              duration,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
+            Tooltip(
+              message: 'Distance',
+              child: Row(
+                children: [
+                  Icon(Icons.straighten, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    distance,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             ),
-            Text(
-              '$pace /km',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '$distance km',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              '$speed km/h',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
+            Tooltip(
+              message: 'Pace: Minutes per kilometer',
+              child: Row(
+                children: [
+                  Icon(Icons.timer, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    pace,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (elevation != null) ...[
-              Text(
-                '+${elevation.gain.toStringAsFixed(0)}m / -${elevation.loss.toStringAsFixed(0)}m',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
+            Tooltip(
+              message: 'Speed: Kilometers per hour',
+              child: Row(
+                children: [
+                  Icon(Icons.speed, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    speed,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            if (elevation != null)
+              Tooltip(
+                message: 'Elevation gain / Elevation loss',
+                child: Row(
+                  children: [
+                    Icon(Icons.terrain, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '+${elevation.gain.toStringAsFixed(0)}m / -${elevation.loss.toStringAsFixed(0)}m',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
           ],
         ),
       ],
