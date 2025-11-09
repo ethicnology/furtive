@@ -78,10 +78,6 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
 
   Widget _buildActivityCard(ActivityEntity activity) {
     return Card(
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: AppColors.primary.background, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: AppColors.quaternary.background,
       child: ListTile(
