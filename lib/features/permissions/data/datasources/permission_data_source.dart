@@ -4,7 +4,6 @@ import 'package:furtive/features/permissions/data/models/permission_model.dart';
 class PermissionDataSource {
   Future<List<PermissionModel>> getPermissions() async {
     final locationWhenInUseStatus = await Permission.locationWhenInUse.status;
-    final locationAlwaysStatus = await Permission.locationAlways.status;
     final notificationStatus = await Permission.notification.status;
 
     final permissions = [
@@ -16,17 +15,9 @@ class PermissionDataSource {
         status: locationWhenInUseStatus,
       ),
       PermissionModel(
-        name: 'Location Always',
-        description:
-            'Optional: Allows tracking your activities while your lock phone.',
-        permission: Permission.locationAlways,
-        status: locationAlwaysStatus,
-        isOptional: true,
-      ),
-      PermissionModel(
         name: 'Notifications',
         description:
-            'Optional: Allows the app to send you notifications about your activities.',
+            'Optional: Allows the app to show your are not on the app.',
         permission: Permission.notification,
         status: notificationStatus,
         isOptional: true,
