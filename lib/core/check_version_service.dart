@@ -24,7 +24,7 @@ Future<void> checkNewVersion(BuildContext context) async {
 
     final jsonBody = json.decode(response.body);
     final latest = jsonBody['tag_name'].toString().replaceAll('v', '');
-    final current = Global.infos.version;
+    final current = Global.app.version;
     if (latest == current) return;
 
     if (!context.mounted) return;

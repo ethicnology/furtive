@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -12,9 +13,12 @@ class Global {
 
   static final padding = screen.width * 0.1;
   static final spacing = screen.width * 0.1;
-  static late PackageInfo infos;
+
+  static late PackageInfo app;
+  static late AndroidDeviceInfo android;
 
   static Future<void> init() async {
-    infos = await PackageInfo.fromPlatform();
+    app = await PackageInfo.fromPlatform();
+    android = await DeviceInfoPlugin().androidInfo;
   }
 }

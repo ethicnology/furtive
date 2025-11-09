@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:furtive/core/global.dart';
 import 'package:logging_colorful/logging_colorful.dart' as dep;
 export 'package:logging_colorful/logging_colorful.dart';
 
@@ -11,6 +13,8 @@ class MyLogs {
   final dep.LoggerColorful logger;
   static const _logFilename = 'logs.tsv';
   File get logsFile => File('${dir.path}/$_logFilename');
+
+  Future<void>? _currentWrite;
 
   MyLogs._(this.dir, this.logger) {
     dep.Logger.root.level = dep.Level.ALL;
@@ -25,15 +29,22 @@ class MyLogs {
       final sanitizedContent = content.map((e) => logger.sanitize(e)).toList();
       final tsvLine = sanitizedContent.join('\t');
 
-      // We don't want to keep the info session in memory, they should be written to file
-      if (record.level != dep.Level.INFO) appendToLogFile(tsvLine);
+      if (record.level != dep.Level.INFO) _queueWrite(tsvLine);
 
       if (kDebugMode) {
-        // remove timestamp and errors
         final debug = content.sublist(1, 3);
         debugPrint(debug.join('\t'));
       }
     });
+  }
+
+  void _queueWrite(String log) {
+    final write = () async {
+      await _currentWrite;
+      await logsFile.writeAsString('$log\n', mode: FileMode.append);
+    }();
+
+    _currentWrite = write;
   }
 
   MyLogs.init({String name = 'MyLogs', Directory? directory})
@@ -53,9 +64,21 @@ class MyLogs {
 
       await logsFile.create(recursive: true);
       fine('Logs created');
+      addContextInfos();
     } catch (e) {
       severe('Logs existence: $e');
     }
+  }
+
+  void addContextInfos() {
+    config('Version: ${Global.app.version}+${Global.app.buildNumber}');
+    config('Signature: ${Global.app.buildSignature}');
+    config('Manufacturer: ${Global.android.manufacturer}');
+    config('Brand: ${Global.android.brand}');
+    config('Model: ${Global.android.model}');
+    config('Device: ${Global.android.device}');
+    config('Android: ${Global.android.version.release}');
+    config('Sdk: ${Global.android.version.sdkInt}');
   }
 
   Future<List<String>> readLogs() async {
@@ -117,24 +140,6 @@ class MyLogs {
     logger.shout(message, error, trace);
   }
 
-  Future<void> migration({
-    required dep.Level level,
-    required String message,
-    Map<String, dynamic>? context,
-    Object? exception,
-    StackTrace? stackTrace,
-  }) async {
-    final now = DateTime.now().toIso8601String();
-    final content = [now, level.name, message];
-    content.add(context?.toString() ?? '');
-    content.add(exception?.toString() ?? '');
-    content.add(stackTrace?.toString() ?? '');
-
-    final sanitizedContent = content.map((e) => logger.sanitize(e)).toList();
-    final tsvLine = sanitizedContent.join('\t');
-    await appendToLogFile(tsvLine);
-  }
-
   Future<void> appendToLogFile(String log) async {
     await logsFile.writeAsString('$log\n', mode: FileMode.append);
   }
@@ -142,5 +147,6 @@ class MyLogs {
   Future<void> deleteLogs() async {
     await logsFile.writeAsString('');
     logs.shout('Logs deleted');
+    addContextInfos();
   }
 }

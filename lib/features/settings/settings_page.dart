@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:furtive/core/widgets/app_version_widget.dart';
 import 'package:furtive/features/permissions/presentation/pages/permissions_page.dart';
 import 'package:furtive/features/preferences/page.dart';
 import 'package:furtive/features/logs/logs_page.dart';
@@ -10,7 +11,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
+      body: Column(
         children: [
           ListTile(
             leading: const Icon(Icons.lock),
@@ -46,6 +47,8 @@ class SettingsPage extends StatelessWidget {
               ).push(MaterialPageRoute(builder: (context) => const LogsPage()));
             },
           ),
+          Spacer(),
+          AppVersionWidget(),
         ],
       ),
     );

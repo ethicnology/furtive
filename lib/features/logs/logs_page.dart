@@ -283,14 +283,13 @@ class _LogsPageState extends State<LogsPage> {
                                           vertical: 1,
                                           horizontal: 8,
                                         ),
-                                        child: Text(
+                                        child: SelectableText(
                                           displayText,
                                           style: TextStyle(
                                             color: textColor,
                                             fontFamily: 'monospace',
                                             fontSize: 13,
                                           ),
-                                          softWrap: true,
                                         ),
                                       ),
                                     );
