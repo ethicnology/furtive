@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:furtive/core/global.dart';
@@ -79,7 +80,7 @@ class _MapPageState extends State<MapPage> {
             body: Stack(
               children: [
                 Container(
-                  color: Colors.grey[300],
+                  color: AppColors.tertiary.background,
                   child: FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
@@ -157,8 +158,16 @@ class _MapPageState extends State<MapPage> {
                     bloc.add(const ToggleFollowUser());
                   },
                   backgroundColor:
-                      state.isFollowingUser ? Colors.tealAccent : null,
-                  child: const Icon(Icons.my_location),
+                      state.isFollowingUser
+                          ? AppColors.secondary.background
+                          : null,
+                  child: Icon(
+                    Icons.my_location,
+                    color:
+                        state.isFollowingUser
+                            ? AppColors.secondary.foreground
+                            : null,
+                  ),
                 ),
 
                 if (state.isPaused && state.activity != null) ...[
@@ -176,7 +185,7 @@ class _MapPageState extends State<MapPage> {
                   FloatingActionButton(
                     heroTag: 'pause',
                     onPressed: () => bloc.add(const PauseActivity()),
-                    backgroundColor: Colors.tealAccent,
+                    backgroundColor: AppColors.primary.background,
                     child:
                         state.isPaused
                             ? const Icon(Icons.play_arrow)
@@ -262,9 +271,9 @@ class _MapPageState extends State<MapPage> {
           point: LatLng(location.latitude, location.longitude),
           width: 40,
           height: 40,
-          child: const Icon(
+          child: Icon(
             Icons.my_location,
-            color: Colors.tealAccent,
+            color: AppColors.primary.background,
             size: 24,
           ),
         ),
@@ -285,8 +294,8 @@ class _MapPageState extends State<MapPage> {
             LatLng(bounds.south, bounds.east),
             LatLng(bounds.south, bounds.west),
           ],
-          color: Colors.teal,
-          borderColor: Colors.tealAccent,
+          color: AppColors.secondary.background,
+          borderColor: AppColors.primary.background,
           borderStrokeWidth: 2.0,
         ),
       ],

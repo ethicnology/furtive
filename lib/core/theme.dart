@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 enum AppColors {
-  primary(Colors.teal, Colors.white),
-  secondary(Colors.tealAccent, Colors.black);
+  primary(Colors.tealAccent, Colors.black),
+  secondary(Colors.teal, Colors.white),
+  tertiary(Colors.blueGrey, Colors.white),
+  quaternary(Colors.black, Colors.white);
 
   final Color background;
   final Color foreground;
@@ -21,6 +23,8 @@ ThemeData get appTheme => ThemeData.dark().copyWith(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.primary.background,
       foregroundColor: AppColors.primary.foreground,
+      disabledBackgroundColor: Colors.grey,
+      disabledForegroundColor: Colors.blueGrey,
       elevation: 0,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

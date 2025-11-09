@@ -7,19 +7,22 @@ class AppVersionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SelectableText(
-            "version ${Global.app.version}+${Global.app.buildNumber}",
-            style: TextStyle(
-              color: AppColors.primary.foreground,
-              fontWeight: FontWeight.bold,
+    return Card(
+      color: AppColors.quaternary.background,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SelectableText(
+              "version ${Global.app.version}+${Global.app.buildNumber}",
+              style: TextStyle(
+                color: AppColors.quaternary.foreground,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

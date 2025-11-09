@@ -1,6 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 
@@ -235,8 +236,8 @@ extension ActivityPathExtension on ActivityEntity {
       points: points.map((p) => p.position.toLatLng()).toList(),
       color:
           status == ActivityPointStatusEntity.active
-              ? Colors.tealAccent
-              : Colors.teal,
+              ? AppColors.primary.background
+              : AppColors.secondary.background,
       strokeWidth: 4.0,
     );
   }

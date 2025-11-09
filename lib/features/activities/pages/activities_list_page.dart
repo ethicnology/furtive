@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
@@ -51,10 +52,13 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             }
 
             if (state.activities.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
                   'No activities found',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.tertiary.foreground,
+                  ),
                 ),
               );
             }
@@ -74,14 +78,18 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
 
   Widget _buildActivityCard(ActivityEntity activity) {
     return Card(
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: AppColors.primary.background, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.grey[900],
+      color: AppColors.quaternary.background,
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         title: Text(
           activity.startedAt.toLocal().toString().substring(0, 19),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: AppColors.tertiary.foreground,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -107,7 +115,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
-          color: Colors.grey[400],
+          color: AppColors.tertiary.foreground,
           size: 16,
         ),
         onTap: () {
@@ -126,13 +134,13 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.teal,
+        color: AppColors.primary.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.primary.foreground,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),

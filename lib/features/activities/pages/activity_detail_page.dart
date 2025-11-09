@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:furtive/core/global.dart';
@@ -57,7 +58,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
               : Stack(
                 children: [
                   Container(
-                    color: Colors.grey[300],
+                    color: AppColors.tertiary.background,
                     child:
                         _mapStyle != null
                             ? FlutterMap(
@@ -118,7 +119,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.3,
             decoration: BoxDecoration(
-              color: Colors.grey[900],
+              color: AppColors.tertiary.background,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/global.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
@@ -55,6 +56,7 @@ class _PermissionsPageState extends State<PermissionsPage>
                       final permission = state.permissions[index];
 
                       return Card(
+                        color: AppColors.primary.background,
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -72,10 +74,23 @@ class _PermissionsPageState extends State<PermissionsPage>
                                             : Colors.red,
                                   ),
                                   const SizedBox(width: 12),
-                                  Expanded(child: Text(permission.name)),
+                                  Expanded(
+                                    child: Text(
+                                      permission.name,
+                                      style: TextStyle(
+                                        color: AppColors.primary.foreground,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                              Text(permission.description),
+                              Text(
+                                permission.description,
+                                style: TextStyle(
+                                  color: AppColors.primary.foreground,
+                                ),
+                              ),
                               ElevatedButton(
                                 onPressed:
                                     permission.isGranted
@@ -87,6 +102,12 @@ class _PermissionsPageState extends State<PermissionsPage>
                                             ),
                                           );
                                         },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      AppColors.quaternary.background,
+                                  foregroundColor:
+                                      AppColors.quaternary.foreground,
+                                ),
                                 child: Text('Grant Permission'),
                               ),
 
