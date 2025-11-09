@@ -49,8 +49,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit) {
-    if (state.activity != null) add(ScoreActivity(position: event.position));
-    emit(state.copyWith(userLocation: event.position));
+    try {
+      if (state.activity != null) add(ScoreActivity(position: event.position));
+      emit(state.copyWith(userLocation: event.position));
+    } catch (e) {
+      logs.severe('$UpdateUserLocation: $e');
+      emit(state.copyWith(errorMessage: AppError(e.toString())));
+    }
   }
 
   @override
@@ -75,6 +80,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final style = await _getMapConfigUseCase();
       emit(state.copyWith(style: style));
     } catch (e) {
+      logs.severe('$InitMap: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));
@@ -100,6 +106,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         (_) => add(const UpdateElapsedTime()),
       );
     } catch (e) {
+      logs.severe('$StartActivity: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     }
   }
@@ -128,6 +135,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       emit(state.copyWith(activity: updatedActivity));
     } catch (e) {
+      logs.severe('$ScoreActivity: $e');
       emit(
         state.copyWith(
           errorMessage: AppError('$_onScoreActivity: ${e.toString()}'),
@@ -137,25 +145,35 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   void _onPauseActivity(PauseActivity event, Emitter<MapState> emit) {
-    if (state.activity == null) throw ActivityNotStartedError();
-    emit(state.copyWith(isPaused: !state.isPaused));
+    try {
+      if (state.activity == null) throw ActivityNotStartedError();
+      emit(state.copyWith(isPaused: !state.isPaused));
+    } catch (e) {
+      logs.severe('$PauseActivity: $e');
+      emit(state.copyWith(errorMessage: AppError(e.toString())));
+    }
   }
 
   void _onCeaseActivity(CeaseActivity event, Emitter<MapState> emit) {
-    _ceaseActivityUsecase(state.activity!.id);
-    _elapsedTimer?.cancel();
-    _elapsedTimer = null;
-    _activityStartTime = null;
+    try {
+      _ceaseActivityUsecase(state.activity!.id);
+      _elapsedTimer?.cancel();
+      _elapsedTimer = null;
+      _activityStartTime = null;
 
-    _activityNotificationUseCase.cancelActivityNotification();
+      _activityNotificationUseCase.cancelActivityNotification();
 
-    emit(
-      state.copyWith(
-        activity: null,
-        elapsedTime: Duration.zero,
-        isPaused: false,
-      ),
-    );
+      emit(
+        state.copyWith(
+          activity: null,
+          elapsedTime: Duration.zero,
+          isPaused: false,
+        ),
+      );
+    } catch (e) {
+      logs.severe('$CeaseActivity: $e');
+      emit(state.copyWith(errorMessage: AppError(e.toString())));
+    }
   }
 
   void _onClearError(ClearError event, Emitter<MapState> emit) {
@@ -163,15 +181,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   void _onUpdateElapsedTime(UpdateElapsedTime event, Emitter<MapState> emit) {
-    if (_activityStartTime != null && !state.isPaused) {
-      final elapsed = DateTime.now().difference(_activityStartTime!);
-      emit(state.copyWith(elapsedTime: elapsed));
+    try {
+      if (_activityStartTime != null && !state.isPaused) {
+        final elapsed = DateTime.now().difference(_activityStartTime!);
+        emit(state.copyWith(elapsedTime: elapsed));
 
-      _activityNotificationUseCase.showActivityNotification(
-        activity: state.activity!,
-        elapsed: elapsed,
-        isPaused: state.isPaused,
-      );
+        _activityNotificationUseCase.showActivityNotification(
+          activity: state.activity!,
+          elapsed: elapsed,
+          isPaused: state.isPaused,
+        );
+      }
+    } catch (e) {
+      logs.severe('$UpdateElapsedTime: $e');
+      emit(state.copyWith(errorMessage: AppError(e.toString())));
     }
   }
 
@@ -208,6 +231,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       );
       emit(state.copyWith(traces: traces));
     } catch (e) {
+      logs.severe('$FetchTraces: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));

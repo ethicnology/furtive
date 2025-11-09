@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
+import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/usecases/get_activities_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
@@ -21,6 +22,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       final activities = await _getActivitiesUseCase();
       emit(state.copyWith(activities: activities));
     } catch (e) {
+      logs.severe('$FetchActivities: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));
