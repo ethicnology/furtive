@@ -2,6 +2,14 @@
 
 Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 
+## Screenshots
 
-https://github.com/user-attachments/assets/3b55dbda-0264-4860-bbdb-a7d89ef0a178
+<div align="center">
 
+| | |
+|:-------------------------:|:-------------------------:|
+| <img src="assets/1.0.0/map.png" width="100%" /> | <img src="assets/1.0.0/activity_stats.png" width="100%" /> |
+| <img src="assets/1.0.0/activities.png" width="100%" /> | <img src="assets/1.0.0/logs.png" width="100%" /> |
+| <img src="assets/1.0.0/permissions.png" width="100%" /> | <img src="assets/1.0.0/settings.png" width="100%" /> |
+
+</div>
