@@ -18,6 +18,18 @@ import 'package:furtive/features/map/error.dart';
 
 const double kSearchHalfSideDegrees = 0.01425;
 
+enum LoadingStatus {
+  localizing,
+  loadingMap,
+  loadingTraces;
+
+  String get message => switch (this) {
+    LoadingStatus.localizing => 'Initializing GPS…',
+    LoadingStatus.loadingMap => 'Loading map…',
+    LoadingStatus.loadingTraces => 'Loading traces…',
+  };
+}
+
 class MapBloc extends Bloc<MapEvent, MapState> {
   final _getMapConfigUseCase = GetMapConfigUseCase();
   final _getPublicGpsTracesUseCase = GetTracesUseCase();
@@ -69,7 +81,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   Future<void> _onInitMap(InitMap event, Emitter<MapState> emit) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
     try {
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
@@ -79,13 +91,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           .handleError((error) => logs.severe('error: $error'))
           .listen((position) => add(UpdateUserLocation(position: position)));
 
+      emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
       final style = await _getMapConfigUseCase();
       emit(state.copyWith(style: style));
     } catch (e) {
       logs.severe('$InitMap: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     } finally {
-      emit(state.copyWith(isLoading: false));
+      emit(state.copyWith(loadingStatus: null));
     }
   }
 
@@ -244,7 +257,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
             longitude: lon,
             elevation: 0,
           ),
-          isLoading: true,
+          loadingStatus: LoadingStatus.loadingTraces,
         ),
       );
       final traces = await _getPublicGpsTracesUseCase(
@@ -259,7 +272,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       logs.severe('$FetchTraces: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
     } finally {
-      emit(state.copyWith(isLoading: false));
+      emit(state.copyWith(loadingStatus: null));
     }
   }
 

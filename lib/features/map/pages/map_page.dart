@@ -73,7 +73,21 @@ class _MapPageState extends State<MapPage> {
       child: BlocBuilder<MapBloc, MapState>(
         builder: (context, state) {
           if (state.style == null || state.userLocation == null) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (state.loadingStatus != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      state.loadingStatus!.message,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ],
+              ),
+            );
           }
 
           return Scaffold(
@@ -113,12 +127,13 @@ class _MapPageState extends State<MapPage> {
                             elevation: state.userLocation!.elevation,
                           ),
                         ),
-                      if (state.searchCenter != null && state.isLoading)
+                      if (state.searchCenter != null &&
+                          state.loadingStatus == LoadingStatus.loadingTraces)
                         _buildSquareOverlay(),
                     ],
                   ),
                 ),
-                if (state.isLoading)
+                if (state.loadingStatus != null)
                   const Center(child: CircularProgressIndicator()),
                 if (state.activity != null)
                   Positioned(
