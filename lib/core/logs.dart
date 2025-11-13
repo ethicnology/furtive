@@ -73,12 +73,26 @@ class MyLogs {
   void addContextInfos() {
     config('Version: ${Global.app.version}+${Global.app.buildNumber}');
     config('Signature: ${Global.app.buildSignature}');
-    config('Manufacturer: ${Global.android.manufacturer}');
-    config('Brand: ${Global.android.brand}');
-    config('Model: ${Global.android.model}');
-    config('Device: ${Global.android.device}');
-    config('Android: ${Global.android.version.release}');
-    config('Sdk: ${Global.android.version.sdkInt}');
+    if (Platform.isAndroid) {
+      final android = Global.android!;
+      config('Manufacturer: ${android.manufacturer}');
+      config('Brand: ${android.brand}');
+      config('Model: ${android.model}');
+      config('Device: ${android.device}');
+      config('Android: ${android.version.release}');
+      config('Sdk: ${android.version.sdkInt}');
+    } else if (Platform.isIOS) {
+      final ios = Global.ios!;
+      config('Model: ${ios.model}');
+      config('Model Name: ${ios.modelName}');
+      config('Name: ${ios.name}');
+      config('System Name: ${ios.systemName}');
+      config('System Version: ${ios.systemVersion}');
+      config('UTS Version: ${ios.utsname.version}');
+      config('UTS Release: ${ios.utsname.release}');
+      config('UTS Machine: ${ios.utsname.machine}');
+      config('iOS App on Mac: ${ios.isiOSAppOnMac}');
+    }
   }
 
   Future<List<String>> readLogs() async {
@@ -138,10 +152,6 @@ class MyLogs {
   /// Use for the most severe errors that require immediate intervention.
   void shout(Object? message, {Object? error, StackTrace? trace}) {
     logger.shout(message, error, trace);
-  }
-
-  Future<void> appendToLogFile(String log) async {
-    await logsFile.writeAsString('$log\n', mode: FileMode.append);
   }
 
   Future<void> deleteLogs() async {
