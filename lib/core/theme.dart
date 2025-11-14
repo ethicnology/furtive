@@ -43,4 +43,10 @@ ThemeData get appTheme => ThemeData.dark().copyWith(
     selectedItemColor: AppColors.primary.background,
   ),
   listTileTheme: ListTileThemeData(iconColor: AppColors.primary.background),
+  snackBarTheme: SnackBarThemeData(
+    backgroundColor: AppColors.primary.background,
+    contentTextStyle: TextStyle(color: AppColors.primary.foreground),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  ),
 );

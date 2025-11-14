@@ -21,12 +21,14 @@ const double kSearchHalfSideDegrees = 0.01425;
 enum LoadingStatus {
   localizing,
   loadingMap,
-  loadingTraces;
+  loadingTraces,
+  startingActivity;
 
   String get message => switch (this) {
     LoadingStatus.localizing => 'Initializing GPS…',
     LoadingStatus.loadingMap => 'Loading map…',
     LoadingStatus.loadingTraces => 'Loading traces…',
+    LoadingStatus.startingActivity => 'Starting activity…',
   };
 }
 
@@ -81,15 +83,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   Future<void> _onInitMap(InitMap event, Emitter<MapState> emit) async {
-    emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
     try {
-      final userPosition = await _getUserLocationUseCase();
-      emit(state.copyWith(userLocation: userPosition));
+      emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
 
       final userPositionStream = await _startTrackPositionUsecase();
       _positionStream = userPositionStream
           .handleError((error) => logs.severe('error: $error'))
           .listen((position) => add(UpdateUserLocation(position: position)));
+
+      final userPosition = await _getUserLocationUseCase();
+      emit(state.copyWith(userLocation: userPosition));
 
       emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
       final style = await _getMapConfigUseCase();
@@ -107,6 +110,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     Emitter<MapState> emit,
   ) async {
     try {
+      emit(state.copyWith(loadingStatus: LoadingStatus.startingActivity));
       _elapsedTimer?.cancel();
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
@@ -125,6 +129,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     } catch (e) {
       logs.severe('$StartActivity: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
+    } finally {
+      emit(state.copyWith(loadingStatus: null));
     }
   }
 

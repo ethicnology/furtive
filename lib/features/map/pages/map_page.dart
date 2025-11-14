@@ -30,12 +30,13 @@ class _MapPageState extends State<MapPage> {
     return MultiBlocListener(
       listeners: [
         BlocListener<MapBloc, MapState>(
+          listenWhen: (previous, current) => previous.error != current.error,
           listener: (context, state) {
-            if (state.errorMessage != null) {
+            if (state.error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    state.errorMessage!.message,
+                    state.error!.message,
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   backgroundColor: Colors.red,
@@ -44,6 +45,31 @@ class _MapPageState extends State<MapPage> {
               );
               context.read<MapBloc>().add(const ClearError());
             }
+          },
+        ),
+        BlocListener<MapBloc, MapState>(
+          listenWhen:
+              (previous, current) =>
+                  previous.loadingStatus == LoadingStatus.startingActivity &&
+                  current.loadingStatus == null,
+          listener: (context, state) {
+            final screenSize = MediaQuery.of(context).size;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Activity started',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                ),
+                margin: EdgeInsets.only(
+                  bottom: screenSize.height * 0.25,
+                  left: screenSize.width * 0.1,
+                  right: screenSize.width * 0.1,
+                ),
+                padding: EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                duration: const Duration(seconds: 2),
+              ),
+            );
           },
         ),
         BlocListener<MapBloc, MapState>(

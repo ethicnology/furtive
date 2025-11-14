@@ -13,7 +13,7 @@ class MapState with MapStateMappable {
   final Style? style;
   final PositionEntity? userLocation;
   final PositionEntity? searchCenter;
-  final AppError? errorMessage;
+  final AppError? error;
   final List<TraceEntity> traces;
   final LoadingStatus? loadingStatus;
   final ActivityEntity? activity;
@@ -25,7 +25,7 @@ class MapState with MapStateMappable {
     this.style,
     this.userLocation,
     this.searchCenter,
-    this.errorMessage,
+    this.error,
     this.traces = const [],
     this.loadingStatus,
     this.activity,
