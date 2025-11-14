@@ -2,6 +2,8 @@
 
 Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 
+[Download the latest apk](https://github.com/ethicnology/furtive/releases/latest)
+
 ## Screenshots
 
 <div align="center">
