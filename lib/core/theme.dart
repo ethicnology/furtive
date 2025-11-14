@@ -18,6 +18,8 @@ ThemeData get appTheme => ThemeData.dark().copyWith(
   iconTheme: IconThemeData(color: AppColors.primary.background),
   progressIndicatorTheme: ProgressIndicatorThemeData(
     color: AppColors.primary.background,
+    refreshBackgroundColor: AppColors.primary.foreground,
+    circularTrackColor: AppColors.primary.foreground,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(

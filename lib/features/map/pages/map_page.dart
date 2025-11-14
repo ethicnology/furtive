@@ -159,7 +159,8 @@ class _MapPageState extends State<MapPage> {
                     ],
                   ),
                 ),
-                if (state.loadingStatus != null)
+                if (state.loadingStatus != null &&
+                    state.loadingStatus != LoadingStatus.startingActivity)
                   const Center(child: CircularProgressIndicator()),
                 if (state.activity != null)
                   Positioned(
@@ -238,8 +239,14 @@ class _MapPageState extends State<MapPage> {
                   const SizedBox(height: 16),
                   FloatingActionButton(
                     heroTag: 'start',
-                    onPressed: () => bloc.add(const StartActivity()),
-                    child: const Icon(Icons.play_arrow),
+                    onPressed:
+                        state.loadingStatus == LoadingStatus.startingActivity
+                            ? null
+                            : () => bloc.add(const StartActivity()),
+                    child:
+                        state.loadingStatus == LoadingStatus.startingActivity
+                            ? CircularProgressIndicator()
+                            : const Icon(Icons.play_arrow),
                   ),
                 ],
               ],

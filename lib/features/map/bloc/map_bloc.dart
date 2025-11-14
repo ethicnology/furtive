@@ -111,21 +111,25 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.startingActivity));
+
       _elapsedTimer?.cancel();
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
 
-      final activity = await _beginActivityUseCase();
-      _activityStartTime = activity.startedAt;
-      emit(state.copyWith(activity: activity));
-
+      // First we wait for user location
       final userPosition = await _getUserLocationUseCase();
+      // Then we start the activity
+      final activity = await _beginActivityUseCase();
+      // Then add the current location to the activity
       add(UpdateUserLocation(position: userPosition));
+      _activityStartTime = activity.startedAt;
 
       _elapsedTimer = Timer.periodic(
         const Duration(seconds: 1),
         (_) => add(const UpdateElapsedTime()),
       );
+
+      emit(state.copyWith(activity: activity));
     } catch (e) {
       logs.severe('$StartActivity: $e');
       emit(state.copyWith(errorMessage: AppError(e.toString())));
