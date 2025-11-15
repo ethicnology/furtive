@@ -181,15 +181,15 @@ class _MapPageState extends State<MapPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  FloatingActionButton.extended(
-                    heroTag: 'search',
-                    onPressed: () {
-                      final center = _mapController.camera.center;
-                      bloc.add(FetchTraces(center: center));
-                    },
-                    label: const Text('Search'),
-                    icon: const Icon(Icons.search),
-                  ),
+                  // FloatingActionButton.extended(
+                  //   heroTag: 'search',
+                  //   onPressed: () {
+                  //     final center = _mapController.camera.center;
+                  //     bloc.add(FetchTraces(center: center));
+                  //   },
+                  //   label: const Text('Search'),
+                  //   icon: const Icon(Icons.search),
+                  // ),
                   const SizedBox(height: 16),
                   FloatingActionButton.extended(
                     onPressed: () {
