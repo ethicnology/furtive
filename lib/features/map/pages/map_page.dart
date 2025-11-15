@@ -22,6 +22,7 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   final _mapController = MapController();
+  final _kFloatingActionButtonWidth = 115.0;
 
   @override
   Widget build(BuildContext context) {
@@ -174,82 +175,100 @@ class _MapPageState extends State<MapPage> {
                   ),
               ],
             ),
-            floatingActionButton: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'search',
-                  onPressed: () {
-                    final center = _mapController.camera.center;
-                    bloc.add(FetchTraces(center: center));
-                  },
-                  child: const Icon(Icons.search),
-                ),
+            floatingActionButton: SizedBox(
+              width: _kFloatingActionButtonWidth,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FloatingActionButton.extended(
+                    heroTag: 'search',
+                    onPressed: () {
+                      final center = _mapController.camera.center;
+                      bloc.add(FetchTraces(center: center));
+                    },
+                    label: const Text('Search'),
+                    icon: const Icon(Icons.search),
+                  ),
+                  const SizedBox(height: 16),
+                  FloatingActionButton.extended(
+                    onPressed: () {
+                      if (state.userLocation == null) return;
 
-                const SizedBox(height: 16),
-
-                FloatingActionButton(
-                  heroTag: 'location',
-                  onPressed: () {
-                    if (state.userLocation == null) return;
-
-                    _mapController.move(
-                      state.userLocation!.toLatLng(),
-                      Global.maxZoom,
-                    );
-                    bloc.add(const ToggleFollowUser());
-                  },
-                  backgroundColor:
-                      state.isFollowingUser
-                          ? AppColors.secondary.background
-                          : null,
-                  child: Icon(
-                    Icons.my_location,
-                    color:
+                      _mapController.move(
+                        state.userLocation!.toLatLng(),
+                        Global.maxZoom,
+                      );
+                      bloc.add(const ToggleFollowUser());
+                    },
+                    backgroundColor:
                         state.isFollowingUser
-                            ? AppColors.secondary.foreground
+                            ? AppColors.secondary.background
                             : null,
+                    label: const Text('Follow'),
+                    icon: Icon(
+                      Icons.my_location,
+                      color:
+                          state.isFollowingUser
+                              ? AppColors.secondary.foreground
+                              : null,
+                    ),
                   ),
-                ),
 
-                if (state.isPaused && state.activity != null) ...[
-                  const SizedBox(height: 16),
-                  FloatingActionButton(
-                    heroTag: 'stop',
-                    onPressed: () => bloc.add(const CeaseActivity()),
-                    backgroundColor: Colors.redAccent,
-                    child: const Icon(Icons.stop),
-                  ),
-                ],
+                  if (state.isPaused && state.activity != null) ...[
+                    const SizedBox(height: 16),
+                    FloatingActionButton.extended(
+                      heroTag: 'stop',
+                      onPressed: () => bloc.add(const CeaseActivity()),
+                      backgroundColor: Colors.redAccent,
+                      label: const Text('Stop'),
+                      icon: const Icon(Icons.stop),
+                    ),
+                  ],
 
-                if (state.activity != null) ...[
-                  const SizedBox(height: 16),
-                  FloatingActionButton(
-                    heroTag: 'pause',
-                    onPressed: () => bloc.add(const PauseActivity()),
-                    backgroundColor: AppColors.primary.background,
-                    child:
-                        state.isPaused
-                            ? const Icon(Icons.play_arrow)
-                            : const Icon(Icons.pause),
-                  ),
-                ],
+                  if (state.activity != null) ...[
+                    const SizedBox(height: 16),
+                    FloatingActionButton.extended(
+                      heroTag: 'pause',
+                      onPressed: () => bloc.add(const PauseActivity()),
+                      backgroundColor: AppColors.primary.background,
+                      label:
+                          state.isPaused
+                              ? const Text('Resume')
+                              : const Text('Pause'),
+                      icon:
+                          state.isPaused
+                              ? const Icon(Icons.play_arrow)
+                              : const Icon(Icons.pause),
+                    ),
+                  ],
 
-                if (state.activity == null) ...[
-                  const SizedBox(height: 16),
-                  FloatingActionButton(
-                    heroTag: 'start',
-                    onPressed:
-                        state.loadingStatus == LoadingStatus.startingActivity
-                            ? null
-                            : () => bloc.add(const StartActivity()),
-                    child:
-                        state.loadingStatus == LoadingStatus.startingActivity
-                            ? CircularProgressIndicator()
-                            : const Icon(Icons.play_arrow),
-                  ),
+                  if (state.activity == null) ...[
+                    const SizedBox(height: 16),
+                    FloatingActionButton.extended(
+                      heroTag: 'start',
+                      onPressed:
+                          state.loadingStatus == LoadingStatus.startingActivity
+                              ? null
+                              : () => bloc.add(const StartActivity()),
+                      label:
+                          state.loadingStatus == LoadingStatus.startingActivity
+                              ? const Text('Starting')
+                              : const Text('Start'),
+                      icon:
+                          state.loadingStatus == LoadingStatus.startingActivity
+                              ? SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  // strokeWidth: 2,
+                                ),
+                              )
+                              : const Icon(Icons.play_arrow),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         },
