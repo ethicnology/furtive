@@ -11,7 +11,7 @@ class TraceRemoteDataSource {
     int page,
   ) async {
     final uri = Uri.parse(
-      'https://api.furtive.org/api/0.6/trackpoints?bbox=$left,$bottom,$right,$top&page=$page',
+      'https://api.openstreetmap.org/api/0.6/trackpoints?bbox=$left,$bottom,$right,$top&page=$page',
     );
     final response = await http.get(uri);
 
