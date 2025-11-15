@@ -33,4 +33,12 @@ class ActivityRepository {
   Future<void> cease(String activityId) async {
     await localActivities.cease(activityId);
   }
+
+  Future<void> updateName(String activityId, String newName) async {
+    await localActivities.updateName(activityId, newName);
+  }
+
+  Future<void> delete(String activityId) async {
+    await localActivities.delete(activityId);
+  }
 }

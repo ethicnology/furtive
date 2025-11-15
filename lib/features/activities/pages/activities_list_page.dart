@@ -77,13 +77,18 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   }
 
   Widget _buildActivityCard(ActivityEntity activity) {
+    var title = activity.startedAt.toLocal().toString().substring(0, 19);
+    if (activity.name.isNotEmpty && activity.name != "Track") {
+      title = activity.name;
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: AppColors.quaternary.background,
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         title: Text(
-          activity.startedAt.toLocal().toString().substring(0, 19),
+          title,
           style: TextStyle(
             color: AppColors.tertiary.foreground,
             fontSize: 18,
@@ -94,17 +99,17 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Row(
+            Wrap(
+              spacing: 8,
               children: [
                 _buildStatChip(activity.activeDuration.toHHMMSS()),
-                const SizedBox(width: 8),
                 _buildStatChip(
                   '${activity.activeDistanceInKm.toStringAsFixed(1)} km',
                 ),
-                const SizedBox(width: 8),
                 _buildStatChip(
                   '${activity.activeSpeedKmh.toStringAsFixed(1)} km/h',
                 ),
+                _buildStatChip(activity.activePaceMinPerKm),
               ],
             ),
           ],

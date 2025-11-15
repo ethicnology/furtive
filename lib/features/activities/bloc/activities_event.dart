@@ -13,3 +13,16 @@ class SelectActivity extends ActivitiesEvent {
 
   final ActivityEntity activity;
 }
+
+class UpdateActivityName extends ActivitiesEvent {
+  const UpdateActivityName({required this.activityId, required this.newName});
+
+  final String activityId;
+  final String newName;
+}
+
+class DeleteActivity extends ActivitiesEvent {
+  const DeleteActivity({required this.activityId});
+
+  final String activityId;
+}

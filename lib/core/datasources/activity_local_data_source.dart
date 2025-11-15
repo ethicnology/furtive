@@ -106,4 +106,30 @@ class ActivityLocalDataSource {
     activities.sort((a, b) => b.startedAt.compareTo(a.startedAt));
     return activities;
   }
+
+  Future<void> updateName(String activityId, String newName) async {
+    final activity =
+        await (db.select(db.activities)
+          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+
+    if (activity == null) throw AppError('Activity not found');
+
+    await (db.update(db.activities)..where(
+      (t) => t.id.equals(activityId),
+    )).write(ActivitiesCompanion(name: Value(newName)));
+  }
+
+  Future<void> delete(String activityId) async {
+    final activity =
+        await (db.select(db.activities)
+          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+
+    if (activity == null) throw AppError('Activity not found');
+
+    await (db.delete(db.activityPoints)
+      ..where((t) => t.activityId.equals(activityId))).go();
+
+    await (db.delete(db.activities)
+      ..where((t) => t.id.equals(activityId))).go();
+  }
 }
