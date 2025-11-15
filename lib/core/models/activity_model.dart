@@ -1,3 +1,4 @@
+import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/database/tables/activity_points_table.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
@@ -69,6 +70,21 @@ class ActivityModel {
               .toList(),
     );
   }
+
+  static ActivityModel fromDatabase(
+    ActivitiesRow row,
+    List<ActivityPointsRow> points,
+  ) {
+    return ActivityModel(
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      createdAt: row.createdAt,
+      startedAt: row.startedAt,
+      stoppedAt: row.stoppedAt,
+      points: points.map(ActivityPointModel.fromDatabase).toList(),
+    );
+  }
 }
 
 class ActivityPointModel {
@@ -105,6 +121,16 @@ class ActivityPointModel {
       ),
       time: model.time,
       status: model.status.toEntity(),
+    );
+  }
+
+  static ActivityPointModel fromDatabase(ActivityPointsRow row) {
+    return ActivityPointModel(
+      latitude: row.latitude,
+      longitude: row.longitude,
+      elevation: row.elevation,
+      time: row.time,
+      status: row.status,
     );
   }
 }

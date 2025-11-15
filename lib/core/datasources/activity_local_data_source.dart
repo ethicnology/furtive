@@ -57,6 +57,19 @@ class ActivityLocalDataSource {
     )).write(ActivitiesCompanion(stoppedAt: Value(DateTime.now().toUtc())));
   }
 
+  Future<ActivityModel> fetchSingle(String activityId) async {
+    final activity =
+        await (db.select(db.activities)
+          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    if (activity == null) throw AppError('Activity not found');
+
+    final points =
+        await (db.select(db.activityPoints)
+          ..where((t) => t.activityId.equals(activityId))).get();
+
+    return ActivityModel.fromDatabase(activity, points);
+  }
+
   Future<List<ActivityModel>> fetch() async {
     final query = db.select(db.activities).join([
       leftOuterJoin(
@@ -74,26 +87,12 @@ class ActivityLocalDataSource {
 
       activityMap.putIfAbsent(
         activity.id.toString(),
-        () => ActivityModel(
-          id: activity.id.toString(),
-          name: activity.name,
-          description: activity.description,
-          createdAt: activity.createdAt,
-          points: [],
-          startedAt: activity.startedAt,
-          stoppedAt: activity.stoppedAt,
-        ),
+        () => ActivityModel.fromDatabase(activity, []),
       );
 
       if (point != null) {
         activityMap[activity.id]!.points.add(
-          ActivityPointModel(
-            latitude: point.latitude,
-            longitude: point.longitude,
-            elevation: point.elevation,
-            time: point.time,
-            status: point.status,
-          ),
+          ActivityPointModel.fromDatabase(point),
         );
       }
     }
