@@ -26,11 +26,11 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   Widget build(BuildContext context) {
     return BlocListener<ActivitiesBloc, ActivitiesState>(
       listener: (context, state) {
-        if (state.errorMessage != null) {
+        if (state.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                state.errorMessage!.message,
+                state.error!.message,
                 style: TextStyle(color: Colors.white, fontSize: 14),
               ),
               backgroundColor: Colors.red,
@@ -47,11 +47,13 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
         ),
         body: BlocBuilder<ActivitiesBloc, ActivitiesState>(
           builder: (context, state) {
-            if (state.isLoading) {
+            final activities = context.watch<ActivitiesBloc>().state.activities;
+
+            if (state.isLoading || activities == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state.activities.isEmpty) {
+            if (activities.isEmpty) {
               return Center(
                 child: Text(
                   'No activities found',
@@ -64,69 +66,72 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             }
 
             return ListView.builder(
-              itemCount: state.activities.length,
+              itemCount: activities.length,
               itemBuilder: (context, index) {
-                final activity = state.activities[index];
-                return _buildActivityCard(activity);
+                final activity = activities[index];
+                var title = activity.startedAt.toLocal().toString().substring(
+                  0,
+                  19,
+                );
+                if (activity.name.isNotEmpty && activity.name != "Track") {
+                  title = activity.name;
+                }
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  color: AppColors.quaternary.background,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        color: AppColors.tertiary.foreground,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            _buildStatChip(activity.activeDuration.toHHMMSS()),
+                            _buildStatChip(
+                              '${activity.activeDistanceInKm.toStringAsFixed(1)} km',
+                            ),
+                            _buildStatChip(
+                              '${activity.activeSpeedKmh.toStringAsFixed(1)} km/h',
+                            ),
+                            _buildStatChip(activity.activePaceMinPerKm),
+                          ],
+                        ),
+                      ],
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: AppColors.tertiary.foreground,
+                      size: 16,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  ActivityDetailPage(activity: activity),
+                        ),
+                      );
+                    },
+                  ),
+                );
               },
             );
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildActivityCard(ActivityEntity activity) {
-    var title = activity.startedAt.toLocal().toString().substring(0, 19);
-    if (activity.name.isNotEmpty && activity.name != "Track") {
-      title = activity.name;
-    }
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.quaternary.background,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: AppColors.tertiary.foreground,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 8,
-              children: [
-                _buildStatChip(activity.activeDuration.toHHMMSS()),
-                _buildStatChip(
-                  '${activity.activeDistanceInKm.toStringAsFixed(1)} km',
-                ),
-                _buildStatChip(
-                  '${activity.activeSpeedKmh.toStringAsFixed(1)} km/h',
-                ),
-                _buildStatChip(activity.activePaceMinPerKm),
-              ],
-            ),
-          ],
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          color: AppColors.tertiary.foreground,
-          size: 16,
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ActivityDetailPage(activity: activity),
-            ),
-          );
-        },
       ),
     );
   }

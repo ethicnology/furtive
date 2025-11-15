@@ -6,15 +6,15 @@ part 'activities_state.mapper.dart';
 
 @MappableClass()
 class ActivitiesState with ActivitiesStateMappable {
-  final List<ActivityEntity> activities;
+  final List<ActivityEntity>? activities;
   final ActivityEntity? selectedActivity;
-  final AppError? errorMessage;
+  final AppError? error;
   final bool isLoading;
 
   const ActivitiesState({
-    this.activities = const [],
+    this.activities,
     this.selectedActivity,
-    this.errorMessage,
+    this.error,
     this.isLoading = false,
   });
 }
