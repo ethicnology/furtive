@@ -31,7 +31,7 @@ Future<void> checkNewVersion(BuildContext context) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Latest version is $latest',
+          'Download the latest version $latest',
           style: TextStyle(
             color: AppColors.primary.foreground,
             fontWeight: FontWeight.bold,
