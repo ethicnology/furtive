@@ -7,6 +7,7 @@ import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
+import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 class ActivityDetailPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class ActivityDetailPage extends StatefulWidget {
 class _ActivityDetailPageState extends State<ActivityDetailPage> {
   final _mapController = MapController();
   final _getMapConfigUseCase = GetMapConfigUseCase();
+  final _exportActivityToGpxUseCase = ExportActivityToGpxUseCase();
   Style? _mapStyle;
   bool _isLoading = true;
 
@@ -49,8 +51,21 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.activity.name),
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
+
+        actions: [
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _exportToGpx,
+            label: const Text('Export'),
+            icon:
+                _isLoading
+                    ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(),
+                    )
+                    : const Icon(Icons.file_download),
+          ),
+        ],
       ),
       body:
           _isLoading
@@ -130,5 +145,27 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
             ),
           ),
     );
+  }
+
+  Future<void> _exportToGpx() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _exportActivityToGpxUseCase(widget.activity.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('GPX exported successfully')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 }

@@ -17,6 +17,11 @@ class ActivityRepository {
     return models.map(ActivityModel.toEntity).toList();
   }
 
+  Future<ActivityEntity> fetchSingle(String activityId) async {
+    final model = await localActivities.fetchSingle(activityId);
+    return ActivityModel.toEntity(model);
+  }
+
   Future<void> score(
     String activityId,
     List<ActivityPointEntity> points,

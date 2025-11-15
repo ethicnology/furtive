@@ -32,6 +32,20 @@ ThemeData get appTheme => ThemeData.dark().copyWith(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      backgroundColor: AppColors.primary.background,
+      foregroundColor: AppColors.primary.foreground,
+      disabledBackgroundColor: Colors.grey,
+      disabledForegroundColor: Colors.blueGrey,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+  ),
+  iconButtonTheme: IconButtonThemeData(
+    style: IconButton.styleFrom(foregroundColor: AppColors.primary.background),
+  ),
   floatingActionButtonTheme: FloatingActionButtonThemeData(
     backgroundColor: AppColors.primary.background,
     foregroundColor: AppColors.primary.foreground,

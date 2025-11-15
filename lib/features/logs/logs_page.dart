@@ -173,12 +173,12 @@ class _LogsPageState extends State<LogsPage> {
           ),
           if (_startDate != null || _endDate != null)
             IconButton(
-              icon: const Icon(Icons.clear, color: Colors.white),
+              icon: const Icon(Icons.clear),
               onPressed: _clearDateRange,
               tooltip: 'Clear filter',
             ),
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.white),
+            icon: const Icon(Icons.share),
             onPressed: _logs.isEmpty ? null : _shareLogs,
             tooltip: 'Share',
           ),
