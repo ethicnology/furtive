@@ -29,7 +29,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       emit(state.copyWith(activities: activities));
     } catch (e) {
       logs.severe('$FetchActivities: $e');
-      emit(state.copyWith(errorMessage: AppError(e.toString())));
+      emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));
     }
@@ -50,7 +50,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       emit(state.copyWith(activities: activities));
     } catch (e) {
       logs.severe('$UpdateActivityName: $e');
-      emit(state.copyWith(errorMessage: AppError(e.toString())));
+      emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));
     }
@@ -67,7 +67,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       emit(state.copyWith(activities: activities));
     } catch (e) {
       logs.severe('$DeleteActivity: $e');
-      emit(state.copyWith(errorMessage: AppError(e.toString())));
+      emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(isLoading: false));
     }

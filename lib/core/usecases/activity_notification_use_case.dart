@@ -34,7 +34,7 @@ class ActivityNotificationUseCase {
     );
 
     await _notifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (details) {
         if (onNotificationAction != null) {
           onNotificationAction!(details.actionId);
@@ -82,15 +82,15 @@ class ActivityNotificationUseCase {
     );
 
     await _notifications.show(
-      _notificationId,
-      'Activity in Progress',
-      '$duration · $distance km · $pace /km',
-      details,
+      id: _notificationId,
+      title: 'Activity in Progress',
+      body: '$duration · $distance km · $pace /km',
+      notificationDetails: details,
     );
   }
 
   Future<void> cancelActivityNotification() async {
-    await _notifications.cancel(_notificationId);
+    await _notifications.cancel(id: _notificationId);
   }
 
   String _formatDuration(Duration duration) {

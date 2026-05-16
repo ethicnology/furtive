@@ -12,7 +12,7 @@ class PreferencesModel {
     required this.accuracyInMeters,
   });
 
-  static fromEntity(PreferencesEntity preferences) {
+  static PreferencesModel fromEntity(PreferencesEntity preferences) {
     return PreferencesModel(
       mapTheme: MapThemeExtension.fromEntity(preferences.mapTheme),
       mapLanguage: MapLanguageExtension.fromEntity(preferences.mapLanguage),
@@ -30,7 +30,7 @@ class PreferencesModel {
 }
 
 extension MapThemeExtension on MapThemeColumn {
-  static fromEntity(MapThemeEntity theme) {
+  static MapThemeColumn fromEntity(MapThemeEntity theme) {
     switch (theme) {
       case MapThemeEntity.light:
         return MapThemeColumn.light;
@@ -39,7 +39,7 @@ extension MapThemeExtension on MapThemeColumn {
     }
   }
 
-  toEntity() {
+  MapThemeEntity toEntity() {
     switch (this) {
       case MapThemeColumn.light:
         return MapThemeEntity.light;
@@ -50,7 +50,7 @@ extension MapThemeExtension on MapThemeColumn {
 }
 
 extension MapLanguageExtension on MapLanguageColumn {
-  static fromEntity(MapLanguageEntity language) {
+  static MapLanguageColumn fromEntity(MapLanguageEntity language) {
     switch (language) {
       case MapLanguageEntity.en:
         return MapLanguageColumn.en;
@@ -59,7 +59,7 @@ extension MapLanguageExtension on MapLanguageColumn {
     }
   }
 
-  toEntity() {
+  MapLanguageEntity toEntity() {
     switch (this) {
       case MapLanguageColumn.en:
         return MapLanguageEntity.en;

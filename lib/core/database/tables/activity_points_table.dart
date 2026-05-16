@@ -17,7 +17,9 @@ enum ActivityPointsStatusColumn {
   active,
   paused;
 
-  static fromEntity(ActivityPointStatusEntity status) {
+  static ActivityPointsStatusColumn fromEntity(
+    ActivityPointStatusEntity status,
+  ) {
     switch (status) {
       case ActivityPointStatusEntity.active:
         return ActivityPointsStatusColumn.active;
@@ -26,7 +28,7 @@ enum ActivityPointsStatusColumn {
     }
   }
 
-  toEntity() {
+  ActivityPointStatusEntity toEntity() {
     switch (this) {
       case ActivityPointsStatusColumn.active:
         return ActivityPointStatusEntity.active;

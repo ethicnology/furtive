@@ -45,7 +45,7 @@ class LocationGpsDataSource {
     return await Geolocator.isLocationServiceEnabled();
   }
 
-  getLocationSettings({required int accuracyInMeters}) {
+  LocationSettings getLocationSettings({required int accuracyInMeters}) {
     late LocationSettings locationSettings;
 
     if (defaultTargetPlatform == TargetPlatform.android) {
