@@ -5,28 +5,32 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val androidMinSdk = (project.properties["android.minSdk"] as String).toInt()
+val androidCompileSdk = (project.properties["android.compileSdk"] as String).toInt()
+val androidTargetSdk = (project.properties["android.targetSdk"] as String).toInt()
+val androidNdkVersion = project.properties["android.ndkVersion"] as String
+val androidJvmTarget = JavaVersion.toVersion(project.properties["android.jvmTarget"] as String)
+
 android {
     namespace = "com.example.furtive"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    compileSdk = androidCompileSdk
+    ndkVersion = androidNdkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = androidJvmTarget
+        targetCompatibility = androidJvmTarget
         isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = androidJvmTarget.toString()
     }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.furtive"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = androidMinSdk
+        targetSdk = androidTargetSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

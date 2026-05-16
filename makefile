@@ -1,12 +1,111 @@
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug
+
+fvm-check:
+	@echo "🔍 Checking FVM"
+	@if ! command -v fvm >/dev/null 2>&1; then \
+		echo "❌ FVM is not installed. See https://fvm.app"; \
+		exit 1; \
+	fi
+	@fvm install
+
+all: setup
+	@echo "✨ All tasks completed!"
+
+setup: fvm-check clean deps build-runner
+	@if [ "$$(uname)" = "Darwin" ]; then $(MAKE) ios-pod-update; fi
+	@echo "🚀 Setup complete!"
+
 clean:
-	fvm flutter clean && rm -f pubspec.lock
+	@echo "🧹 Clean and remove pubspec.lock and ios/Podfile.lock"
+	@fvm flutter clean && rm -f pubspec.lock && rm -f ios/Podfile.lock
 
-setup:
-	fvm flutter pub get
-	fvm dart pub run build_runner build
+deps:
+	@echo "🏃 Fetch dependencies"
+	@fvm flutter pub get
 
-docker-apk:
-	docker build --platform linux/amd64 -t app-builder .
-	docker create --name tmp-container app-builder
-	docker cp tmp-container:/app/build/app/outputs/flutter-apk/app-release.apk ./app-unsigned.apk
-	docker rm tmp-container
+build-runner:
+	@echo "🏗️ Build runner"
+	@fvm dart run build_runner build --delete-conflicting-outputs --force-jit
+
+build-runner-watch:
+	@echo "🏗️ Build runner (watch mode)"
+	@fvm dart run build_runner watch --delete-conflicting-outputs --force-jit
+
+drift-migrations:
+	@echo "🔄 Create schema and sum migrations"
+	@fvm dart run drift_dev make-migrations
+
+ios-pod-update:
+	@if [ "$$(uname)" != "Darwin" ]; then echo "Skipping pod update (not macOS)"; exit 0; fi
+	@echo "🍎 Fetching iOS dependencies"
+	@fvm flutter precache --ios
+	@cd ios && pod install --repo-update && cd -
+
+# Container runtime — default podman, override with CONTAINER=docker for
+# environments without podman.
+CONTAINER ?= podman
+
+container-tools:
+	@echo "🔧 Building tools image"
+	@$(CONTAINER) build -f Containerfile.tools -t furtive-tools \
+		--build-arg FLUTTER_VERSION=$$(jq -r .flutter .fvmrc) \
+		--build-arg JVM_TARGET=$$(grep 'android.jvmTarget' android/gradle.properties | cut -d= -f2) \
+		--build-arg ANDROID_API_LEVEL=$$(grep 'android.compileSdk' android/gradle.properties | cut -d= -f2) \
+		--build-arg ANDROID_BUILD_TOOLS=$$(grep 'android.buildToolsVersion' android/gradle.properties | cut -d= -f2) \
+		--build-arg ANDROID_NDK=$$(grep 'android.ndkVersion' android/gradle.properties | cut -d= -f2) \
+		.
+
+container-app: container-tools
+	@echo "📦 Building app image"
+	@$(CONTAINER) build -f Containerfile.app -t furtive-app \
+		--build-arg GRADLE_HEAP=$(or $(GRADLE_HEAP),4g) \
+		.
+
+MODE ?= release
+FORMAT ?= apk
+
+# Allow "make apk release" or "make apk debug" syntax
+ifneq (,$(filter release,$(MAKECMDGOALS)))
+  MODE := release
+endif
+ifneq (,$(filter debug,$(MAKECMDGOALS)))
+  MODE := debug
+endif
+release debug:
+	@:
+
+# Flutter writes APK and AAB to different paths
+ifeq ($(FORMAT),aab)
+  CONTAINER_OUTPUT := /app/build/app/outputs/bundle/$(MODE)/app-$(MODE).aab
+  HOST_OUTPUT := ./app-$(MODE).aab
+  FLUTTER_BUILD := fvm flutter build appbundle --$(MODE)
+else
+  CONTAINER_OUTPUT := /app/build/app/outputs/flutter-apk/app-$(MODE).apk
+  HOST_OUTPUT := ./app-$(MODE).apk
+  FLUTTER_BUILD := fvm flutter build apk --$(MODE)
+endif
+
+apk: container-app
+	@echo "🔨 Building $(FORMAT) ($(MODE)) via $(CONTAINER)"
+	@$(CONTAINER) rm -f furtive-build > /dev/null 2>&1 || true
+	@$(CONTAINER) run --name furtive-build \
+		--ulimit nofile=65536:65536 \
+		furtive-app bash -c 'cd /app && $(FLUTTER_BUILD)'
+	@$(CONTAINER) cp furtive-build:$(CONTAINER_OUTPUT) $(HOST_OUTPUT)
+	@$(CONTAINER) rm furtive-build > /dev/null
+	@echo "✅ Output extracted: $(HOST_OUTPUT)"
+	@sha256sum $(HOST_OUTPUT) 2>/dev/null || shasum -a 256 $(HOST_OUTPUT)
+
+PROJECT := $(notdir $(CURDIR))
+
+devcontainer-create:
+	@echo "🏗️  Creating Dev Container"
+	@devcontainer up --workspace-folder . --config ./.devcontainer/devcontainer.json
+
+devcontainer-start:
+	@echo "▶️  Starting Dev Container ($(PROJECT))"
+	@$(CONTAINER) start $(PROJECT)
+	@$(CONTAINER) exec -it $(PROJECT) bash
+
+# Alias for backwards compatibility
+devcontainer: devcontainer-create
