@@ -54,11 +54,13 @@ class LocationGpsDataSource {
         //(Optional) Set foreground notification config to keep the app alive
         //when going to the background
         foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationText:
-              "We will continue to update your location when your phone is locked",
-          notificationTitle: "Running in background",
+          notificationText: 'Swipe to stop background tracking.',
+          notificationTitle: 'Tracking active',
           enableWakeLock: false,
-          setOngoing: true,
+          // setOngoing: false — user can swipe the notification away to
+          // stop the foreground service. MapBloc listens for the resulting
+          // stream-end and ceases the activity (see _onInitMap).
+          setOngoing: false,
           // defType is the Android resource folder name, NOT the package id.
           // flutter_launcher_icons emits `launcher_icon.png` under mipmap-*.
           notificationIcon: AndroidResource(

@@ -148,7 +148,10 @@ class _MapPageState extends State<MapPage> {
                           state.activity!.points.isNotEmpty)
                         state.activity!.toPolylineLayer(),
                       // Animated pulse marker + heading indicator + accuracy
-                      // circle. The package subscribes to geolocator itself.
+                      // circle. Deliberately uses its own internal geolocator
+                      // subscription (no distance filter) for smooth visuals,
+                      // separate from MapBloc's filtered stream used for
+                      // activity scoring.
                       CurrentLocationLayer(
                         style: LocationMarkerStyle(
                           marker: DefaultLocationMarker(

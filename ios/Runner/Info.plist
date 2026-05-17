@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs to access your location to track your activity when you are running.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Keeps tracking accurate during long activities, even if the OS suspends the app.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

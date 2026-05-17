@@ -4,23 +4,24 @@ import 'package:furtive/features/permissions/data/models/permission_model.dart';
 class PermissionDataSource {
   Future<List<PermissionModel>> getPermissions() async {
     final locationWhenInUseStatus = await Permission.locationWhenInUse.status;
-    final notificationStatus = await Permission.notification.status;
+    final locationAlwaysStatus = await Permission.locationAlways.status;
 
+    // The "Tracking active" notification while an activity runs is a
+    // foreground-service notification, which Android exempts from
+    // POST_NOTIFICATIONS — so we don't ask the user for that permission.
     final permissions = [
       PermissionModel(
-        name: 'Location When In Use',
+        name: 'Location While Using',
         description:
-            'Required to track your position and display it on the map',
+            'Required to track your position and display it on the map.',
         permission: Permission.locationWhenInUse,
         status: locationWhenInUseStatus,
       ),
       PermissionModel(
-        name: 'Notifications',
-        description:
-            'Optional: shows an ongoing notification while you are recording '
-            'an activity, even when the app is in the background.',
-        permission: Permission.notification,
-        status: notificationStatus,
+        name: 'Location Always',
+        description: 'Optional: keeps tracking accurate during long activities, even if the OS suspends the app.',
+        permission: Permission.locationAlways,
+        status: locationAlwaysStatus,
         isOptional: true,
       ),
     ];

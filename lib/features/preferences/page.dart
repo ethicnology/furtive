@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/global.dart';
+import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/preferences/bloc/preferences_bloc.dart';
 import 'package:furtive/features/preferences/bloc/preferences_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_state.dart';
@@ -106,24 +107,12 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
-      DropdownButtonFormField<MapThemeEntity>(
-        initialValue: state.preferences.mapTheme,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        items:
-            MapThemeEntity.values.map((theme) {
-              return DropdownMenuItem(
-                value: theme,
-                child: Text(theme.name.toUpperCase()),
-              );
-            }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            context.read<PreferencesBloc>().add(ChangeMapTheme(value));
-          }
-        },
+      LabeledDropdown<MapThemeEntity>(
+        value: state.preferences.mapTheme,
+        items: MapThemeEntity.values,
+        labelFor: (t) => t.name.toUpperCase(),
+        onChanged:
+            (v) => context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
       ),
     ],
   );
@@ -138,24 +127,12 @@ Widget _buildMapLanguageSection(BuildContext context, PreferencesState state) {
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
-      DropdownButtonFormField<MapLanguageEntity>(
-        initialValue: state.preferences.mapLanguage,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        items:
-            MapLanguageEntity.values.map((language) {
-              return DropdownMenuItem(
-                value: language,
-                child: Text(language.name.toUpperCase()),
-              );
-            }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            context.read<PreferencesBloc>().add(ChangeMapLanguage(value));
-          }
-        },
+      LabeledDropdown<MapLanguageEntity>(
+        value: state.preferences.mapLanguage,
+        items: MapLanguageEntity.values,
+        labelFor: (l) => l.name.toUpperCase(),
+        onChanged:
+            (v) => context.read<PreferencesBloc>().add(ChangeMapLanguage(v)),
       ),
     ],
   );

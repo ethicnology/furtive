@@ -9,7 +9,6 @@ import 'package:furtive/core/usecases/start_track_position_use_case.dart';
 import 'package:furtive/core/usecases/score_activity_use_case.dart';
 import 'package:furtive/core/usecases/start_activity_use_case.dart';
 import 'package:furtive/core/usecases/cease_activity_use_case.dart';
-import 'package:furtive/core/usecases/activity_notification_use_case.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
@@ -40,16 +39,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final _ceaseActivityUsecase = CeaseActivityUseCase();
   final _startTrackPositionUsecase = StartTrackPositionUseCase();
   final _getUserLocationUseCase = GetUserLocationUseCase();
-  final _activityNotificationUseCase = ActivityNotificationUseCase();
 
   StreamSubscription<PositionEntity>? _positionStream;
   Timer? _elapsedTimer;
+  Timer? _positionWatchdog;
   DateTime? _activityStartTime;
   DateTime? _pauseStartTime;
   Duration _totalPausedDuration = Duration.zero;
-  DateTime? _lastNotificationAt;
 
-  static const _notificationInterval = Duration(seconds: 5);
+  // If the geolocator position stream stays silent for this long while an
+  // activity is running and not paused, assume the foreground service was
+  // killed (e.g. user swiped the notification away on Android) and cease
+  // the activity. Stream.onDone is not reliable for this case — verified
+  // against Baseflow/flutter-geolocator issues #1023, #1395.
+  static const _positionWatchdogDuration = Duration(seconds: 90);
 
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
@@ -69,7 +72,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit) {
     try {
-      if (state.activity != null) add(ScoreActivity(position: event.position));
+      if (state.activity != null) {
+        add(ScoreActivity(position: event.position));
+        if (!state.isPaused) _armPositionWatchdog();
+      }
       emit(state.copyWith(userLocation: event.position));
     } catch (e) {
       logs.severe('$UpdateUserLocation: $e');
@@ -77,10 +83,24 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
+  void _armPositionWatchdog() {
+    _positionWatchdog?.cancel();
+    _positionWatchdog = Timer(_positionWatchdogDuration, () {
+      if (state.activity != null && !state.isPaused) {
+        logs.severe(
+          'Position stream silent for $_positionWatchdogDuration; '
+          'ceasing activity (foreground service likely killed).',
+        );
+        add(const CeaseActivity());
+      }
+    });
+  }
+
   @override
   Future<void> close() async {
     await _positionStream?.cancel();
     _elapsedTimer?.cancel();
+    _positionWatchdog?.cancel();
     return super.close();
   }
 
@@ -96,7 +116,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final userPositionStream = await _startTrackPositionUsecase();
       _positionStream = userPositionStream
           .handleError((error) => logs.severe('error: $error'))
-          .listen((position) => add(UpdateUserLocation(position: position)));
+          .listen(
+            (position) => add(UpdateUserLocation(position: position)),
+            // When the user swipes the geolocator foreground-service
+            // notification away, the position stream closes. Treat that as
+            // an explicit "stop tracking" gesture and end any active activity.
+            onDone: () {
+              if (state.activity != null) add(const CeaseActivity());
+            },
+          );
 
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
@@ -135,6 +163,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         const Duration(seconds: 1),
         (_) => add(const UpdateElapsedTime()),
       );
+      _armPositionWatchdog();
 
       emit(state.copyWith(activity: activity));
     } catch (e) {
@@ -189,9 +218,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           const Duration(seconds: 1),
           (_) => add(const UpdateElapsedTime()),
         );
+        _armPositionWatchdog();
       } else {
         _pauseStartTime = DateTime.now();
         _elapsedTimer?.cancel();
+        _positionWatchdog?.cancel();
       }
 
       emit(state.copyWith(isPaused: !state.isPaused));
@@ -209,12 +240,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       await _ceaseActivityUsecase(state.activity!.id);
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
+      _positionWatchdog?.cancel();
+      _positionWatchdog = null;
       _activityStartTime = null;
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
-      _lastNotificationAt = null;
-
-      await _activityNotificationUseCase.cancelActivityNotification();
 
       emit(
         state.copyWith(
@@ -240,21 +270,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final elapsed =
           DateTime.now().difference(_activityStartTime!) - _totalPausedDuration;
       emit(state.copyWith(elapsedTime: elapsed));
-
-      // Throttle the ongoing notification — the elapsed timer fires every second
-      // but redrawing the system notification at 1 Hz wastes CPU/battery.
-      final now = DateTime.now();
-      if (_lastNotificationAt == null ||
-          now.difference(_lastNotificationAt!) >= _notificationInterval) {
-        _lastNotificationAt = now;
-        unawaited(
-          _activityNotificationUseCase.showActivityNotification(
-            activity: state.activity!,
-            elapsed: elapsed,
-            isPaused: state.isPaused,
-          ),
-        );
-      }
     } catch (e) {
       logs.severe('$UpdateElapsedTime: $e');
       emit(state.copyWith(error: AppError(e.toString())));

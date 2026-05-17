@@ -43,12 +43,11 @@ dependencies:
   geolocator: ^14.0.2
   permission_handler: ^12.0.1
   http: ^1.6.0
-  xml: ^6.5.0 # pinned by flutter_local_notifications_windows 3.x
+  xml: ^6.5.0
   drift: ^2.33.0
   path_provider: ^2.1.5
   path: ^1.9.1
   dart_mappable: ^4.8.0
-  flutter_local_notifications: ^21.0.0
   logging_colorful: ^1.3.2
   package_info_plus: ^9.0.1 # pinned by geolocator_linux transitive
   url_launcher: ^6.3.2

@@ -35,21 +35,22 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
     // Fire-and-forget — version check is informational, not gating
     unawaited(checkNewVersion(context));
 
-    if (!allGranted) {
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const PermissionsPage()),
-      );
-      return;
-    }
-
-    // Permissions OK — check onboarding flag
     final prefs = await _getPreferences();
     if (!mounted) return;
 
-    final destination =
-        prefs.hasCompletedOnboarding
-            ? const BottomNavigationWidget()
-            : const OnboardingPage();
+    // The wizard now owns the permissions step, so onboarding takes priority
+    // over the standalone PermissionsPage. PermissionsPage is only used as a
+    // recovery fallback when an onboarded user has had a required permission
+    // revoked (e.g. via system settings while the app was backgrounded).
+    final Widget destination;
+    if (!prefs.hasCompletedOnboarding) {
+      destination = const OnboardingPage();
+    } else if (!allGranted) {
+      destination = const PermissionsPage();
+    } else {
+      destination = const BottomNavigationWidget();
+    }
+
     await Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
