@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
@@ -146,14 +147,27 @@ class _MapPageState extends State<MapPage> {
                       if (state.activity != null &&
                           state.activity!.points.isNotEmpty)
                         state.activity!.toPolylineLayer(),
-                      if (state.userLocation != null)
-                        _buildLocationMarker(
-                          PositionEntity(
-                            latitude: state.userLocation!.latitude,
-                            longitude: state.userLocation!.longitude,
-                            elevation: state.userLocation!.elevation,
+                      // Animated pulse marker + heading indicator + accuracy
+                      // circle. The package subscribes to geolocator itself.
+                      CurrentLocationLayer(
+                        style: LocationMarkerStyle(
+                          marker: DefaultLocationMarker(
+                            color: AppColors.primary.background,
+                            child: Icon(
+                              Icons.navigation,
+                              color: AppColors.primary.foreground,
+                              size: 18,
+                            ),
                           ),
+                          markerSize: const Size.square(36),
+                          markerDirection: MarkerDirection.heading,
+                          accuracyCircleColor: AppColors.primary.background
+                              .withAlpha(40),
+                          headingSectorColor: AppColors.primary.background
+                              .withAlpha(80),
+                          headingSectorRadius: 64,
                         ),
+                      ),
                       if (state.searchCenter != null &&
                           state.loadingStatus == LoadingStatus.loadingTraces)
                         _buildSquareOverlay(),
@@ -331,23 +345,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Widget _buildLocationMarker(PositionEntity location) {
-    return MarkerLayer(
-      markers: [
-        Marker(
-          point: LatLng(location.latitude, location.longitude),
-          width: 40,
-          height: 40,
-          child: Icon(
-            Icons.my_location,
-            color: AppColors.primary.background,
-            size: 24,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSquareOverlay() {
     final center = _mapController.camera.center;
     final bounds = _calculateBounds(center);
@@ -372,7 +369,6 @@ class _MapPageState extends State<MapPage> {
   ({double north, double south, double east, double west}) _calculateBounds(
     LatLng center,
   ) {
-    const double kSearchHalfSideDegrees = 0.01425;
     return (
       north: center.latitude + kSearchHalfSideDegrees,
       south: center.latitude - kSearchHalfSideDegrees,
