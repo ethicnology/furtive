@@ -47,7 +47,9 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
         ),
         body: BlocBuilder<ActivitiesBloc, ActivitiesState>(
           builder: (context, state) {
-            final activities = context.watch<ActivitiesBloc>().state.activities;
+            // B31: read state from the builder param, not via context.watch
+            // (which would cause a second rebuild on every emit).
+            final activities = state.activities;
 
             if (state.isLoading || activities == null) {
               return const Center(child: CircularProgressIndicator());
@@ -101,10 +103,10 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                           children: [
                             _buildStatChip(activity.activeDuration.toHHMMSS()),
                             _buildStatChip(
-                              '${activity.activeDistanceInKm.toStringAsFixed(1)} km',
+                              '${activity.activeDistanceInKm.fmt2} km',
                             ),
                             _buildStatChip(
-                              '${activity.activeSpeedKmh.toStringAsFixed(1)} km/h',
+                              '${activity.activeSpeedKmh.fmt2} km/h',
                             ),
                             _buildStatChip(activity.activePaceMinPerKm),
                           ],

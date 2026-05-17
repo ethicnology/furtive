@@ -27,20 +27,25 @@ class ActivityLocalDataSource {
   }
 
   Future<void> score(String activityId, List<ActivityPointModel> points) async {
-    for (final point in points) {
-      await db
-          .into(db.activityPoints)
-          .insert(
-            ActivityPointsCompanion(
-              activityId: Value(activityId),
-              latitude: Value(point.latitude),
-              longitude: Value(point.longitude),
-              elevation: Value(point.elevation),
-              time: Value(point.time),
-              status: Value(point.status),
-            ),
-          );
-    }
+    if (points.isEmpty) return;
+    // Batched insert: compile the statement once and run it for each point,
+    // wrapped in an implicit transaction. Orders of magnitude faster than
+    // N awaited inserts for long activities.
+    await db.batch((batch) {
+      batch.insertAll(
+        db.activityPoints,
+        points.map(
+          (point) => ActivityPointsCompanion(
+            activityId: Value(activityId),
+            latitude: Value(point.latitude),
+            longitude: Value(point.longitude),
+            elevation: Value(point.elevation),
+            time: Value(point.time),
+            status: Value(point.status),
+          ),
+        ),
+      );
+    });
   }
 
   Future<void> cease(String activityId) async {

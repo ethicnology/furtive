@@ -112,9 +112,9 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                             : const Center(child: Text('Failed to load map')),
                   ),
                   Positioned(
-                    bottom: Global.padding,
-                    left: Global.padding,
-                    right: Global.padding,
+                    bottom: context.screenPadding,
+                    left: context.screenPadding,
+                    right: context.screenPadding,
                     child: ElevatedButton.icon(
                       onPressed:
                           () => _showStatisticsBottomSheet(
@@ -134,7 +134,14 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     BuildContext context,
     ActivityEntity activity,
   ) {
-    final stoppedAt = activity.stoppedAt ?? activity.points.last.time;
+    // B37: fall back to startedAt for activities with zero recorded points
+    // (start + immediate stop before any GPS fix). Previously crashed on
+    // points.last.
+    final stoppedAt =
+        activity.stoppedAt ??
+        (activity.points.isNotEmpty
+            ? activity.points.last.time
+            : activity.startedAt);
 
     showModalBottomSheet(
       context: context,
@@ -181,42 +188,47 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   }
 
   Future<void> _showRenameDialog() async {
+    // B36: dispose the controller in `finally` to avoid a leak per dialog open.
     final textController = TextEditingController(text: _currentName);
-    final result = await showDialog<String>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Rename'),
-            content: TextField(
-              controller: textController,
-              decoration: const InputDecoration(labelText: 'Activity name'),
-              autofocus: true,
-              style: TextStyle(color: AppColors.primary.foreground),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceAround,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.tertiary.background,
-                  foregroundColor: AppColors.tertiary.foreground,
+    try {
+      final result = await showDialog<String>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Rename'),
+              content: TextField(
+                controller: textController,
+                decoration: const InputDecoration(labelText: 'Activity name'),
+                autofocus: true,
+                style: TextStyle(color: AppColors.primary.foreground),
+              ),
+              actionsAlignment: MainAxisAlignment.spaceAround,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.tertiary.background,
+                    foregroundColor: AppColors.tertiary.foreground,
+                  ),
+                  child: const Text('Cancel'),
                 ),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, textController.text),
-                child: const Text('Rename'),
-              ),
-            ],
-          ),
-    );
-
-    if (result != null && result.isNotEmpty && result != _currentName) {
-      if (!mounted) return;
-      context.read<ActivitiesBloc>().add(
-        UpdateActivityName(activityId: widget.activity.id, newName: result),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, textController.text),
+                  child: const Text('Rename'),
+                ),
+              ],
+            ),
       );
-      setState(() => _currentName = result);
+
+      if (result != null && result.isNotEmpty && result != _currentName) {
+        if (!mounted) return;
+        context.read<ActivitiesBloc>().add(
+          UpdateActivityName(activityId: widget.activity.id, newName: result),
+        );
+        setState(() => _currentName = result);
+      }
+    } finally {
+      textController.dispose();
     }
   }
 

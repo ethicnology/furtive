@@ -15,3 +15,10 @@ Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 | <img src="assets/readme/activities.png" width="100%" /> | <img src="assets/readme/permissions.png" width="100%" /> |
 
 </div>
+
+## Releases
+
+Release artifacts are produced unsigned by Flutter (`signingConfig = null`
+in `android/app/build.gradle.kts`) and signed out-of-band with
+`apksigner` / `zipalign`. Keystores never enter this repository — do
+not add a `key.properties` or wire signing into Gradle.

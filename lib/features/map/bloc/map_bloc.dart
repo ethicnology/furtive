@@ -42,11 +42,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final _getUserLocationUseCase = GetUserLocationUseCase();
   final _activityNotificationUseCase = ActivityNotificationUseCase();
 
-  late StreamSubscription<PositionEntity> _positionStream;
+  StreamSubscription<PositionEntity>? _positionStream;
   Timer? _elapsedTimer;
   DateTime? _activityStartTime;
   DateTime? _pauseStartTime;
   Duration _totalPausedDuration = Duration.zero;
+  DateTime? _lastNotificationAt;
+
+  static const _notificationInterval = Duration(seconds: 5);
 
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
@@ -76,9 +79,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   @override
   Future<void> close() async {
-    await _positionStream.cancel();
+    await _positionStream?.cancel();
     _elapsedTimer?.cancel();
-    _elapsedTimer = null;
     return super.close();
   }
 
@@ -86,6 +88,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
 
+      // B38: InitMap can fire more than once (from the onboarding finish and
+      // from PreferencesBloc.UpdatePreferences). Cancel the previous
+      // subscription before opening a new one so we don't leak listeners
+      // that keep dispatching UpdateUserLocation events.
+      await _positionStream?.cancel();
       final userPositionStream = await _startTrackPositionUsecase();
       _positionStream = userPositionStream
           .handleError((error) => logs.severe('error: $error'))
@@ -163,9 +170,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(activity: updatedActivity));
     } catch (e) {
       logs.severe('$ScoreActivity: $e');
-      emit(
-        state.copyWith(error: AppError('$_onScoreActivity: ${e.toString()}')),
-      );
+      emit(state.copyWith(error: AppError('ScoreActivity: $e')));
     }
   }
 
@@ -196,16 +201,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void _onCeaseActivity(CeaseActivity event, Emitter<MapState> emit) {
+  Future<void> _onCeaseActivity(
+    CeaseActivity event,
+    Emitter<MapState> emit,
+  ) async {
     try {
-      _ceaseActivityUsecase(state.activity!.id);
+      await _ceaseActivityUsecase(state.activity!.id);
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
       _activityStartTime = null;
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
+      _lastNotificationAt = null;
 
-      _activityNotificationUseCase.cancelActivityNotification();
+      await _activityNotificationUseCase.cancelActivityNotification();
 
       emit(
         state.copyWith(
@@ -226,16 +235,24 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   void _onUpdateElapsedTime(UpdateElapsedTime event, Emitter<MapState> emit) {
     try {
-      if (_activityStartTime != null) {
-        final elapsed =
-            DateTime.now().difference(_activityStartTime!) -
-            _totalPausedDuration;
-        emit(state.copyWith(elapsedTime: elapsed));
+      if (_activityStartTime == null) return;
 
-        _activityNotificationUseCase.showActivityNotification(
-          activity: state.activity!,
-          elapsed: elapsed,
-          isPaused: state.isPaused,
+      final elapsed =
+          DateTime.now().difference(_activityStartTime!) - _totalPausedDuration;
+      emit(state.copyWith(elapsedTime: elapsed));
+
+      // Throttle the ongoing notification — the elapsed timer fires every second
+      // but redrawing the system notification at 1 Hz wastes CPU/battery.
+      final now = DateTime.now();
+      if (_lastNotificationAt == null ||
+          now.difference(_lastNotificationAt!) >= _notificationInterval) {
+        _lastNotificationAt = now;
+        unawaited(
+          _activityNotificationUseCase.showActivityNotification(
+            activity: state.activity!,
+            elapsed: elapsed,
+            isPaused: state.isPaused,
+          ),
         );
       }
     } catch (e) {

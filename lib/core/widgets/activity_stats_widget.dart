@@ -52,16 +52,16 @@ class ActivityStatsWidget extends StatelessWidget {
                 _buildStatsPage(
                   label: 'Active',
                   duration: activity.activeDuration.toHHMMSS(),
-                  distance: activity.activeDistanceInKm.toStringAsFixed(1),
-                  speed: activity.activeSpeedKmh.toStringAsFixed(1),
+                  distance: activity.activeDistanceInKm.fmt2,
+                  speed: activity.activeSpeedKmh.fmt2,
                   pace: activity.activePaceMinPerKm,
                   elevation: activity.activeElevation,
                 ),
                 _buildStatsPage(
                   label: 'Paused',
                   duration: activity.pausedDuration.toHHMMSS(),
-                  distance: activity.pausedDistanceInKm.toStringAsFixed(1),
-                  speed: activity.pausedSpeedKmh.toStringAsFixed(1),
+                  distance: activity.pausedDistanceInKm.fmt2,
+                  speed: activity.pausedSpeedKmh.fmt2,
                   pace: activity.pausedPaceMinPerKm,
                   elevation: null,
                 ),
@@ -108,8 +108,7 @@ Widget _buildStatsPage({
               _StatItem(
                 icon: Icons.terrain,
                 label: 'Elevation',
-                value:
-                    '${elevation.gain.toStringAsFixed(0)}/${elevation.loss.toStringAsFixed(0)}m',
+                value: '${elevation.gain.fmt2}/${elevation.loss.fmt2} m',
               ),
           ],
         ),

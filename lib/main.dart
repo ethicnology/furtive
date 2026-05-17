@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
@@ -12,11 +11,10 @@ import 'core/locator.dart';
 import 'core/logs.dart';
 import 'core/theme.dart';
 
-void main() async {
+void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      await dotenv.load();
       await Global.init();
 
       final appDir = await getApplicationDocumentsDirectory();
@@ -46,13 +44,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    screen = MediaQuery.of(context).size; // initialize screen size
-
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => getIt<MapBloc>()),
-        BlocProvider(create: (context) => getIt<ActivitiesBloc>()),
-        BlocProvider(create: (context) => getIt<PermissionsBloc>()),
+        // .value because the locator owns the bloc lifetimes — BlocProvider
+        // must not close them on widget disposal.
+        BlocProvider<MapBloc>.value(value: getIt<MapBloc>()),
+        BlocProvider<ActivitiesBloc>.value(value: getIt<ActivitiesBloc>()),
+        BlocProvider<PermissionsBloc>.value(value: getIt<PermissionsBloc>()),
       ],
       child: MaterialApp(
         title: 'Map App',

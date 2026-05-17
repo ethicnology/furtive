@@ -15,8 +15,6 @@ class PermissionRepository {
             permission: p.permission,
             isGranted: p.isGranted,
             isPermanentlyDenied: p.isPermanentlyDenied,
-            requiresLocationWhenInUse:
-                p.permission == Permission.locationAlways,
             isOptional: p.isOptional,
           ),
         )

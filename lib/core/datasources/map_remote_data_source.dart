@@ -1,19 +1,28 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:furtive/core/database/tables/preferences_table.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
+
+// Secrets are injected at build time via --dart-define so they never get
+// bundled into the APK as a plain asset (which a .env file would be).
+// See README for the build command.
+const _protomapsUrl = String.fromEnvironment(
+  'PROTOMAPS_URL',
+  defaultValue: 'https://api.protomaps.com/styles/v5',
+);
+const _protomapsKey = String.fromEnvironment('PROTOMAPS_KEY');
 
 class MapRemoteDataSource {
   Future<Style> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
     MapLanguageColumn language = MapLanguageColumn.en,
   }) async {
-    final url = dotenv.env['PROTOMAPS_URL'] ?? '';
-    final key = dotenv.env['PROTOMAPS_KEY'] ?? '';
-    if (url.isEmpty || key.isEmpty) {
-      throw Exception('Missing PROTOMAPS_URL or PROTOMAPS_KEY in .env');
+    if (_protomapsKey.isEmpty) {
+      throw Exception(
+        'Missing PROTOMAPS_KEY. Build with --dart-define=PROTOMAPS_KEY=...',
+      );
     }
 
-    final styleUrl = '$url/${theme.name}/${language.name}.json?key=$key';
-    return await StyleReader(uri: styleUrl, apiKey: key).read();
+    final styleUrl =
+        '$_protomapsUrl/${theme.name}/${language.name}.json?key=$_protomapsKey';
+    return await StyleReader(uri: styleUrl, apiKey: _protomapsKey).read();
   }
 }

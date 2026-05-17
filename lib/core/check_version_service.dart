@@ -7,7 +7,18 @@ import 'package:furtive/core/theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+// Process-lifetime cache. Github's API is unauthenticated-rate-limited
+// to 60 req/h per IP — we don't want to burn budget on every cold start.
+DateTime? _lastCheck;
+const _checkCacheTtl = Duration(hours: 24);
+
 Future<void> checkNewVersion(BuildContext context) async {
+  if (_lastCheck != null &&
+      DateTime.now().difference(_lastCheck!) < _checkCacheTtl) {
+    return;
+  }
+  _lastCheck = DateTime.now();
+
   try {
     final latestUrlApi = Uri.parse(
       'https://api.github.com/repos/ethicnology/furtive/releases/latest',
@@ -17,7 +28,9 @@ Future<void> checkNewVersion(BuildContext context) async {
       'https://github.com/ethicnology/furtive/releases/latest',
     );
 
-    final response = await http.get(latestUrlApi);
+    final response = await http
+        .get(latestUrlApi)
+        .timeout(const Duration(seconds: 5));
     if (response.statusCode != 200) {
       throw Exception('Failed to get latest version: ${response.statusCode}');
     }

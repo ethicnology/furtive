@@ -1,12 +1,8 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:furtive/core/errors.dart';
 
 class LocationGpsDataSource {
-  StreamSubscription<Position>? _positionStreamSubscription;
-  StreamSubscription<ServiceStatus>? _serviceStatusStreamSubscription;
-
   Future<Position> getCurrentLocation() async {
     final hasPermission = await checkLocationPermission();
     if (!hasPermission) {
@@ -63,9 +59,11 @@ class LocationGpsDataSource {
           notificationTitle: "Running in background",
           enableWakeLock: false,
           setOngoing: true,
+          // defType is the Android resource folder name, NOT the package id.
+          // flutter_launcher_icons emits `launcher_icon.png` under mipmap-*.
           notificationIcon: AndroidResource(
             name: 'launcher_icon',
-            defType: 'com.example.furtive',
+            defType: 'mipmap',
           ),
         ),
       );
@@ -87,11 +85,6 @@ class LocationGpsDataSource {
       );
     }
     return locationSettings;
-  }
-
-  void dispose() {
-    _positionStreamSubscription?.cancel();
-    _serviceStatusStreamSubscription?.cancel();
   }
 }
 

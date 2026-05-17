@@ -85,12 +85,23 @@ else
   FLUTTER_BUILD := fvm flutter build apk --$(MODE)
 endif
 
+# Pass secrets to the build via --dart-define if they are set in the host
+# environment. Empty values produce a build without the secret (CI / FOSS
+# reproducible path). Override per-invocation: `make apk PROTOMAPS_KEY=xxx`.
+DART_DEFINES :=
+ifneq ($(strip $(PROTOMAPS_KEY)),)
+  DART_DEFINES += --dart-define=PROTOMAPS_KEY=$(PROTOMAPS_KEY)
+endif
+ifneq ($(strip $(PROTOMAPS_URL)),)
+  DART_DEFINES += --dart-define=PROTOMAPS_URL=$(PROTOMAPS_URL)
+endif
+
 apk: container-app
 	@echo "🔨 Building $(FORMAT) ($(MODE)) via $(CONTAINER)"
 	@$(CONTAINER) rm -f furtive-build > /dev/null 2>&1 || true
 	@$(CONTAINER) run --name furtive-build \
 		--ulimit nofile=65536:65536 \
-		furtive-app bash -c 'cd /app && $(FLUTTER_BUILD)'
+		furtive-app bash -c 'cd /app && $(FLUTTER_BUILD) $(DART_DEFINES)'
 	@$(CONTAINER) cp furtive-build:$(CONTAINER_OUTPUT) $(HOST_OUTPUT)
 	@$(CONTAINER) rm furtive-build > /dev/null
 	@echo "✅ Output extracted: $(HOST_OUTPUT)"

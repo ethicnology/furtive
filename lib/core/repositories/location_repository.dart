@@ -45,6 +45,4 @@ class LocationRepository {
   Future<bool> isLocationServiceEnabled() async {
     return await remoteDataSource.isLocationServiceEnabled();
   }
-
-  void dispose() => remoteDataSource.dispose();
 }

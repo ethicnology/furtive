@@ -109,14 +109,14 @@ extension ActivityStatisticsExtension on ActivityEntity {
   List<ActivitySegment> _segmentPoints(List<ActivityPointEntity> points) {
     if (points.isEmpty) return [];
 
-    // Ensure they are sorted by time earliest to latest
-    points.sort((a, b) => a.time.compareTo(b.time));
+    // Copy + sort to avoid mutating the entity's points list.
+    final sorted = [...points]..sort((a, b) => a.time.compareTo(b.time));
 
     final segments = <ActivitySegment>[];
-    var currentSegmentPoints = <ActivityPointEntity>[points.first];
-    var currentStatus = points.first.status;
+    var currentSegmentPoints = <ActivityPointEntity>[sorted.first];
+    var currentStatus = sorted.first.status;
 
-    for (final point in points) {
+    for (final point in sorted.skip(1)) {
       if (point.status == currentStatus) {
         currentSegmentPoints.add(point);
       } else {
@@ -204,38 +204,16 @@ extension ActivityPathExtension on ActivityEntity {
   Widget toPolylineLayer() {
     if (points.isEmpty) return PolylineLayer(polylines: <Polyline>[]);
 
-    final segments = <Polyline>[];
-    var segmentPoints = <ActivityPointEntity>[];
-    ActivityPointStatusEntity? previousStatus;
-
-    for (final point in points) {
-      final hasStatusChanged =
-          previousStatus != null && point.status != previousStatus;
-
-      if (hasStatusChanged) {
-        segments.add(_createPathSegment(segmentPoints, previousStatus));
-        segmentPoints = [];
-      }
-
-      segmentPoints.add(point);
-      previousStatus = point.status;
-    }
-
-    if (segmentPoints.isNotEmpty && previousStatus != null) {
-      segments.add(_createPathSegment(segmentPoints, previousStatus));
-    }
-
-    return PolylineLayer(polylines: segments);
+    return PolylineLayer(
+      polylines: segments.map(_polylineFromSegment).toList(),
+    );
   }
 
-  Polyline _createPathSegment(
-    List<ActivityPointEntity> points,
-    ActivityPointStatusEntity status,
-  ) {
+  Polyline _polylineFromSegment(ActivitySegment segment) {
     return Polyline(
-      points: points.map((p) => p.position.toLatLng()).toList(),
+      points: segment.points.map((p) => p.position.toLatLng()).toList(),
       color:
-          status == ActivityPointStatusEntity.active
+          segment.isActive
               ? AppColors.primary.background
               : AppColors.secondary.background,
       strokeWidth: 4.0,

@@ -10,7 +10,6 @@ class PermissionEntity with PermissionEntityMappable {
   final Permission permission;
   final bool isGranted;
   final bool isPermanentlyDenied;
-  final bool requiresLocationWhenInUse;
   final bool isOptional;
 
   const PermissionEntity({
@@ -19,7 +18,6 @@ class PermissionEntity with PermissionEntityMappable {
     required this.permission,
     required this.isGranted,
     required this.isPermanentlyDenied,
-    this.requiresLocationWhenInUse = false,
     this.isOptional = false,
   });
 }

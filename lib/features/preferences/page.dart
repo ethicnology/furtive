@@ -6,13 +6,41 @@ import 'package:furtive/features/preferences/bloc/preferences_bloc.dart';
 import 'package:furtive/features/preferences/bloc/preferences_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_state.dart';
 
-class PreferencesPage extends StatelessWidget {
+class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});
+
+  @override
+  State<PreferencesPage> createState() => _PreferencesPageState();
+}
+
+class _PreferencesPageState extends State<PreferencesPage> {
+  // B20: create the bloc once in initState. The previous StatelessWidget +
+  // FutureBuilder pattern called PreferencesBloc.create() on every build,
+  // spawning a new bloc each rebuild.
+  late final Future<PreferencesBloc> _blocFuture;
+  // B21: own the bloc lifecycle so it gets closed when the page is popped,
+  // otherwise BlocProvider.value would leak it.
+  PreferencesBloc? _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _blocFuture = PreferencesBloc.create().then((bloc) {
+      _bloc = bloc;
+      return bloc;
+    });
+  }
+
+  @override
+  void dispose() {
+    _bloc?.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<PreferencesBloc>(
-      future: PreferencesBloc.create(),
+      future: _blocFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Scaffold(
@@ -35,11 +63,11 @@ class PreferencesPage extends StatelessWidget {
                     _buildMapThemeSection(context, state),
                     const SizedBox(height: 24),
                     _buildMapLanguageSection(context, state),
-                    Spacer(),
+                    const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: Padding(
-                        padding: EdgeInsets.all(Global.spacing),
+                        padding: EdgeInsets.all(context.screenPadding),
                         child: ElevatedButton(
                           onPressed: () {
                             context.read<PreferencesBloc>().add(
@@ -67,71 +95,68 @@ class PreferencesPage extends StatelessWidget {
       },
     );
   }
+}
 
-  Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Map Theme',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Map Theme',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<MapThemeEntity>(
+        initialValue: state.preferences.mapTheme,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<MapThemeEntity>(
-          initialValue: state.preferences.mapTheme,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          items:
-              MapThemeEntity.values.map((theme) {
-                return DropdownMenuItem(
-                  value: theme,
-                  child: Text(theme.name.toUpperCase()),
-                );
-              }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              context.read<PreferencesBloc>().add(ChangeMapTheme(value));
-            }
-          },
-        ),
-      ],
-    );
-  }
+        items:
+            MapThemeEntity.values.map((theme) {
+              return DropdownMenuItem(
+                value: theme,
+                child: Text(theme.name.toUpperCase()),
+              );
+            }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            context.read<PreferencesBloc>().add(ChangeMapTheme(value));
+          }
+        },
+      ),
+    ],
+  );
+}
 
-  Widget _buildMapLanguageSection(
-    BuildContext context,
-    PreferencesState state,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Map Language',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+Widget _buildMapLanguageSection(BuildContext context, PreferencesState state) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Map Language',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<MapLanguageEntity>(
+        initialValue: state.preferences.mapLanguage,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<MapLanguageEntity>(
-          initialValue: state.preferences.mapLanguage,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          items:
-              MapLanguageEntity.values.map((language) {
-                return DropdownMenuItem(
-                  value: language,
-                  child: Text(language.name.toUpperCase()),
-                );
-              }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              context.read<PreferencesBloc>().add(ChangeMapLanguage(value));
-            }
-          },
-        ),
-      ],
-    );
-  }
+        items:
+            MapLanguageEntity.values.map((language) {
+              return DropdownMenuItem(
+                value: language,
+                child: Text(language.name.toUpperCase()),
+              );
+            }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            context.read<PreferencesBloc>().add(ChangeMapLanguage(value));
+          }
+        },
+      ),
+    ],
+  );
 }

@@ -16,8 +16,7 @@ class _LogsPageState extends State<LogsPage> {
   bool _loading = true;
   DateTime? _startDate;
   DateTime? _endDate;
-
-  int get _logsSize => utf8.encode(_logs.join('\n')).length ~/ 1000;
+  int _logsSizeKb = 0;
 
   @override
   void initState() {
@@ -29,8 +28,11 @@ class _LogsPageState extends State<LogsPage> {
     setState(() => _loading = true);
     try {
       final loadedLogs = await logs.readLogs();
+      // Compute size once on load, not on every rebuild
+      final sizeKb = utf8.encode(loadedLogs.join('\n')).length ~/ 1000;
       setState(() {
         _logs = loadedLogs;
+        _logsSizeKb = sizeKb;
         _loading = false;
       });
     } catch (e) {
@@ -158,7 +160,7 @@ class _LogsPageState extends State<LogsPage> {
         title: Text('Logs'),
         actions: [
           Text(
-            '$_logsSize kB',
+            '$_logsSizeKb kB',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
           IconButton(

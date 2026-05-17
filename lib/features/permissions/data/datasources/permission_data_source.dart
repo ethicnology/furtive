@@ -17,7 +17,8 @@ class PermissionDataSource {
       PermissionModel(
         name: 'Notifications',
         description:
-            'Optional: Allows the app to show your are not on the app.',
+            'Optional: shows an ongoing notification while you are recording '
+            'an activity, even when the app is in the background.',
         permission: Permission.notification,
         status: notificationStatus,
         isOptional: true,
@@ -25,10 +26,6 @@ class PermissionDataSource {
     ];
 
     return permissions;
-  }
-
-  Future<PermissionStatus> checkPermission(Permission permission) async {
-    return await permission.status;
   }
 
   Future<PermissionStatus> requestPermission(Permission permission) async {

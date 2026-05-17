@@ -26,12 +26,14 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     emit(state.copyWith(isLoading: true));
     try {
       final activities = await _getActivitiesUseCase();
-      emit(state.copyWith(activities: activities));
+      // B30: single terminal emit avoids two extra rebuilds and the
+      // mid-load flicker between "spinner" → "list" → "spinner" → "list".
+      emit(state.copyWith(activities: activities, isLoading: false));
     } catch (e) {
       logs.severe('$FetchActivities: $e');
-      emit(state.copyWith(error: AppError(e.toString())));
-    } finally {
-      emit(state.copyWith(isLoading: false));
+      emit(
+        state.copyWith(error: AppError(e.toString()), isLoading: false),
+      );
     }
   }
 
@@ -47,12 +49,12 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     try {
       await _updateActivityNameUseCase(event.activityId, event.newName);
       final activities = await _getActivitiesUseCase();
-      emit(state.copyWith(activities: activities));
+      emit(state.copyWith(activities: activities, isLoading: false));
     } catch (e) {
       logs.severe('$UpdateActivityName: $e');
-      emit(state.copyWith(error: AppError(e.toString())));
-    } finally {
-      emit(state.copyWith(isLoading: false));
+      emit(
+        state.copyWith(error: AppError(e.toString()), isLoading: false),
+      );
     }
   }
 
@@ -64,12 +66,12 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     try {
       await _deleteActivityUseCase(event.activityId);
       final activities = await _getActivitiesUseCase();
-      emit(state.copyWith(activities: activities));
+      emit(state.copyWith(activities: activities, isLoading: false));
     } catch (e) {
       logs.severe('$DeleteActivity: $e');
-      emit(state.copyWith(error: AppError(e.toString())));
-    } finally {
-      emit(state.copyWith(isLoading: false));
+      emit(
+        state.copyWith(error: AppError(e.toString()), isLoading: false),
+      );
     }
   }
 }

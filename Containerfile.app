@@ -21,9 +21,6 @@ ARG GRADLE_HEAP=4g
 COPY --chown=$USERNAME:$USERNAME . /app/
 WORKDIR /app
 
-# .env is gitignored but required as a Flutter asset; seed from example
-RUN test -f .env || cp .env.example .env
-
 # Install Flutter version specified in .fvmrc (no-op if it matches tools stage)
 RUN fvm install
 

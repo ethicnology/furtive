@@ -17,7 +17,7 @@ class StartActivityUseCase {
       stoppedAt: null,
     );
 
-    activityRepository.store(newActivity);
+    await activityRepository.store(newActivity);
     return newActivity;
   }
 }

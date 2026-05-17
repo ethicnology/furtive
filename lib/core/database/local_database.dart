@@ -40,6 +40,10 @@ class LocalDatabase extends _$LocalDatabase {
         await (update(preferences)).write(
           PreferencesCompanion(hasCompletedOnboarding: Value(true)),
         );
+        // Indices on hot foreign-key columns. Fresh installs get them via
+        // m.createAll(); v1 users need them created explicitly here.
+        await m.createIndex(idxActivityPointsActivityId);
+        await m.createIndex(idxTracePointsTraceId);
       }
     },
     beforeOpen: (details) async {

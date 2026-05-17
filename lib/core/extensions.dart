@@ -1,3 +1,16 @@
+import 'package:flutter/widgets.dart';
+
+extension BuildContextLayout on BuildContext {
+  /// Standard padding/spacing = 10% of screen width.
+  /// Read at call site so values stay correct on rotation / hot reload.
+  double get screenPadding => MediaQuery.sizeOf(this).width * 0.1;
+}
+
+extension NumFormatting on num {
+  /// Standard 2-decimal display for distances, speeds and elevations.
+  String get fmt2 => toStringAsFixed(2);
+}
+
 extension DurationExtension on Duration {
   String toHHMMSS() {
     String twoDigits(int n) => n.toString().padLeft(2, '0');

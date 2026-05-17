@@ -16,10 +16,17 @@ class MyLogs {
 
   Future<void>? _currentWrite;
 
+  // B25: a single listener subscribes to Logger.root. The top-level
+  // `logs = MyLogs.init()` runs before main reassigns to the real instance.
+  // Without this guard, both instances would subscribe and every log line
+  // would be written twice — to two different files.
+  static StreamSubscription<dep.LogRecord>? _rootSubscription;
+
   MyLogs._(this.dir, this.logger) {
     dep.Logger.root.level = dep.Level.ALL;
 
-    dep.Logger.root.onRecord.listen((record) {
+    _rootSubscription?.cancel();
+    _rootSubscription = dep.Logger.root.onRecord.listen((record) {
       final time = record.time.toIso8601String();
       final content = [time, record.level.name, record.message];
 
