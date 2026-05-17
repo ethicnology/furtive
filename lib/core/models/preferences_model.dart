@@ -5,11 +5,13 @@ class PreferencesModel {
   final MapThemeColumn mapTheme;
   final MapLanguageColumn mapLanguage;
   final int accuracyInMeters;
+  final bool hasCompletedOnboarding;
 
   PreferencesModel({
     required this.mapTheme,
     required this.mapLanguage,
     required this.accuracyInMeters,
+    required this.hasCompletedOnboarding,
   });
 
   static PreferencesModel fromEntity(PreferencesEntity preferences) {
@@ -17,6 +19,7 @@ class PreferencesModel {
       mapTheme: MapThemeExtension.fromEntity(preferences.mapTheme),
       mapLanguage: MapLanguageExtension.fromEntity(preferences.mapLanguage),
       accuracyInMeters: preferences.accuracyInMeters,
+      hasCompletedOnboarding: preferences.hasCompletedOnboarding,
     );
   }
 
@@ -25,6 +28,7 @@ class PreferencesModel {
       mapTheme: model.mapTheme.toEntity(),
       mapLanguage: model.mapLanguage.toEntity(),
       accuracyInMeters: model.accuracyInMeters,
+      hasCompletedOnboarding: model.hasCompletedOnboarding,
     );
   }
 }

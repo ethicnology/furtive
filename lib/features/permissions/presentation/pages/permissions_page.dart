@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/usecases/get_preferences_use_case.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
+import 'package:furtive/features/onboarding/onboarding_page.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
@@ -16,10 +18,36 @@ class PermissionsPage extends StatefulWidget {
 
 class _PermissionsPageState extends State<PermissionsPage>
     with WidgetsBindingObserver {
+  final _getPreferences = GetPreferencesUseCase();
+
   @override
   void initState() {
     super.initState();
+    // B19: the WidgetsBindingObserver mixin only fires lifecycle callbacks
+    // once the instance is registered with WidgetsBinding.
+    WidgetsBinding.instance.addObserver(this);
     context.read<PermissionsBloc>().add(const LoadPermissions());
+  }
+
+  Future<void> _onContinue() async {
+    // B39: Continue must honor the onboarding flag — otherwise a fresh
+    // install that lands on this page (because permissions were denied)
+    // skips the wizard once permissions are granted.
+    final prefs = await _getPreferences();
+    if (!mounted) return;
+    final destination =
+        prefs.hasCompletedOnboarding
+            ? const BottomNavigationWidget()
+            : const OnboardingPage();
+    await Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -125,20 +153,9 @@ class _PermissionsPageState extends State<PermissionsPage>
                 SizedBox(
                   width: double.infinity,
                   child: Padding(
-                    padding: EdgeInsets.all(Global.spacing),
+                    padding: EdgeInsets.all(context.screenPadding),
                     child: ElevatedButton(
-                      onPressed:
-                          allRequiredGranted
-                              ? () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            const BottomNavigationWidget(),
-                                  ),
-                                );
-                              }
-                              : null,
+                      onPressed: allRequiredGranted ? _onContinue : null,
                       child: Text(
                         allRequiredGranted
                             ? 'Continue'

@@ -13,10 +13,11 @@ class PreferencesLocalDataSource {
         .into(db.preferences)
         .insertOnConflictUpdate(
           PreferencesCompanion(
-            id: Value(1),
+            id: const Value(1),
             mapTheme: Value(preferences.mapTheme),
             mapLanguage: Value(preferences.mapLanguage),
             accuracyInMeters: Value(preferences.accuracyInMeters),
+            hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
           ),
         );
   }
@@ -30,6 +31,7 @@ class PreferencesLocalDataSource {
       mapTheme: preferences.mapTheme,
       mapLanguage: preferences.mapLanguage,
       accuracyInMeters: preferences.accuracyInMeters,
+      hasCompletedOnboarding: preferences.hasCompletedOnboarding,
     );
   }
 }

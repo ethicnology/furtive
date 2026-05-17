@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/check_version_service.dart';
+import 'package:furtive/core/usecases/get_preferences_use_case.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
+import 'package:furtive/features/onboarding/onboarding_page.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
@@ -16,6 +20,7 @@ class CheckPermissionPage extends StatefulWidget {
 
 class _PermissionCheckPageState extends State<CheckPermissionPage> {
   bool _hasNavigated = false;
+  final _getPreferences = GetPreferencesUseCase();
 
   @override
   void initState() {
@@ -23,21 +28,31 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
     context.read<PermissionsBloc>().add(const LoadPermissions());
   }
 
-  void _navigate(bool allGranted) {
+  Future<void> _navigate(bool allGranted) async {
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
 
-    checkNewVersion(context);
+    // Fire-and-forget — version check is informational, not gating
+    unawaited(checkNewVersion(context));
 
-    if (allGranted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const BottomNavigationWidget()),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
+    if (!allGranted) {
+      await Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const PermissionsPage()),
       );
+      return;
     }
+
+    // Permissions OK — check onboarding flag
+    final prefs = await _getPreferences();
+    if (!mounted) return;
+
+    final destination =
+        prefs.hasCompletedOnboarding
+            ? const BottomNavigationWidget()
+            : const OnboardingPage();
+    await Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
   }
 
   @override
