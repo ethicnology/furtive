@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
+import 'package:furtive/core/widgets/hold_to_confirm_button.dart';
+import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -11,6 +15,7 @@ import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
+import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/core/entities/trace_entity.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
@@ -21,12 +26,52 @@ class MapPage extends StatefulWidget {
   State<MapPage> createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> {
+class _MapPageState extends State<MapPage>
+    with AutomaticKeepAliveClientMixin {
   final _mapController = MapController();
   final _kFloatingActionButtonWidth = 115.0;
 
+  // Stay alive across BottomNavigation tab switches so the F6 cease →
+  // stats listener keeps firing even when the user is on Activities or
+  // Settings. Otherwise PageView disposes us and a watchdog cease while
+  // off-tab would silently end the activity with no redirect.
+  @override
+  bool get wantKeepAlive => true;
+  StreamSubscription<MapState>? _ceaseSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // F6: route to the activity stats page when the running activity ends
+    // (Stop tap, notification swipe, or watchdog cease). We track the
+    // previous activity manually since BlocListener's listener can't see
+    // the pre-transition state and side-effecting listenWhen is fragile.
+    final bloc = context.read<MapBloc>();
+    ActivityEntity? prev = bloc.state.activity;
+    _ceaseSub = bloc.stream.listen((state) {
+      if (prev != null && state.activity == null) {
+        final ceased = prev!;
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ActivityDetailPage(activity: ceased),
+            ),
+          );
+        }
+      }
+      prev = state.activity;
+    });
+  }
+
+  @override
+  void dispose() {
+    _ceaseSub?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     final bloc = context.read<MapBloc>();
 
     return MultiBlocListener(
@@ -145,8 +190,10 @@ class _MapPageState extends State<MapPage> {
                       if (state.traces.isNotEmpty)
                         _buildTracesLayer(state.traces),
                       if (state.activity != null &&
-                          state.activity!.points.isNotEmpty)
+                          state.activity!.points.isNotEmpty) ...[
                         state.activity!.toPolylineLayer(),
+                        KmMilestonesLayer(activity: state.activity!),
+                      ],
                       // Animated pulse marker + heading indicator + accuracy
                       // circle. Deliberately uses its own internal geolocator
                       // subscription (no distance filter) for smooth visuals,
@@ -188,6 +235,7 @@ class _MapPageState extends State<MapPage> {
                     child: ActivityStatsWidget(
                       activity: state.activity!,
                       elapsedTime: state.elapsedTime,
+                      opaqueBackground: true,
                     ),
                   ),
               ],
@@ -207,7 +255,17 @@ class _MapPageState extends State<MapPage> {
                   //   label: const Text('Search'),
                   //   icon: const Icon(Icons.search),
                   // ),
-                  const SizedBox(height: 16),
+                  if (state.isPaused && state.activity != null) ...[
+                    HoldToConfirmButton(
+                      icon: Icons.stop,
+                      label: 'Stop',
+                      shortTapHint: 'Hold Stop for 3 seconds to end activity',
+                      backgroundColor: AppColors.destructive.background,
+                      foregroundColor: AppColors.destructive.foreground,
+                      onConfirmed: () => bloc.add(const CeaseActivity()),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   FloatingActionButton.extended(
                     onPressed: () {
                       if (state.userLocation == null) return;
@@ -231,17 +289,6 @@ class _MapPageState extends State<MapPage> {
                               : null,
                     ),
                   ),
-
-                  if (state.isPaused && state.activity != null) ...[
-                    const SizedBox(height: 16),
-                    FloatingActionButton.extended(
-                      heroTag: 'stop',
-                      onPressed: () => bloc.add(const CeaseActivity()),
-                      backgroundColor: Colors.redAccent,
-                      label: const Text('Stop'),
-                      icon: const Icon(Icons.stop),
-                    ),
-                  ],
 
                   if (state.activity != null) ...[
                     const SizedBox(height: 16),

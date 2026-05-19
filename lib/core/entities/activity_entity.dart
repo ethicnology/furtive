@@ -101,10 +101,11 @@ extension ActivityStatisticsExtension on ActivityEntity {
   double get activeDistanceMeters => _calculateSegmentsDistance(activeSegments);
   double get pausedDistanceMeters => _calculateSegmentsDistance(pausedSegments);
 
-  ({double gain, double loss}) get activeElevation =>
-      _calculateSegmentsElevation(activeSegments);
-  ({double gain, double loss}) get pausedElevation =>
-      _calculateSegmentsElevation(pausedSegments);
+  // D+ only — sum of positive elevation deltas (matches Strava/Garmin
+  // "Elevation Gain"). For a loop this is roughly half of total altitude
+  // variation; for a one-way ascent it equals total climb.
+  double get activeElevationGain => _calculateSegmentsElevationGain(activeSegments);
+  double get pausedElevationGain => _calculateSegmentsElevationGain(pausedSegments);
 
   List<ActivitySegment> _segmentPoints(List<ActivityPointEntity> points) {
     if (points.isEmpty) return [];
@@ -174,29 +175,189 @@ extension ActivityStatisticsExtension on ActivityEntity {
     return totalDistance;
   }
 
-  ({double gain, double loss}) _calculateSegmentsElevation(
-    List<ActivitySegment> segments,
-  ) {
+  double _calculateSegmentsElevationGain(List<ActivitySegment> segments) {
     double totalGain = 0.0;
-    double totalLoss = 0.0;
-
     for (final segment in segments) {
-      double segmentGain = 0.0;
-      double segmentLoss = 0.0;
       final points = segment.points;
-
       for (int i = 0; i < points.length - 1; i++) {
-        final currentPoint = points[i];
-        final nextPoint = points[i + 1];
-        final elevationGain =
-            nextPoint.position.elevation - currentPoint.position.elevation;
-        if (elevationGain > 0) segmentGain += elevationGain;
-        if (elevationGain < 0) segmentLoss += elevationGain;
+        final delta =
+            points[i + 1].position.elevation - points[i].position.elevation;
+        if (delta > 0) totalGain += delta;
       }
-      totalGain += segmentGain;
-      totalLoss += segmentLoss;
     }
-    return (gain: totalGain, loss: totalLoss);
+    return totalGain;
+  }
+}
+
+/// One milestone marker per kilometre crossed during the active part of an
+/// activity. Position is interpolated linearly on the segment that crossed
+/// the threshold so the marker lands on the exact km, not on the next GPS
+/// fix that happened to be past it.
+class KmMilestone {
+  final int km;
+  final PositionEntity position;
+  final DateTime time;
+  const KmMilestone({
+    required this.km,
+    required this.position,
+    required this.time,
+  });
+}
+
+/// One per-kilometre split for the active portion. The last split may be
+/// partial (e.g. 5.3 km final) — in that case `isPartial == true` and `km`
+/// is fractional via `distanceMeters`.
+class KmSplit {
+  final int index;
+  final double distanceMeters;
+  final Duration duration;
+  final bool isPartial;
+  const KmSplit({
+    required this.index,
+    required this.distanceMeters,
+    required this.duration,
+    required this.isPartial,
+  });
+
+  double get speedKmh =>
+      duration.inMicroseconds > 0
+          ? (distanceMeters / 1000) /
+              (duration.inMicroseconds / Duration.microsecondsPerHour)
+          : 0;
+
+  /// Minutes per kilometre (pace). Higher = slower.
+  double get paceMinPerKm {
+    if (distanceMeters <= 0 || duration.inMicroseconds <= 0) return 0;
+    return (duration.inMicroseconds / Duration.microsecondsPerMinute) /
+        (distanceMeters / 1000);
+  }
+}
+
+extension ActivityKmExtension on ActivityEntity {
+  /// Per-kilometre milestone markers, interpolated to the exact threshold.
+  List<KmMilestone> get kmMilestones {
+    final milestones = <KmMilestone>[];
+    int nextKm = 1;
+    double cumulativeMeters = 0;
+
+    for (final segment in activeSegments) {
+      final pts = segment.points;
+      for (int i = 0; i < pts.length - 1; i++) {
+        final a = pts[i];
+        final b = pts[i + 1];
+        final segMeters = Geolocator.distanceBetween(
+          a.position.latitude,
+          a.position.longitude,
+          b.position.latitude,
+          b.position.longitude,
+        );
+        if (segMeters == 0) continue;
+
+        // Walk through every km threshold this segment crosses (handles
+        // gaps where one segment covers >1 km, e.g. after a brief loss
+        // of signal).
+        while (cumulativeMeters + segMeters >= nextKm * 1000) {
+          final overshoot = nextKm * 1000 - cumulativeMeters;
+          final t = overshoot / segMeters;
+          final lat =
+              a.position.latitude +
+              (b.position.latitude - a.position.latitude) * t;
+          final lon =
+              a.position.longitude +
+              (b.position.longitude - a.position.longitude) * t;
+          final elev =
+              a.position.elevation +
+              (b.position.elevation - a.position.elevation) * t;
+          final tMs = a.time.millisecondsSinceEpoch +
+              ((b.time.millisecondsSinceEpoch -
+                          a.time.millisecondsSinceEpoch) *
+                      t)
+                  .round();
+          milestones.add(
+            KmMilestone(
+              km: nextKm,
+              position: PositionEntity(
+                latitude: lat,
+                longitude: lon,
+                elevation: elev,
+              ),
+              time: DateTime.fromMillisecondsSinceEpoch(tMs),
+            ),
+          );
+          nextKm++;
+        }
+        cumulativeMeters += segMeters;
+      }
+    }
+    return milestones;
+  }
+
+  /// Per-kilometre splits over the active distance. Each split's duration
+  /// counts only active time — gaps between paused/active segments are
+  /// excluded so a 5 min coffee break between km 1 and km 2 doesn't tank
+  /// the km 2 pace. The last entry may be a partial trailing fragment
+  /// (isPartial: true).
+  List<KmSplit> get kmSplits {
+    final splits = <KmSplit>[];
+    int nextKm = 1;
+    double cumulativeMeters = 0;
+    Duration cumulativeActive = Duration.zero;
+    Duration prevSplitActive = Duration.zero;
+
+    for (final segment in activeSegments) {
+      final pts = segment.points;
+      for (int i = 0; i < pts.length - 1; i++) {
+        final a = pts[i];
+        final b = pts[i + 1];
+        final segMeters = Geolocator.distanceBetween(
+          a.position.latitude,
+          a.position.longitude,
+          b.position.latitude,
+          b.position.longitude,
+        );
+        if (segMeters == 0) continue;
+        final segActiveMs =
+            b.time.millisecondsSinceEpoch - a.time.millisecondsSinceEpoch;
+        // Guard against GPS clock skew / out-of-order points — a negative
+        // delta would produce negative split durations and a negative bar.
+        if (segActiveMs < 0) continue;
+
+        while (cumulativeMeters + segMeters >= nextKm * 1000) {
+          final overshoot = nextKm * 1000 - cumulativeMeters;
+          final t = overshoot / segMeters;
+          final activeAtCrossing =
+              cumulativeActive +
+              Duration(milliseconds: (segActiveMs * t).round());
+          splits.add(
+            KmSplit(
+              index: nextKm,
+              distanceMeters: 1000,
+              duration: activeAtCrossing - prevSplitActive,
+              isPartial: false,
+            ),
+          );
+          prevSplitActive = activeAtCrossing;
+          nextKm++;
+        }
+
+        cumulativeMeters += segMeters;
+        cumulativeActive += Duration(milliseconds: segActiveMs);
+      }
+    }
+
+    // Trailing partial kilometre.
+    final partialMeters = cumulativeMeters - (nextKm - 1) * 1000;
+    if (partialMeters > 50) {
+      splits.add(
+        KmSplit(
+          index: nextKm,
+          distanceMeters: partialMeters,
+          duration: cumulativeActive - prevSplitActive,
+          isPartial: true,
+        ),
+      );
+    }
+    return splits;
   }
 }
 

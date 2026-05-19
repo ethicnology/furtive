@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
+import 'package:furtive/core/widgets/km_milestones_layer.dart';
+import 'package:furtive/core/widgets/km_splits_chart.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -105,8 +107,10 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                                   tileProviders: _mapStyle!.providers,
                                   sprites: _mapStyle!.sprites,
                                 ),
-                                if (widget.activity.points.isNotEmpty)
+                                if (widget.activity.points.isNotEmpty) ...[
                                   widget.activity.toPolylineLayer(),
+                                  KmMilestonesLayer(activity: widget.activity),
+                                ],
                               ],
                             )
                             : const Center(child: Text('Failed to load map')),
@@ -149,18 +153,43 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       isScrollControlled: true,
       isDismissible: true,
       builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.3,
-            decoration: BoxDecoration(
-              color: AppColors.tertiary.background,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-            ),
-            child: ActivityStatsWidget(
-              activity: activity,
-              elapsedTime: stoppedAt.difference(activity.startedAt),
-            ),
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.3,
+            maxChildSize: 0.95,
+            expand: false,
+            builder:
+                (_, scrollController) => Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary.background,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      ActivityStatsWidget(
+                        activity: activity,
+                        elapsedTime: stoppedAt.difference(activity.startedAt),
+                      ),
+                      const SizedBox(height: 16),
+                      KmSplitsChart(activity: activity),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
           ),
     );
   }
