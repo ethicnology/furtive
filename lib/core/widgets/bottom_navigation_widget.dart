@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/features/activities/pages/activities_list_page.dart';
 import 'package:furtive/features/map/pages/map_page.dart';
 import 'package:furtive/features/settings/settings_page.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class BottomNavigationWidget extends StatefulWidget {
   const BottomNavigationWidget({super.key});
@@ -51,12 +52,18 @@ class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
             curve: Curves.easeInOut,
           );
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Activities'),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: const Icon(Icons.map),
+            label: AppLocalizations.of(context).navMap,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.list),
+            label: AppLocalizations.of(context).navActivities,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.settings),
+            label: AppLocalizations.of(context).navSettings,
           ),
         ],
       ),

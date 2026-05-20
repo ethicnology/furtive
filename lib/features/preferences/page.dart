@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/global.dart';
+import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/preferences/bloc/preferences_bloc.dart';
 import 'package:furtive/features/preferences/bloc/preferences_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_state.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});
@@ -52,7 +54,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
         return BlocProvider.value(
           value: snapshot.data!,
           child: Scaffold(
-            appBar: AppBar(title: const Text('Preferences')),
+            appBar: AppBar(
+              title: Text(AppLocalizations.of(context).preferencesTitle),
+            ),
             body: BlocBuilder<PreferencesBloc, PreferencesState>(
               builder: (context, state) {
                 if (state.isLoading) {
@@ -64,6 +68,8 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     _buildMapThemeSection(context, state),
                     const SizedBox(height: 24),
                     _buildMapLanguageSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildAppLanguageSection(context, state),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
@@ -78,12 +84,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
                                   mapLanguage: state.preferences.mapLanguage,
                                   accuracyInMeters:
                                       state.preferences.accuracyInMeters,
+                                  uiLocale: state.preferences.uiLocale,
                                 ),
                               ),
                             );
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Apply'),
+                          child: Text(AppLocalizations.of(context).btnApply),
                         ),
                       ),
                     ),
@@ -102,9 +109,9 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'Map Theme',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      Text(
+        AppLocalizations.of(context).prefMapTheme,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
       LabeledDropdown<MapThemeEntity>(
@@ -122,9 +129,9 @@ Widget _buildMapLanguageSection(BuildContext context, PreferencesState state) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'Map Language',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      Text(
+        AppLocalizations.of(context).prefMapLanguage,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
       LabeledDropdown<MapLanguageEntity>(
@@ -133,6 +140,31 @@ Widget _buildMapLanguageSection(BuildContext context, PreferencesState state) {
         labelFor: (l) => l.name.toUpperCase(),
         onChanged:
             (v) => context.read<PreferencesBloc>().add(ChangeMapLanguage(v)),
+      ),
+    ],
+  );
+}
+
+Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        l10n.prefAppLanguage,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 8),
+      LabeledDropdown<String?>(
+        value: state.preferences.uiLocale,
+        items: uiLanguageOptions,
+        labelFor:
+            (code) =>
+                code == null
+                    ? l10n.settingsUiLanguageSystem
+                    : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+        onChanged:
+            (v) => context.read<PreferencesBloc>().add(ChangeUiLocale(v)),
       ),
     ],
   );

@@ -31,3 +31,10 @@ class ChangeAccuracy extends PreferencesEvent {
 
   const ChangeAccuracy(this.accuracyInMeters);
 }
+
+class ChangeUiLocale extends PreferencesEvent {
+  // null = follow device locale
+  final String? languageCode;
+
+  const ChangeUiLocale(this.languageCode);
+}

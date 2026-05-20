@@ -5,6 +5,7 @@ import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:furtive/core/widgets/km_splits_chart.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -113,7 +114,11 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                                 ],
                               ],
                             )
-                            : const Center(child: Text('Failed to load map')),
+                            : Center(
+                              child: Text(
+                                AppLocalizations.of(context).mapLoadFailed,
+                              ),
+                            ),
                   ),
                   Positioned(
                     bottom: context.screenPadding,
@@ -126,7 +131,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                             widget.activity,
                           ),
                       icon: const Icon(Icons.analytics),
-                      label: const Text('View Statistics'),
+                      label: Text(AppLocalizations.of(context).btnViewStats),
                     ),
                   ),
                 ],
@@ -201,15 +206,21 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       await _exportActivityToGpxUseCase(widget.activity.id);
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('GPX exported successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).gpxExportSuccess),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).gpxExportFailed(e.toString()),
+            ),
+          ),
+        );
       }
     } finally {
       setState(() => _isLoading = false);
@@ -222,31 +233,33 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     try {
       final result = await showDialog<String>(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Rename'),
-              content: TextField(
-                controller: textController,
-                decoration: const InputDecoration(labelText: 'Activity name'),
-                autofocus: true,
-                style: TextStyle(color: AppColors.primary.foreground),
-              ),
-              actionsAlignment: MainAxisAlignment.spaceAround,
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.tertiary.background,
-                    foregroundColor: AppColors.tertiary.foreground,
-                  ),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, textController.text),
-                  child: const Text('Rename'),
-                ),
-              ],
+        builder: (context) {
+          final l10n = AppLocalizations.of(context);
+          return AlertDialog(
+            title: Text(l10n.dlgRenameTitle),
+            content: TextField(
+              controller: textController,
+              decoration: InputDecoration(labelText: l10n.activityNameLabel),
+              autofocus: true,
+              style: TextStyle(color: AppColors.primary.foreground),
             ),
+            actionsAlignment: MainAxisAlignment.spaceAround,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.tertiary.background,
+                  foregroundColor: AppColors.tertiary.foreground,
+                ),
+                child: Text(l10n.btnCancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, textController.text),
+                child: Text(l10n.btnRename),
+              ),
+            ],
+          );
+        },
       );
 
       if (result != null && result.isNotEmpty && result != _currentName) {
@@ -264,32 +277,32 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   Future<void> _showDeleteDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete'),
-            content: const Text(
-              'Are you sure you want to delete this activity?',
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return AlertDialog(
+          title: Text(l10n.dlgDeleteTitle),
+          content: Text(l10n.dlgDeleteConfirm),
+          actionsAlignment: MainAxisAlignment.end,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.tertiary.background,
+                foregroundColor: AppColors.tertiary.foreground,
+              ),
+              child: Text(l10n.btnCancel),
             ),
-            actionsAlignment: MainAxisAlignment.end,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.tertiary.background,
-                  foregroundColor: AppColors.tertiary.foreground,
-                ),
-                child: const Text('Cancel'),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.destructive.background,
+                foregroundColor: AppColors.destructive.foreground,
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.destructive.background,
-                  foregroundColor: AppColors.destructive.foreground,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+              child: Text(l10n.btnDelete),
+            ),
+          ],
+        );
+      },
     );
 
     if (result == true && mounted) {
@@ -298,7 +311,9 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       );
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Activity deleted successfully')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).activityDeleteSuccess),
+        ),
       );
     }
   }

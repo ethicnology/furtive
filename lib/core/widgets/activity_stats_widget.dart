@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class ActivityStatsWidget extends StatelessWidget {
   final ActivityEntity activity;
@@ -21,6 +22,7 @@ class ActivityStatsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fg = AppColors.tertiary.foreground;
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -32,7 +34,7 @@ class ActivityStatsWidget extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  'Recording Activity',
+                  l10n.statsRecordingTitle,
                   style: TextStyle(
                     color: fg,
                     fontSize: 24,
@@ -56,6 +58,7 @@ class ActivityStatsWidget extends StatelessWidget {
             child: PageView(
               children: [
                 _buildStatsPage(
+                  l10n: l10n,
                   duration: activity.activeDuration.toHHMMSS(),
                   distance: activity.activeDistanceInKm.fmt2,
                   speed: activity.activeSpeedKmh.fmt2,
@@ -64,6 +67,7 @@ class ActivityStatsWidget extends StatelessWidget {
                   foreground: fg,
                 ),
                 _buildStatsPage(
+                  l10n: l10n,
                   duration: activity.pausedDuration.toHHMMSS(),
                   distance: activity.pausedDistanceInKm.fmt2,
                   speed: activity.pausedSpeedKmh.fmt2,
@@ -83,6 +87,7 @@ class ActivityStatsWidget extends StatelessWidget {
 }
 
 Widget _buildStatsPage({
+  required AppLocalizations l10n,
   required String duration,
   required String distance,
   required String speed,
@@ -101,13 +106,13 @@ Widget _buildStatsPage({
           children: [
             _StatItem(
               icon: Icons.straighten,
-              label: 'Distance',
+              label: l10n.statDistance,
               value: '$distance km',
               foreground: foreground,
             ),
             _StatItem(
               icon: Icons.timer,
-              label: 'Pace',
+              label: l10n.statPace,
               value: pace,
               foreground: foreground,
             ),
@@ -119,14 +124,14 @@ Widget _buildStatsPage({
           children: [
             _StatItem(
               icon: Icons.speed,
-              label: 'Speed',
+              label: l10n.statSpeed,
               value: '$speed km/h',
               foreground: foreground,
             ),
             if (elevationGain != null)
               _StatItem(
                 icon: Icons.terrain,
-                label: 'Elevation',
+                label: l10n.statElevation,
                 value: '${elevationGain.round()} m',
                 foreground: foreground,
               ),

@@ -30,6 +30,12 @@ class ActivityEntity with ActivityEntityMappable {
 
 enum ActivityPointStatusEntity { active, paused }
 
+/// Sentinel stored in `ActivityEntity.name` when the user hasn't picked a
+/// custom name yet. Compared by reference in the activities list to decide
+/// whether to fall back to the start timestamp. Localised display copy
+/// lives under `AppLocalizations.activityDefaultName`.
+const String kDefaultActivityName = 'Track';
+
 @MappableClass()
 class ActivityPointEntity with ActivityPointEntityMappable {
   final PositionEntity position;

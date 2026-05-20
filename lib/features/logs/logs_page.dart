@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:furtive/core/logs.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class LogsPage extends StatefulWidget {
   const LogsPage({super.key});
@@ -38,9 +39,13 @@ class _LogsPageState extends State<LogsPage> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load logs: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).logsLoadError(e.toString()),
+            ),
+          ),
+        );
       }
     }
   }
@@ -106,23 +111,23 @@ class _LogsPageState extends State<LogsPage> {
   Future<void> _deleteLogs() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete logs'),
-            content: const Text(
-              'Are you sure you want to delete all logs? This action cannot be undone.',
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return AlertDialog(
+          title: Text(l10n.dlgDeleteLogsTitle),
+          content: Text(l10n.dlgDeleteLogsConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.btnCancel),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.btnDelete),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed == true) {
@@ -140,7 +145,11 @@ class _LogsPageState extends State<LogsPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${_filteredLogs.length} logs copied to clipboard'),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            ).logsCopiedMsg(_filteredLogs.length),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -155,34 +164,35 @@ class _LogsPageState extends State<LogsPage> {
   Widget build(BuildContext context) {
     final filteredLogs = _filteredLogs;
 
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Logs'),
+        title: Text(l10n.logsTitle),
         actions: [
           Text(
             '$_logsSizeKb kB',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: _logs.isEmpty ? null : _deleteLogs,
-            tooltip: 'Clear log',
+            tooltip: l10n.logsTooltipClear,
           ),
           IconButton(
             icon: const Icon(Icons.date_range, color: Colors.white),
             onPressed: _selectDateRange,
-            tooltip: 'Filter by date',
+            tooltip: l10n.logsTooltipFilterDate,
           ),
           if (_startDate != null || _endDate != null)
             IconButton(
               icon: const Icon(Icons.clear),
               onPressed: _clearDateRange,
-              tooltip: 'Clear filter',
+              tooltip: l10n.logsTooltipClearFilter,
             ),
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: _logs.isEmpty ? null : _shareLogs,
-            tooltip: 'Share',
+            tooltip: l10n.logsTooltipShare,
           ),
         ],
       ),
@@ -199,7 +209,10 @@ class _LogsPageState extends State<LogsPage> {
                         child: Row(
                           children: [
                             Text(
-                              'Filtered: ${_formatDate(_startDate!)} - ${_formatDate(_endDate!)}',
+                              l10n.logsFiltered(
+                                _formatDate(_startDate!),
+                                _formatDate(_endDate!),
+                              ),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
@@ -207,7 +220,10 @@ class _LogsPageState extends State<LogsPage> {
                             ),
                             const Spacer(),
                             Text(
-                              'Showing ${filteredLogs.length} of ${_logs.length}',
+                              l10n.logsShowingCount(
+                                filteredLogs.length,
+                                _logs.length,
+                              ),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
@@ -219,10 +235,12 @@ class _LogsPageState extends State<LogsPage> {
                     Expanded(
                       child:
                           filteredLogs.isEmpty
-                              ? const Center(
+                              ? Center(
                                 child: Text(
-                                  'No logs found',
-                                  style: TextStyle(color: Colors.white70),
+                                  AppLocalizations.of(context).logsEmpty,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                  ),
                                 ),
                               )
                               : Scrollbar(
@@ -272,11 +290,15 @@ class _LogsPageState extends State<LogsPage> {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text(
-                                              'Log copied to clipboard',
+                                              AppLocalizations.of(
+                                                context,
+                                              ).logCopiedMsg,
                                             ),
-                                            duration: Duration(seconds: 1),
+                                            duration: const Duration(
+                                              seconds: 1,
+                                            ),
                                           ),
                                         );
                                       },

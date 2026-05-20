@@ -7,6 +7,7 @@ import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class ActivitiesListPage extends StatefulWidget {
   const ActivitiesListPage({super.key});
@@ -41,7 +42,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Activities'),
+          title: Text(AppLocalizations.of(context).navActivities),
           backgroundColor: Colors.black87,
           foregroundColor: Colors.white,
         ),
@@ -58,7 +59,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             if (activities.isEmpty) {
               return Center(
                 child: Text(
-                  'No activities found',
+                  AppLocalizations.of(context).activitiesEmpty,
                   style: TextStyle(
                     fontSize: 18,
                     color: AppColors.tertiary.foreground,
@@ -75,7 +76,8 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                   0,
                   19,
                 );
-                if (activity.name.isNotEmpty && activity.name != "Track") {
+                if (activity.name.isNotEmpty &&
+                    activity.name != kDefaultActivityName) {
                   title = activity.name;
                 }
                 return Card(

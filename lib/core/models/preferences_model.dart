@@ -6,12 +6,14 @@ class PreferencesModel {
   final MapLanguageColumn mapLanguage;
   final int accuracyInMeters;
   final bool hasCompletedOnboarding;
+  final String? uiLocale;
 
   PreferencesModel({
     required this.mapTheme,
     required this.mapLanguage,
     required this.accuracyInMeters,
     required this.hasCompletedOnboarding,
+    this.uiLocale,
   });
 
   static PreferencesModel fromEntity(PreferencesEntity preferences) {
@@ -20,6 +22,7 @@ class PreferencesModel {
       mapLanguage: MapLanguageExtension.fromEntity(preferences.mapLanguage),
       accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
+      uiLocale: preferences.uiLocale,
     );
   }
 
@@ -29,6 +32,7 @@ class PreferencesModel {
       mapLanguage: model.mapLanguage.toEntity(),
       accuracyInMeters: model.accuracyInMeters,
       hasCompletedOnboarding: model.hasCompletedOnboarding,
+      uiLocale: model.uiLocale,
     );
   }
 }
@@ -60,6 +64,10 @@ extension MapLanguageExtension on MapLanguageColumn {
         return MapLanguageColumn.en;
       case MapLanguageEntity.fr:
         return MapLanguageColumn.fr;
+      case MapLanguageEntity.ru:
+        return MapLanguageColumn.ru;
+      case MapLanguageEntity.uk:
+        return MapLanguageColumn.uk;
     }
   }
 
@@ -69,6 +77,10 @@ extension MapLanguageExtension on MapLanguageColumn {
         return MapLanguageEntity.en;
       case MapLanguageColumn.fr:
         return MapLanguageEntity.fr;
+      case MapLanguageColumn.ru:
+        return MapLanguageEntity.ru;
+      case MapLanguageColumn.uk:
+        return MapLanguageEntity.uk;
     }
   }
 }

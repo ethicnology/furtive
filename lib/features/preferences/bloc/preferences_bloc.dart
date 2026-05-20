@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
+import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/usecases/get_preferences_use_case.dart';
 import 'package:furtive/core/usecases/update_preferences_use_case.dart';
@@ -19,6 +20,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeMapLanguage>(_onChangeMapLanguage);
     on<ChangeAccuracy>(_onChangeAccuracy);
+    on<ChangeUiLocale>(_onChangeUiLocale);
   }
 
   static Future<PreferencesBloc> create() async {
@@ -63,6 +65,16 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     emit(state.copyWith(preferences: newPreferences));
   }
 
+  void _onChangeUiLocale(
+    ChangeUiLocale event,
+    Emitter<PreferencesState> emit,
+  ) {
+    final newPreferences = state.preferences.copyWith(
+      uiLocale: event.languageCode,
+    );
+    emit(state.copyWith(preferences: newPreferences));
+  }
+
   Future<void> _onUpdatePreferences(
     UpdatePreferences event,
     Emitter<PreferencesState> emit,
@@ -70,5 +82,9 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     await _updatePreferencesUseCase(event.preferences);
     emit(state.copyWith(preferences: event.preferences));
     getIt<MapBloc>().add(InitMap());
+    // Apply the locale override immediately so the UI reflects the change
+    // without requiring an app restart.
+    final code = event.preferences.uiLocale;
+    getIt<LocaleCubit>().setLocale(code);
   }
 }

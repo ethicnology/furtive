@@ -17,6 +17,7 @@ import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/core/entities/trace_entity.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 class MapPage extends StatefulWidget {
@@ -104,9 +105,12 @@ class _MapPageState extends State<MapPage>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Activity started',
+                  AppLocalizations.of(context).mapActivityStartedMsg,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 margin: EdgeInsets.only(
                   bottom: screenSize.height * 0.25,
@@ -258,8 +262,9 @@ class _MapPageState extends State<MapPage>
                   if (state.isPaused && state.activity != null) ...[
                     HoldToConfirmButton(
                       icon: Icons.stop,
-                      label: 'Stop',
-                      shortTapHint: 'Hold Stop for 3 seconds to end activity',
+                      label: AppLocalizations.of(context).btnStop,
+                      shortTapHint:
+                          AppLocalizations.of(context).mapStopHint,
                       backgroundColor: AppColors.destructive.background,
                       foregroundColor: AppColors.destructive.foreground,
                       onConfirmed: () => bloc.add(const CeaseActivity()),
@@ -280,7 +285,7 @@ class _MapPageState extends State<MapPage>
                         state.isFollowingUser
                             ? AppColors.secondary.background
                             : null,
-                    label: const Text('Follow'),
+                    label: Text(AppLocalizations.of(context).btnFollow),
                     icon: Icon(
                       Icons.my_location,
                       color:
@@ -298,8 +303,8 @@ class _MapPageState extends State<MapPage>
                       backgroundColor: AppColors.primary.background,
                       label:
                           state.isPaused
-                              ? const Text('Resume')
-                              : const Text('Pause'),
+                              ? Text(AppLocalizations.of(context).btnResume)
+                              : Text(AppLocalizations.of(context).btnPause),
                       icon:
                           state.isPaused
                               ? const Icon(Icons.play_arrow)
@@ -317,8 +322,10 @@ class _MapPageState extends State<MapPage>
                               : () => bloc.add(const StartActivity()),
                       label:
                           state.loadingStatus == LoadingStatus.startingActivity
-                              ? const Text('Starting')
-                              : const Text('Start'),
+                              ? Text(
+                                AppLocalizations.of(context).btnStarting,
+                              )
+                              : Text(AppLocalizations.of(context).btnStart),
                       icon:
                           state.loadingStatus == LoadingStatus.startingActivity
                               ? SizedBox(

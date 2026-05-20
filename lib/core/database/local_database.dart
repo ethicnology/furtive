@@ -33,10 +33,12 @@ class LocalDatabase extends _$LocalDatabase {
       // Schema migrations live here. Each `if (from < N)` block runs in order
       // for users coming from an earlier version.
       if (from < 2) {
-        // v2: add hasCompletedOnboarding to preferences (for the first-launch
-        // wizard). Existing users default to true so they don't see the
-        // wizard on upgrade.
+        // v2: add hasCompletedOnboarding + uiLocale to preferences and
+        // index hot foreign-key columns. Existing users default to
+        // hasCompletedOnboarding=true so they don't see the wizard on
+        // upgrade; uiLocale stays null (= follow device locale).
         await m.addColumn(preferences, preferences.hasCompletedOnboarding);
+        await m.addColumn(preferences, preferences.uiLocale);
         await (update(preferences)).write(
           PreferencesCompanion(hasCompletedOnboarding: Value(true)),
         );

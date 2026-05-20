@@ -18,6 +18,7 @@ class PreferencesLocalDataSource {
             mapLanguage: Value(preferences.mapLanguage),
             accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
+            uiLocale: Value(preferences.uiLocale),
           ),
         );
   }
@@ -32,6 +33,7 @@ class PreferencesLocalDataSource {
       mapLanguage: preferences.mapLanguage,
       accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
+      uiLocale: preferences.uiLocale,
     );
   }
 }

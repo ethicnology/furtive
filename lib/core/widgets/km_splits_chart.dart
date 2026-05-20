@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 enum _Metric { pace, speed }
 
@@ -22,12 +23,13 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final splits = widget.activity.kmSplits;
     if (splits.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          'Not enough data for splits yet.',
+          l10n.splitsNotEnoughData,
           style: TextStyle(color: AppColors.tertiary.foreground),
         ),
       );
@@ -66,7 +68,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Splits',
+                l10n.splitsTitle,
                 style: TextStyle(
                   color: AppColors.tertiary.foreground,
                   fontSize: 16,
@@ -74,9 +76,15 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
                 ),
               ),
               SegmentedButton<_Metric>(
-                segments: const [
-                  ButtonSegment(value: _Metric.pace, label: Text('Pace')),
-                  ButtonSegment(value: _Metric.speed, label: Text('Speed')),
+                segments: [
+                  ButtonSegment(
+                    value: _Metric.pace,
+                    label: Text(l10n.metricPace),
+                  ),
+                  ButtonSegment(
+                    value: _Metric.speed,
+                    label: Text(l10n.metricSpeed),
+                  ),
                 ],
                 selected: {_metric},
                 onSelectionChanged:

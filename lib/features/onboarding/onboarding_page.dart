@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/global.dart';
+import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
+import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/usecases/update_preferences_use_case.dart';
@@ -11,9 +13,11 @@ import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/permissions/domain/entities/permission_entity.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 /// First-launch wizard:
 /// 1. Welcome
@@ -37,6 +41,7 @@ class _OnboardingPageState extends State<OnboardingPage>
   MapThemeEntity _theme = MapThemeEntity.dark;
   MapLanguageEntity _language = MapLanguageEntity.en;
   int _accuracyMeters = 0;
+  String? _uiLocale; // null = follow system
   int _currentStep = 0;
   bool _saving = false;
 
@@ -87,8 +92,12 @@ class _OnboardingPageState extends State<OnboardingPage>
           mapLanguage: _language,
           accuracyInMeters: _accuracyMeters,
           hasCompletedOnboarding: true,
+          uiLocale: _uiLocale,
         ),
       );
+      // Apply locale immediately so the app shell uses the chosen language
+      // from the first frame after onboarding completes.
+      getIt<LocaleCubit>().setLocale(_uiLocale);
 
       // MapBloc was instantiated at app start with the DB defaults — re-fire
       // InitMap so the user's chosen theme/language/accuracy take effect
@@ -107,7 +116,7 @@ class _OnboardingPageState extends State<OnboardingPage>
         SnackBar(
           backgroundColor: AppColors.destructive.background,
           content: Text(
-            'Could not save your choices: $e',
+            AppLocalizations.of(context).onboardSaveError(e.toString()),
             style: TextStyle(color: AppColors.destructive.foreground),
           ),
         ),
@@ -135,10 +144,17 @@ class _OnboardingPageState extends State<OnboardingPage>
                       theme: _theme,
                       language: _language,
                       accuracyMeters: _accuracyMeters,
+                      uiLocale: _uiLocale,
                       onThemeChanged: (v) => setState(() => _theme = v),
                       onLanguageChanged: (v) => setState(() => _language = v),
                       onAccuracyChanged:
                           (v) => setState(() => _accuracyMeters = v),
+                      onUiLocaleChanged: (v) {
+                        setState(() => _uiLocale = v);
+                        // Preview locale change live so the wizard itself
+                        // immediately reflects the chosen language.
+                        getIt<LocaleCubit>().setLocale(v);
+                      },
                     ),
                     const _PermissionsStep(),
                   ],
@@ -164,7 +180,15 @@ class _OnboardingPageState extends State<OnboardingPage>
                                     strokeWidth: 2,
                                   ),
                                 )
-                                : Text(isLastStep ? 'Finish' : 'Next'),
+                                : Text(
+                                  isLastStep
+                                      ? AppLocalizations.of(
+                                        context,
+                                      ).btnFinish
+                                      : AppLocalizations.of(
+                                        context,
+                                      ).btnNext,
+                                ),
                       );
                     },
                   ),
@@ -249,10 +273,10 @@ class _StepShell extends StatelessWidget {
 class _WelcomeStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _StepShell(
-      title: 'Welcome to Furtive',
-      subtitle:
-          'Privacy-first activity tracking. No accounts, no telemetry, no Google services. Let\'s pick a few defaults.',
+      title: l10n.onboardWelcomeTitle,
+      subtitle: l10n.onboardWelcomeSubtitle,
       child: Center(
         child: Icon(
           Icons.directions_run,
@@ -268,31 +292,36 @@ class _SettingsStep extends StatelessWidget {
   final MapThemeEntity theme;
   final MapLanguageEntity language;
   final int accuracyMeters;
+  final String? uiLocale;
   final ValueChanged<MapThemeEntity> onThemeChanged;
   final ValueChanged<MapLanguageEntity> onLanguageChanged;
   final ValueChanged<int> onAccuracyChanged;
+  final ValueChanged<String?> onUiLocaleChanged;
 
   const _SettingsStep({
     required this.theme,
     required this.language,
     required this.accuracyMeters,
+    required this.uiLocale,
     required this.onThemeChanged,
     required this.onLanguageChanged,
     required this.onAccuracyChanged,
+    required this.onUiLocaleChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _StepShell(
-      title: 'Map settings',
-      subtitle: 'Pick your defaults — you can change them later in settings.',
+      title: l10n.onboardSettingsTitle,
+      subtitle: l10n.onboardSettingsSubtitle,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Theme',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Text(
+              l10n.settingsThemeLabel,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             LabeledDropdown<MapThemeEntity>(
@@ -302,9 +331,9 @@ class _SettingsStep extends StatelessWidget {
               onChanged: onThemeChanged,
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Language',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Text(
+              l10n.settingsLanguageLabel,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             LabeledDropdown<MapLanguageEntity>(
@@ -314,13 +343,29 @@ class _SettingsStep extends StatelessWidget {
               onChanged: onLanguageChanged,
             ),
             const SizedBox(height: 24),
-            const Text(
-              'GPS accuracy',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Text(
+              l10n.settingsUiLanguageLabel,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            LabeledDropdown<String?>(
+              value: uiLocale,
+              items: uiLanguageOptions,
+              labelFor:
+                  (code) =>
+                      code == null
+                          ? l10n.settingsUiLanguageSystem
+                          : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+              onChanged: onUiLocaleChanged,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.settingsAccuracyLabel,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Text(
-              'Minimum distance (m) between recorded points. Lower = more detail, more battery. 0 = every fix.',
+              l10n.settingsAccuracyHint,
               style: TextStyle(color: AppColors.tertiary.foreground),
             ),
             const SizedBox(height: 8),
@@ -349,11 +394,10 @@ class _PermissionsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _StepShell(
-      title: 'Permissions',
-      subtitle:
-          'Grant location to track your runs. Notifications and background '
-          'access are optional.',
+      title: l10n.onboardPermissionsTitle,
+      subtitle: l10n.onboardPermissionsSubtitle,
       child: BlocBuilder<PermissionsBloc, PermissionsState>(
         builder: (context, state) {
           if (state.isLoading && state.permissions.isEmpty) {
@@ -370,6 +414,31 @@ class _PermissionsStep extends StatelessWidget {
       ),
     );
   }
+}
+
+// Map the runtime Permission to the localised name/description copies in
+// app_*.arb. Unknown permissions fall back to the entity's hardcoded text
+// so newly-added permissions don't break the build.
+String _localizedName(BuildContext context, PermissionEntity p) {
+  final l10n = AppLocalizations.of(context);
+  if (p.permission == Permission.locationWhenInUse) {
+    return l10n.permLocationWhileUsingName;
+  }
+  if (p.permission == Permission.locationAlways) {
+    return l10n.permLocationAlwaysName;
+  }
+  return p.name;
+}
+
+String _localizedDescription(BuildContext context, PermissionEntity p) {
+  final l10n = AppLocalizations.of(context);
+  if (p.permission == Permission.locationWhenInUse) {
+    return l10n.permLocationWhileUsingDesc;
+  }
+  if (p.permission == Permission.locationAlways) {
+    return l10n.permLocationAlwaysDesc;
+  }
+  return p.description;
 }
 
 class _PermissionCard extends StatelessWidget {
@@ -394,7 +463,7 @@ class _PermissionCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    permission.name,
+                    _localizedName(context, permission),
                     style: TextStyle(
                       color: AppColors.primary.foreground,
                       fontWeight: FontWeight.bold,
@@ -403,14 +472,14 @@ class _PermissionCard extends StatelessWidget {
                 ),
                 if (permission.isOptional)
                   Text(
-                    'Optional',
+                    AppLocalizations.of(context).permOptional,
                     style: TextStyle(color: AppColors.primary.foreground),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              permission.description,
+              _localizedDescription(context, permission),
               style: TextStyle(color: AppColors.primary.foreground),
             ),
             const SizedBox(height: 12),
@@ -425,14 +494,12 @@ class _PermissionCard extends StatelessWidget {
                 backgroundColor: AppColors.quaternary.background,
                 foregroundColor: AppColors.quaternary.foreground,
               ),
-              child: const Text('Grant'),
+              child: Text(AppLocalizations.of(context).btnGrant),
             ),
             if (permission.isPermanentlyDenied)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Denied — enable it in app settings.',
-                ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(AppLocalizations.of(context).permDeniedMsg),
               ),
           ],
         ),

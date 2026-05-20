@@ -60,7 +60,9 @@ class LabeledDropdown<T> extends StatelessWidget {
               )
               .toList(),
       onChanged: (v) {
-        if (v != null) onChanged(v);
+        // `null is T` is true when T is nullable (e.g. String?), allowing
+        // null through as a valid selection (e.g. "System default" option).
+        if (v != null || null is T) onChanged(v as T);
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SupportDeveloperWidget extends StatelessWidget {
@@ -14,6 +15,7 @@ class SupportDeveloperWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       color: AppColors.primary.background,
       child: Padding(
@@ -23,10 +25,10 @@ class SupportDeveloperWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.favorite, color: Colors.redAccent, size: 24),
+                const Icon(Icons.favorite, color: Colors.redAccent, size: 24),
                 const SizedBox(width: 12),
                 Text(
-                  'Support Development',
+                  l10n.supportTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary.foreground,
@@ -36,7 +38,7 @@ class SupportDeveloperWidget extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'This app is built and maintained on my free time. Your support helps keep it alive and growing.',
+              l10n.supportDescription,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.primary.foreground,
               ),
@@ -55,7 +57,7 @@ class SupportDeveloperWidget extends StatelessWidget {
                       color: AppColors.quaternary.foreground,
                     ),
                     label: Text(
-                      'Star on GitHub',
+                      l10n.btnStarGitHub,
                       style: TextStyle(color: AppColors.quaternary.foreground),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -75,7 +77,7 @@ class SupportDeveloperWidget extends StatelessWidget {
                       color: AppColors.quaternary.foreground,
                     ),
                     label: Text(
-                      'Sponsor',
+                      l10n.btnSponsor,
                       style: TextStyle(color: AppColors.quaternary.foreground),
                     ),
                     style: OutlinedButton.styleFrom(

@@ -8,6 +8,29 @@ import 'package:furtive/features/onboarding/onboarding_page.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
+import 'package:furtive/l10n/app_localizations.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+// Map the runtime Permission to the localised name/description in
+// app_*.arb. Unknown permissions fall back to the entity copy so a newly
+// added permission doesn't break the build.
+String _localizedName(BuildContext context, Permission p, String fallback) {
+  final l10n = AppLocalizations.of(context);
+  if (p == Permission.locationWhenInUse) return l10n.permLocationWhileUsingName;
+  if (p == Permission.locationAlways) return l10n.permLocationAlwaysName;
+  return fallback;
+}
+
+String _localizedDescription(
+  BuildContext context,
+  Permission p,
+  String fallback,
+) {
+  final l10n = AppLocalizations.of(context);
+  if (p == Permission.locationWhenInUse) return l10n.permLocationWhileUsingDesc;
+  if (p == Permission.locationAlways) return l10n.permLocationAlwaysDesc;
+  return fallback;
+}
 
 class PermissionsPage extends StatefulWidget {
   const PermissionsPage({super.key});
@@ -59,8 +82,9 @@ class _PermissionsPageState extends State<PermissionsPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Permissions')),
+      appBar: AppBar(title: Text(l10n.permissionsTitle)),
       body: BlocBuilder<PermissionsBloc, PermissionsState>(
         builder: (context, state) {
           if (state.isLoading) {
@@ -74,9 +98,7 @@ class _PermissionsPageState extends State<PermissionsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'This app needs the following permissions to work properly',
-                ),
+                Text(l10n.permissionsInstructions),
                 Expanded(
                   child: ListView.builder(
                     itemCount: state.permissions.length,
@@ -104,7 +126,7 @@ class _PermissionsPageState extends State<PermissionsPage>
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      permission.name,
+                                      _localizedName(context, permission.permission, permission.name),
                                       style: TextStyle(
                                         color: AppColors.primary.foreground,
                                         fontWeight: FontWeight.bold,
@@ -114,7 +136,7 @@ class _PermissionsPageState extends State<PermissionsPage>
                                 ],
                               ),
                               Text(
-                                permission.description,
+                                _localizedDescription(context, permission.permission, permission.description),
                                 style: TextStyle(
                                   color: AppColors.primary.foreground,
                                 ),
@@ -136,13 +158,11 @@ class _PermissionsPageState extends State<PermissionsPage>
                                   foregroundColor:
                                       AppColors.quaternary.foreground,
                                 ),
-                                child: Text('Grant Permission'),
+                                child: Text(l10n.btnGrantPermission),
                               ),
 
                               if (permission.isPermanentlyDenied)
-                                const Text(
-                                  'This permission has to be enabled in app settings.',
-                                ),
+                                Text(l10n.permPermanentlyDenied),
                             ],
                           ),
                         ),
@@ -158,8 +178,8 @@ class _PermissionsPageState extends State<PermissionsPage>
                       onPressed: allRequiredGranted ? _onContinue : null,
                       child: Text(
                         allRequiredGranted
-                            ? 'Continue'
-                            : 'Grant Required Permissions to Continue',
+                            ? l10n.btnContinue
+                            : l10n.btnGrantToContinue,
                       ),
                     ),
                   ),

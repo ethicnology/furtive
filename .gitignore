@@ -46,6 +46,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# APK build artifacts dropped in repo root
+*.apk
+
 #env
 .env
 

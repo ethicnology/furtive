@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any # version pinned by flutter_localizations
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -37,6 +40,7 @@ dependencies:
   flutter_map: ^8.3.0
   flutter_map_location_marker: ^10.2.0
   vector_map_tiles: ^9.0.0-beta.8
+  vector_tile_renderer: ^6.0.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
   flutter_bloc: ^9.1.1
   get_it: ^9.2.1
   latlong2: ^0.9.1 # pinned by vector_map_tiles 9.x
@@ -89,6 +93,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Wires `flutter gen-l10n` (configured in l10n.yaml) into the build —
+  # the generated AppLocalizations is reachable as
+  # `package:flutter_gen/gen_l10n/app_localizations.dart`.
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
