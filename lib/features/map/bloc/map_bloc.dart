@@ -197,7 +197,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         position: position,
         status: status,
       );
-      final newPoints = [...state.activity!.points, newPoint];
+      // Use the locally-captured `activity` (line above the await), not
+      // state.activity — a concurrent CeaseActivity between the await and
+      // here would null state.activity and crash the null-bang.
+      final newPoints = [...activity.points, newPoint];
       final updatedActivity = activity.copyWith(points: newPoints);
 
       emit(state.copyWith(activity: updatedActivity));

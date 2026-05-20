@@ -36,7 +36,13 @@ Future<void> checkNewVersion(BuildContext context) async {
     }
 
     final jsonBody = json.decode(response.body);
-    final latest = jsonBody['tag_name'].toString().replaceAll('v', '');
+    // Guard the shape — GitHub occasionally returns error objects with a
+    // 200 status (e.g. rate-limit), and a future schema change shouldn't
+    // crash the app on a noisy `toString()` call.
+    if (jsonBody is! Map || jsonBody['tag_name'] is! String) {
+      throw Exception('Unexpected GitHub release payload shape');
+    }
+    final latest = (jsonBody['tag_name'] as String).replaceAll('v', '');
     final current = Global.app.version;
     if (latest == current) return;
 

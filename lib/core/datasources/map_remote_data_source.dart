@@ -145,9 +145,14 @@ class MapRemoteDataSource {
 
       final tiles = source['tiles'];
       if (tiles is! List || tiles.isEmpty) continue;
+      // Don't unchecked-cast the first entry — a future Protomaps schema
+      // change shipping a non-string would throw ClassCastError and break
+      // the map for everyone until we ship a patch.
+      final first = tiles.first;
+      if (first is! String) continue;
       providers[entry.key] = NetworkVectorTileProvider(
         type: type,
-        urlTemplate: _withKey(tiles.first as String),
+        urlTemplate: _withKey(first),
         maximumZoom: source['maxzoom'] as int? ?? 14,
         minimumZoom: source['minzoom'] as int? ?? 1,
       );
