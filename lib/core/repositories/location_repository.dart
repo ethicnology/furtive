@@ -11,23 +11,38 @@ class LocationRepository {
 
   Future<PositionEntity> getCurrentLocation() async {
     final position = await remoteDataSource.getCurrentLocation();
-    return PositionEntity(
-      latitude: position.latitude,
-      longitude: position.longitude,
-      elevation: position.altitude,
-    );
+    return _toEntity(position) ??
+        (throw StateError(
+          'Geolocator returned a position with non-finite coordinates',
+        ));
   }
 
   Stream<PositionEntity> getPositionStream({required int accuracyInMeters}) {
+    // Drop any frames with non-finite lat/lon — they crash flutter_map's
+    // LatLng constructor ("LatLng is not finite") and corrupt downstream
+    // distance / interpolation maths (NaN poisons cumulativeMeters and
+    // every km-milestone derived from it).
     return remoteDataSource
         .getPositionStream(accuracyInMeters: accuracyInMeters)
-        .map((position) {
-          return PositionEntity(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            elevation: position.altitude,
-          );
-        });
+        .map(_toEntity)
+        .where((p) => p != null)
+        .cast<PositionEntity>();
+  }
+
+  /// Returns null when the underlying fix has NaN/Infinity coordinates so
+  /// callers can drop it instead of poisoning the activity track.
+  PositionEntity? _toEntity(Position position) {
+    if (!position.latitude.isFinite || !position.longitude.isFinite) {
+      return null;
+    }
+    // Altitude can legitimately be NaN on devices that don't report it;
+    // coerce to 0 so the elevation maths don't propagate NaN.
+    final elevation = position.altitude.isFinite ? position.altitude : 0.0;
+    return PositionEntity(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      elevation: elevation,
+    );
   }
 
   Stream<ServiceStatus> getServiceStatusStream() {

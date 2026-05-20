@@ -56,7 +56,15 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
       }
     }
 
-    final rawMax = splits.map(_value).reduce((a, b) => a > b ? a : b);
+    // Filter out non-finite metric values before reducing — a single NaN
+    // would poison the rolling max (`NaN > x` is false in both directions),
+    // then `NaN / maxValue` would feed NaN into FractionallySizedBox, which
+    // throws on non-finite widthFactor.
+    final finiteValues = splits.map(_value).where((v) => v.isFinite).toList();
+    final rawMax =
+        finiteValues.isEmpty
+            ? 0.0
+            : finiteValues.reduce((a, b) => a > b ? a : b);
     final maxValue = rawMax > 0 ? rawMax : 1;
 
     return Column(
@@ -98,7 +106,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
           _SplitRow(
             split: s,
             label: _format(s),
-            barFraction: _value(s) / maxValue,
+            barFraction: _safeFraction(_value(s), maxValue),
             color: _barColor(
               s,
               fastestIdx: fastestIdx,
@@ -113,6 +121,14 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
 
   double _value(KmSplit s) =>
       _metric == _Metric.pace ? s.paceMinPerKm : s.speedKmh;
+
+  /// Last-line defence: FractionallySizedBox throws on a non-finite
+  /// widthFactor. _value() can in theory be NaN if a future change drops
+  /// the guards in KmSplit, so collapse to 0 here.
+  double _safeFraction(double value, num max) {
+    final f = value / max;
+    return f.isFinite ? f.clamp(0.0, 1.0).toDouble() : 0.0;
+  }
 
   String _format(KmSplit s) {
     if (_metric == _Metric.pace) {

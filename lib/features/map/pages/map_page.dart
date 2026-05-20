@@ -48,6 +48,13 @@ class _MapPageState extends State<MapPage>
     // previous activity manually since BlocListener's listener can't see
     // the pre-transition state and side-effecting listenWhen is fragile.
     final bloc = context.read<MapBloc>();
+    // Trigger location/map init the first time the page mounts. Safe to
+    // call repeatedly — _onInitMap cancels any prior position stream — but
+    // AutomaticKeepAliveClientMixin keeps this State alive across tab
+    // switches so it only fires once per cold start. The onboarded
+    // cold-start path lands here; the wizard-finish path fires InitMap
+    // explicitly before navigating.
+    if (bloc.state.style == null) bloc.add(const InitMap());
     ActivityEntity? prev = bloc.state.activity;
     _ceaseSub = bloc.stream.listen((state) {
       if (prev != null && state.activity == null) {
@@ -352,11 +359,18 @@ class _MapPageState extends State<MapPage>
     final Map<String, List<LatLng>> segmentKeys = {};
     for (final trace in traces) {
       for (var i = 0; i < trace.points.length - 1; i++) {
-        final a = LatLng(trace.points[i].latitude, trace.points[i].longitude);
-        final b = LatLng(
-          trace.points[i + 1].latitude,
-          trace.points[i + 1].longitude,
-        );
+        final pa = trace.points[i];
+        final pb = trace.points[i + 1];
+        // Public GPX traces from OSM can carry junk fixes — LatLng throws
+        // on non-finite values, which would crash the whole map tree.
+        if (!pa.latitude.isFinite ||
+            !pa.longitude.isFinite ||
+            !pb.latitude.isFinite ||
+            !pb.longitude.isFinite) {
+          continue;
+        }
+        final a = LatLng(pa.latitude, pa.longitude);
+        final b = LatLng(pb.latitude, pb.longitude);
         final key = _segmentKey(a, b);
         segmentCounts[key] = (segmentCounts[key] ?? 0) + 1;
         segmentKeys[key] = [a, b];

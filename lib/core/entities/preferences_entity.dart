@@ -19,7 +19,10 @@ class PreferencesEntity with PreferencesEntityMappable {
     required this.mapTheme,
     required this.mapLanguage,
     required this.accuracyInMeters,
-    this.hasCompletedOnboarding = false,
+    // Required (no default) so callers can't silently reset it to false.
+    // Caused a regression: PreferencesPage rebuilt the entity by hand and
+    // omitted this field, writing false back to DB → wizard reappeared.
+    required this.hasCompletedOnboarding,
     this.uiLocale,
   });
 }

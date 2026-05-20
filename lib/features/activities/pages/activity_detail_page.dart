@@ -9,7 +9,6 @@ import 'package:furtive/l10n/app_localizations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
-import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
 import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
@@ -23,6 +22,20 @@ class ActivityDetailPage extends StatefulWidget {
 
   @override
   State<ActivityDetailPage> createState() => _ActivityDetailPageState();
+}
+
+// Fallback when an activity has zero usable points (Place de la Concorde,
+// Paris). Picked arbitrarily — the map only renders without points if the
+// user ceased before any GPS fix arrived.
+const _kFallbackCenter = LatLng(48.8566, 2.3522);
+
+LatLng _initialCenter(ActivityEntity activity) {
+  for (final point in activity.points) {
+    final lat = point.position.latitude;
+    final lon = point.position.longitude;
+    if (lat.isFinite && lon.isFinite) return LatLng(lat, lon);
+  }
+  return _kFallbackCenter;
 }
 
 class _ActivityDetailPageState extends State<ActivityDetailPage> {
@@ -93,11 +106,11 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                             ? FlutterMap(
                               mapController: _mapController,
                               options: MapOptions(
-                                initialCenter:
-                                    widget.activity.points.isNotEmpty
-                                        ? widget.activity.points.first.position
-                                            .toLatLng()
-                                        : const LatLng(48.8566, 2.3522),
+                                // Use the first point that has finite lat/lon
+                                // — `points.first` can be NaN if the GPS
+                                // emitted a junk fix and we'd crash
+                                // FlutterMap's LatLng constructor.
+                                initialCenter: _initialCenter(widget.activity),
                                 initialZoom: Global.maxZoom,
                                 maxZoom: Global.maxZoom,
                               ),
@@ -108,10 +121,8 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                                   tileProviders: _mapStyle!.providers,
                                   sprites: _mapStyle!.sprites,
                                 ),
-                                if (widget.activity.points.isNotEmpty) ...[
-                                  widget.activity.toPolylineLayer(),
-                                  KmMilestonesLayer(activity: widget.activity),
-                                ],
+                                widget.activity.toPolylineLayer(),
+                                KmMilestonesLayer(activity: widget.activity),
                               ],
                             )
                             : Center(

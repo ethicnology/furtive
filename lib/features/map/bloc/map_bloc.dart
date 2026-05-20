@@ -67,7 +67,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ToggleFollowUser>(_onToggleFollowUser);
     on<StopFollowingUser>(_onStopFollowingUser);
 
-    add(const InitMap());
+    // InitMap is NOT auto-fired here — it triggers the OS location-permission
+    // dialog, and the bloc is instantiated at app start (via the BlocProvider
+    // in MyApp) which happens before the onboarding wizard's permissions
+    // step. MapPage.initState and OnboardingPage._finish fire it explicitly
+    // once the user is ready to see the map.
   }
 
   void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit) {

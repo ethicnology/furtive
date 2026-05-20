@@ -116,8 +116,20 @@ extension ActivityStatisticsExtension on ActivityEntity {
   List<ActivitySegment> _segmentPoints(List<ActivityPointEntity> points) {
     if (points.isEmpty) return [];
 
+    // Filter out any GPS fix with non-finite coordinates. flutter_map's
+    // LatLng constructor crashes on NaN, and a single NaN point poisons
+    // every downstream distance / interpolation calc.
+    final valid =
+        points
+            .where(
+              (p) =>
+                  p.position.latitude.isFinite && p.position.longitude.isFinite,
+            )
+            .toList();
+    if (valid.isEmpty) return [];
+
     // Copy + sort to avoid mutating the entity's points list.
-    final sorted = [...points]..sort((a, b) => a.time.compareTo(b.time));
+    final sorted = valid..sort((a, b) => a.time.compareTo(b.time));
 
     final segments = <ActivitySegment>[];
     var currentSegmentPoints = <ActivityPointEntity>[sorted.first];
@@ -257,7 +269,10 @@ extension ActivityKmExtension on ActivityEntity {
           b.position.latitude,
           b.position.longitude,
         );
-        if (segMeters == 0) continue;
+        // segMeters NaN check covers the case where Geolocator.distanceBetween
+        // would return NaN on bad input; redundant with _segmentPoints
+        // filtering but cheap.
+        if (segMeters == 0 || !segMeters.isFinite) continue;
 
         // Walk through every km threshold this segment crosses (handles
         // gaps where one segment covers >1 km, e.g. after a brief loss
@@ -279,17 +294,23 @@ extension ActivityKmExtension on ActivityEntity {
                           a.time.millisecondsSinceEpoch) *
                       t)
                   .round();
-          milestones.add(
-            KmMilestone(
-              km: nextKm,
-              position: PositionEntity(
-                latitude: lat,
-                longitude: lon,
-                elevation: elev,
+          // Skip the milestone if any computed value is non-finite. The
+          // segment filter already drops NaN inputs, but if a future code
+          // path introduces another NaN source this prevents propagation
+          // into PositionEntity → toLatLng → flutter_map crash.
+          if (lat.isFinite && lon.isFinite) {
+            milestones.add(
+              KmMilestone(
+                km: nextKm,
+                position: PositionEntity(
+                  latitude: lat,
+                  longitude: lon,
+                  elevation: elev.isFinite ? elev : 0,
+                ),
+                time: DateTime.fromMillisecondsSinceEpoch(tMs),
               ),
-              time: DateTime.fromMillisecondsSinceEpoch(tMs),
-            ),
-          );
+            );
+          }
           nextKm++;
         }
         cumulativeMeters += segMeters;

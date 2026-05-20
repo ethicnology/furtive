@@ -77,16 +77,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
                         padding: EdgeInsets.all(context.screenPadding),
                         child: ElevatedButton(
                           onPressed: () {
+                            // Pass state.preferences directly — re-building
+                            // a PreferencesEntity by hand drops fields that
+                            // aren't edited on this page (e.g.
+                            // hasCompletedOnboarding) and silently resets
+                            // them to their constructor defaults.
                             context.read<PreferencesBloc>().add(
-                              UpdatePreferences(
-                                PreferencesEntity(
-                                  mapTheme: state.preferences.mapTheme,
-                                  mapLanguage: state.preferences.mapLanguage,
-                                  accuracyInMeters:
-                                      state.preferences.accuracyInMeters,
-                                  uiLocale: state.preferences.uiLocale,
-                                ),
-                              ),
+                              UpdatePreferences(state.preferences),
                             );
                             Navigator.of(context).pop();
                           },
