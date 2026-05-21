@@ -45,7 +45,13 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   final _exportActivityToGpxUseCase = ExportActivityToGpxUseCase();
   final _shareActivityUseCase = ShareActivityUseCase();
   Style? _mapStyle;
-  bool _isLoading = true;
+  // _isMapStyleLoading covers ONLY the initial map-tile-style fetch.
+  // Previously _isLoading was overloaded with export-in-progress as well,
+  // which meant the whole map view collapsed to a spinner during GPX
+  // export and that share/export were blocked while the map style was
+  // still loading even though neither needs it.
+  bool _isMapStyleLoading = true;
+  bool _isExporting = false;
   bool _isSharing = false;
   late String _currentName;
 
@@ -65,13 +71,15 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   Future<void> _loadMapStyle() async {
     try {
       final style = await _getMapConfigUseCase();
+      if (!mounted) return;
       setState(() {
         _mapStyle = style;
-        _isLoading = false;
+        _isMapStyleLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _isLoading = false;
+        _isMapStyleLoading = false;
       });
     }
   }
@@ -99,7 +107,10 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
             onPressed: _showDeleteDialog,
           ),
           IconButton(
-            onPressed: (_isLoading || _isSharing) ? null : _share,
+            // Share + export DON'T need the map-tile style loaded — the
+            // ShareCard draws its own polyline via CustomPainter and the
+            // GPX export reads from the entity. Gate only on each other.
+            onPressed: (_isSharing || _isExporting) ? null : _share,
             tooltip: AppLocalizations.of(context).shareTooltip,
             icon: _isSharing
                 ? const SizedBox(
@@ -110,20 +121,19 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                 : const Icon(Icons.share),
           ),
           IconButton(
-            onPressed: (_isLoading || _isSharing) ? null : _exportToGpx,
-            icon:
-                _isLoading
-                    ? SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(),
-                    )
-                    : const Icon(Icons.file_download),
+            onPressed: (_isExporting || _isSharing) ? null : _exportToGpx,
+            icon: _isExporting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(),
+                  )
+                : const Icon(Icons.file_download),
           ),
         ],
       ),
       body:
-          _isLoading
+          _isMapStyleLoading
               ? const Center(child: CircularProgressIndicator())
               : Stack(
                 children: [
@@ -239,7 +249,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   }
 
   Future<void> _exportToGpx() async {
-    setState(() => _isLoading = true);
+    setState(() => _isExporting = true);
 
     try {
       await _exportActivityToGpxUseCase(widget.activity.id);
@@ -262,7 +272,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 
