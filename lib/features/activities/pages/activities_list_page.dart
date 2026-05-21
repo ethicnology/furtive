@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -17,17 +18,52 @@ class ActivitiesListPage extends StatefulWidget {
 }
 
 class _ActivitiesListPageState extends State<ActivitiesListPage> {
+  // Set true the moment we dispatch ImportActivityFromGpx so the
+  // BlocListener can distinguish an import's success transition from any
+  // other isLoading=true→false transition (e.g. FetchActivities). Cleared
+  // when the listener fires.
+  bool _importPending = false;
+
   @override
   void initState() {
     super.initState();
     context.read<ActivitiesBloc>().add(const FetchActivities());
   }
 
+  Future<void> _pickAndImportGpx() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    // file_selector with a .gpx-only filter. iOS / Android both honour
+    // the extension list via UTType / MIME inference.
+    final file = await openFile(
+      acceptedTypeGroups: [
+        const XTypeGroup(label: 'GPX', extensions: ['gpx']),
+      ],
+    );
+    if (file == null || !mounted) return;
+    _importPending = true;
+    context.read<ActivitiesBloc>().add(
+      ImportActivityFromGpx(filePath: file.path),
+    );
+    // Lightweight "import started" toast — the success/failure result
+    // arrives via the bloc listener below.
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.importStarted),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocListener<ActivitiesBloc, ActivitiesState>(
+      listenWhen: (prev, curr) =>
+          prev.isLoading != curr.isLoading || prev.error != curr.error,
       listener: (context, state) {
         if (state.error != null) {
+          _importPending = false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -38,13 +74,30 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
               duration: const Duration(seconds: 3),
             ),
           );
+          return;
+        }
+        if (_importPending && !state.isLoading) {
+          _importPending = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.importSuccess),
+              duration: const Duration(seconds: 2),
+            ),
+          );
         }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context).navActivities),
+          title: Text(l10n.navActivities),
           backgroundColor: Colors.black87,
           foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.file_upload),
+              tooltip: l10n.activitiesImportTooltip,
+              onPressed: _pickAndImportGpx,
+            ),
+          ],
         ),
         body: BlocBuilder<ActivitiesBloc, ActivitiesState>(
           builder: (context, state) {

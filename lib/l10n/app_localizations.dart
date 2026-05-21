@@ -492,6 +492,24 @@ abstract class AppLocalizations {
   /// **'No activities found'**
   String get activitiesEmpty;
 
+  /// No description provided for @activitiesImportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a GPX file'**
+  String get activitiesImportTooltip;
+
+  /// No description provided for @importStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing…'**
+  String get importStarted;
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity imported'**
+  String get importSuccess;
+
   /// No description provided for @activityNameLabel.
   ///
   /// In en, this message translates to:

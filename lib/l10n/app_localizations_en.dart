@@ -214,6 +214,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activitiesEmpty => 'No activities found';
 
   @override
+  String get activitiesImportTooltip => 'Import a GPX file';
+
+  @override
+  String get importStarted => 'Importing…';
+
+  @override
+  String get importSuccess => 'Activity imported';
+
+  @override
   String get activityNameLabel => 'Activity name';
 
   @override

@@ -216,6 +216,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get activitiesEmpty => 'Нет тренировок';
 
   @override
+  String get activitiesImportTooltip => 'Импорт GPX-файла';
+
+  @override
+  String get importStarted => 'Импорт…';
+
+  @override
+  String get importSuccess => 'Тренировка импортирована';
+
+  @override
   String get activityNameLabel => 'Название тренировки';
 
   @override

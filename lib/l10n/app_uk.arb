@@ -76,6 +76,9 @@
   "metricSpeed": "Швидкість",
 
   "activitiesEmpty": "Тренувань немає",
+  "activitiesImportTooltip": "Імпорт GPX-файлу",
+  "importStarted": "Імпорт…",
+  "importSuccess": "Тренування імпортовано",
   "activityNameLabel": "Назва тренування",
   "activityDeleteSuccess": "Тренування видалено",
   "dlgRenameTitle": "Перейменувати",

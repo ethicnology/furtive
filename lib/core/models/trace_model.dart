@@ -1,4 +1,5 @@
 import 'package:furtive/core/entities/trace_entity.dart';
+import 'package:furtive/core/utils/gpx.dart';
 import 'package:xml/xml.dart';
 
 class TraceModel {
@@ -36,26 +37,16 @@ class TraceModel {
     final name = track.findElements('name').firstOrNull?.innerText ?? 'Unknown';
     final description = track.findElements('desc').firstOrNull?.innerText ?? '';
     final url = track.findElements('url').firstOrNull?.innerText ?? '';
-    final trackPoints = track.findAllElements('trkpt');
     final points = <TracePointModel>[];
-    for (final point in trackPoints) {
-      final lat = double.tryParse(point.getAttribute('lat') ?? '');
-      final lon = double.tryParse(point.getAttribute('lon') ?? '');
-      // Reject points with missing/garbage/out-of-range coords up front so
-      // bad GPX (from OSM or imports) can't poison the renderer or the DB.
-      if (lat == null || !lat.isFinite || lat < -90 || lat > 90) continue;
-      if (lon == null || !lon.isFinite || lon < -180 || lon > 180) continue;
-      final timeStr = point.findElements('time').firstOrNull?.innerText;
-      final time = timeStr != null ? DateTime.tryParse(timeStr) : null;
-      final eleStr = point.findElements('ele').firstOrNull?.innerText;
-      final eleRaw = eleStr != null ? double.tryParse(eleStr) : null;
-      final elevation = (eleRaw != null && eleRaw.isFinite) ? eleRaw : 0.0;
+    for (final point in track.findAllElements('trkpt')) {
+      final parsed = parseTrkpt(point);
+      if (parsed == null) continue;
       points.add(
         TracePointModel(
-          latitude: lat,
-          longitude: lon,
-          elevation: elevation,
-          time: time,
+          latitude: parsed.latitude,
+          longitude: parsed.longitude,
+          elevation: parsed.elevation,
+          time: parsed.time,
         ),
       );
     }

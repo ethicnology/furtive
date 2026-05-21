@@ -217,6 +217,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get activitiesEmpty => 'Aucune activité';
 
   @override
+  String get activitiesImportTooltip => 'Importer un fichier GPX';
+
+  @override
+  String get importStarted => 'Import en cours…';
+
+  @override
+  String get importSuccess => 'Activité importée';
+
+  @override
   String get activityNameLabel => 'Nom de l\'\'activité';
 
   @override

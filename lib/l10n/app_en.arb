@@ -81,6 +81,9 @@
   "metricSpeed": "Speed",
 
   "activitiesEmpty": "No activities found",
+  "activitiesImportTooltip": "Import a GPX file",
+  "importStarted": "Importing…",
+  "importSuccess": "Activity imported",
   "activityNameLabel": "Activity name",
   "activityDeleteSuccess": "Activity deleted successfully",
   "dlgRenameTitle": "Rename",

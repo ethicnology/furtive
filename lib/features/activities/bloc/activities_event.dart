@@ -26,3 +26,9 @@ class DeleteActivity extends ActivitiesEvent {
 
   final String activityId;
 }
+
+class ImportActivityFromGpx extends ActivitiesEvent {
+  const ImportActivityFromGpx({required this.filePath});
+
+  final String filePath;
+}

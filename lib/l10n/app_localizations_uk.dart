@@ -215,6 +215,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get activitiesEmpty => 'Тренувань немає';
 
   @override
+  String get activitiesImportTooltip => 'Імпорт GPX-файлу';
+
+  @override
+  String get importStarted => 'Імпорт…';
+
+  @override
+  String get importSuccess => 'Тренування імпортовано';
+
+  @override
   String get activityNameLabel => 'Назва тренування';
 
   @override
