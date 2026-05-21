@@ -104,5 +104,13 @@
   "supportDescription": "Cette app est construite et maintenue sur mon temps libre. Ton soutien aide à la garder vivante.",
 
   "notifBgTrackingTitle": "Suivi actif",
-  "notifBgTrackingMsg": "Balaye pour arrêter le suivi en arrière-plan."
+  "notifBgTrackingMsg": "Balaye pour arrêter le suivi en arrière-plan.",
+
+  "changelogTitle": "Nouveautés",
+  "changelogGotIt": "Compris",
+  "changelogV110I18n": "L''application est désormais disponible en anglais, français, russe et ukrainien.",
+  "changelogV110Splits": "Graphique des splits par kilomètre sur la fiche d''activité, avec bascule allure ⇄ vitesse.",
+  "changelogV110HoldToStop": "Maintiens Stop 3 secondes pour terminer une activité — fini les arrêts accidentels.",
+  "changelogV110MapLabels": "Les libellés de la carte s''affichent maintenant dans la langue sélectionnée.",
+  "changelogV110NanDefense": "Le pipeline GPS résiste aux relevés aberrants qui faisaient planter la carte de la fiche d''activité."
 }

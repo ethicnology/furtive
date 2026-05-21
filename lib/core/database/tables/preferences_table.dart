@@ -13,6 +13,12 @@ class Preferences extends Table {
       boolean().withDefault(const Constant(false))();
   // null = follow device locale; non-null = BCP-47 language code override.
   TextColumn get uiLocale => text().nullable()();
+  // App version string the user last saw the changelog for. null on a
+  // fresh install (no changelog should pop on day one — only on upgrade).
+  // Compared against package_info_plus' Global.app.version, which returns
+  // pubspec's version WITHOUT the trailing "+buildNumber" — so changing
+  // only the build number won't re-trigger the changelog.
+  TextColumn get lastShownChangelogVersion => text().nullable()();
 }
 
 enum MapThemeColumn { light, dark }

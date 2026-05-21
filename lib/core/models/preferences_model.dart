@@ -7,6 +7,7 @@ class PreferencesModel {
   final int accuracyInMeters;
   final bool hasCompletedOnboarding;
   final String? uiLocale;
+  final String? lastShownChangelogVersion;
 
   PreferencesModel({
     required this.mapTheme,
@@ -14,6 +15,7 @@ class PreferencesModel {
     required this.accuracyInMeters,
     required this.hasCompletedOnboarding,
     this.uiLocale,
+    this.lastShownChangelogVersion,
   });
 
   static PreferencesModel fromEntity(PreferencesEntity preferences) {
@@ -23,6 +25,7 @@ class PreferencesModel {
       accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,
+      lastShownChangelogVersion: preferences.lastShownChangelogVersion,
     );
   }
 
@@ -33,6 +36,7 @@ class PreferencesModel {
       accuracyInMeters: model.accuracyInMeters,
       hasCompletedOnboarding: model.hasCompletedOnboarding,
       uiLocale: model.uiLocale,
+      lastShownChangelogVersion: model.lastShownChangelogVersion,
     );
   }
 }

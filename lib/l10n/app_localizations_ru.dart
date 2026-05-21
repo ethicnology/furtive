@@ -302,4 +302,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get notifBgTrackingMsg =>
       'Смахни, чтобы остановить фоновое отслеживание.';
+
+  @override
+  String get changelogTitle => 'Что нового';
+
+  @override
+  String get changelogGotIt => 'Понятно';
+
+  @override
+  String get changelogV110I18n =>
+      'Приложение доступно на английском, французском, русском и украинском языках.';
+
+  @override
+  String get changelogV110Splits =>
+      'График отрезков по километрам на странице тренировки, переключатель темп ⇄ скорость.';
+
+  @override
+  String get changelogV110HoldToStop =>
+      'Удерживай Стоп 3 секунды, чтобы завершить тренировку — без случайных нажатий.';
+
+  @override
+  String get changelogV110MapLabels =>
+      'Подписи на карте отображаются на выбранном языке.';
+
+  @override
+  String get changelogV110NanDefense =>
+      'GPS-конвейер защищён от мусорных координат, из-за которых падала карта тренировки.';
 }

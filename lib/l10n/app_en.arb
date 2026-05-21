@@ -136,5 +136,13 @@
   "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
 
   "notifBgTrackingTitle": "Tracking active",
-  "notifBgTrackingMsg": "Swipe to stop background tracking."
+  "notifBgTrackingMsg": "Swipe to stop background tracking.",
+
+  "changelogTitle": "What''s new",
+  "changelogGotIt": "Got it",
+  "changelogV110I18n": "App is now available in English, French, Russian and Ukrainian.",
+  "changelogV110Splits": "Per-kilometre splits chart on the activity detail page, with pace ⇄ speed toggle.",
+  "changelogV110HoldToStop": "Hold the Stop button for 3 seconds to end an activity — no accidental taps.",
+  "changelogV110MapLabels": "Map labels now render in your selected language.",
+  "changelogV110NanDefense": "Hardened GPS pipeline against junk fixes that used to crash the activity detail map."
 }

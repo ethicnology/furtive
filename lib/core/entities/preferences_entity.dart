@@ -14,6 +14,9 @@ class PreferencesEntity with PreferencesEntityMappable {
   final bool hasCompletedOnboarding;
   // null = follow device locale; BCP-47 code overrides the system locale.
   final String? uiLocale;
+  // Last app version the user has dismissed the changelog for. null marker
+  // means "not initialised yet" — main.dart back-fills it on startup.
+  final String? lastShownChangelogVersion;
 
   PreferencesEntity({
     required this.mapTheme,
@@ -24,5 +27,6 @@ class PreferencesEntity with PreferencesEntityMappable {
     // omitted this field, writing false back to DB → wizard reappeared.
     required this.hasCompletedOnboarding,
     this.uiLocale,
+    this.lastShownChangelogVersion,
   });
 }

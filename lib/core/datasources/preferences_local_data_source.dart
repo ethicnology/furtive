@@ -19,6 +19,8 @@ class PreferencesLocalDataSource {
             accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
             uiLocale: Value(preferences.uiLocale),
+            lastShownChangelogVersion:
+                Value(preferences.lastShownChangelogVersion),
           ),
         );
   }
@@ -34,6 +36,7 @@ class PreferencesLocalDataSource {
       accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,
+      lastShownChangelogVersion: preferences.lastShownChangelogVersion,
     );
   }
 }

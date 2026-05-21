@@ -641,6 +641,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Swipe to stop background tracking.'**
   String get notifBgTrackingMsg;
+
+  /// No description provided for @changelogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'\'s new'**
+  String get changelogTitle;
+
+  /// No description provided for @changelogGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get changelogGotIt;
+
+  /// No description provided for @changelogV110I18n.
+  ///
+  /// In en, this message translates to:
+  /// **'App is now available in English, French, Russian and Ukrainian.'**
+  String get changelogV110I18n;
+
+  /// No description provided for @changelogV110Splits.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-kilometre splits chart on the activity detail page, with pace ⇄ speed toggle.'**
+  String get changelogV110Splits;
+
+  /// No description provided for @changelogV110HoldToStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold the Stop button for 3 seconds to end an activity — no accidental taps.'**
+  String get changelogV110HoldToStop;
+
+  /// No description provided for @changelogV110MapLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Map labels now render in your selected language.'**
+  String get changelogV110MapLabels;
+
+  /// No description provided for @changelogV110NanDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardened GPS pipeline against junk fixes that used to crash the activity detail map.'**
+  String get changelogV110NanDefense;
 }
 
 class _AppLocalizationsDelegate

@@ -93,6 +93,9 @@ class _OnboardingPageState extends State<OnboardingPage>
           accuracyInMeters: _accuracyMeters,
           hasCompletedOnboarding: true,
           uiLocale: _uiLocale,
+          // Stamp the current version so the post-upgrade changelog doesn't
+          // immediately pop in front of a user who just finished onboarding.
+          lastShownChangelogVersion: Global.app.version,
         ),
       );
       // Apply locale immediately so the app shell uses the chosen language

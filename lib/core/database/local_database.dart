@@ -33,14 +33,29 @@ class LocalDatabase extends _$LocalDatabase {
       // Schema migrations live here. Each `if (from < N)` block runs in order
       // for users coming from an earlier version.
       if (from < 2) {
-        // v2: add hasCompletedOnboarding + uiLocale to preferences and
-        // index hot foreign-key columns. Existing users default to
-        // hasCompletedOnboarding=true so they don't see the wizard on
-        // upgrade; uiLocale stays null (= follow device locale).
+        // v2: add hasCompletedOnboarding + uiLocale + lastShownChangelogVersion
+        // to preferences and index hot foreign-key columns. Existing users
+        // default to hasCompletedOnboarding=true so they don't see the wizard
+        // on upgrade; uiLocale stays null (= follow device locale);
+        // lastShownChangelogVersion stays null on the first run after this
+        // migration — main.dart writes the current version so the changelog
+        // doesn't pop for existing users on the upgrade introducing this
+        // feature.
         await m.addColumn(preferences, preferences.hasCompletedOnboarding);
         await m.addColumn(preferences, preferences.uiLocale);
+        await m.addColumn(preferences, preferences.lastShownChangelogVersion);
         await (update(preferences)).write(
-          PreferencesCompanion(hasCompletedOnboarding: Value(true)),
+          // hasCompletedOnboarding=true: existing users skip the wizard.
+          // lastShownChangelogVersion='0.0.0' sentinel: forces the changelog
+          // page on next launch so v1 users see the v1.1.0 release notes.
+          // Fresh installs take the beforeOpen path below instead — the row
+          // is inserted with both fields at their column defaults (false +
+          // null), and a null lastShownChangelogVersion suppresses the
+          // changelog until the wizard stamps the current version.
+          const PreferencesCompanion(
+            hasCompletedOnboarding: Value(true),
+            lastShownChangelogVersion: Value('0.0.0'),
+          ),
         );
         // Indices on hot foreign-key columns. Fresh installs get them via
         // m.createAll(); v1 users need them created explicitly here.
