@@ -210,12 +210,6 @@ abstract class AppLocalizations {
   /// **'Apply'**
   String get btnApply;
 
-  /// No description provided for @btnShare.
-  ///
-  /// In en, this message translates to:
-  /// **'Share'**
-  String get btnShare;
-
   /// No description provided for @btnStarGitHub.
   ///
   /// In en, this message translates to:
@@ -666,6 +660,18 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete all logs? This action cannot be undone.'**
   String get dlgDeleteLogsConfirm;
 
+  /// No description provided for @newVersionAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the latest version {version}'**
+  String newVersionAvailable(String version);
+
+  /// No description provided for @btnDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get btnDownload;
+
   /// No description provided for @supportTitle.
   ///
   /// In en, this message translates to:
@@ -677,18 +683,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This app is built and maintained on my free time. Your support helps keep it alive and growing.'**
   String get supportDescription;
-
-  /// No description provided for @notifBgTrackingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Tracking active'**
-  String get notifBgTrackingTitle;
-
-  /// No description provided for @notifBgTrackingMsg.
-  ///
-  /// In en, this message translates to:
-  /// **'Swipe to stop background tracking.'**
-  String get notifBgTrackingMsg;
 
   /// No description provided for @changelogTitle.
   ///

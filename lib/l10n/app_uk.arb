@@ -19,7 +19,6 @@
   "btnRename": "Перейменувати",
   "btnDelete": "Видалити",
   "btnApply": "Застосувати",
-  "btnShare": "Поділитися",
   "btnStarGitHub": "Зірка на GitHub",
   "btnSponsor": "Підтримати",
 
@@ -109,11 +108,11 @@
   "dlgDeleteLogsTitle": "Видалити журнали",
   "dlgDeleteLogsConfirm": "Точно хочеш видалити всі журнали? Цю дію неможливо скасувати.",
 
+  "newVersionAvailable": "Завантаж останню версію {version}",
+  "btnDownload": "Завантажити",
+
   "supportTitle": "Підтримати розробку",
   "supportDescription": "Цей застосунок створюється та підтримується у вільний час. Твоя підтримка допомагає йому розвиватися.",
-
-  "notifBgTrackingTitle": "Відстеження активне",
-  "notifBgTrackingMsg": "Змахни, щоб зупинити фонове відстеження.",
 
   "changelogTitle": "Що нового",
   "changelogGotIt": "Зрозуміло",

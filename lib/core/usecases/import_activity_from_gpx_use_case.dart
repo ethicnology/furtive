@@ -22,7 +22,19 @@ class ImportActivityFromGpxUseCase {
 
   ImportActivityFromGpxUseCase();
 
+  /// Files larger than this are rejected before parsing. A typical 2-hour
+  /// GPX with 1 Hz sampling is ~300-400 KB. 50 MB is a generous ceiling
+  /// that still defends against billion-laughs / quadratic-blowup XML
+  /// payloads (the xml package doesn't disable DTD entity expansion).
+  static const _maxFileBytes = 50 * 1024 * 1024;
+
   Future<ActivityEntity> call(File file) async {
+    final size = await file.length();
+    if (size > _maxFileBytes) {
+      throw GpxParseError(
+        'File too large (${(size / 1024 / 1024).toStringAsFixed(1)} MB)',
+      );
+    }
     final content = await file.readAsString();
 
     final XmlDocument doc;

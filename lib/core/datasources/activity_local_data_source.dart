@@ -125,16 +125,21 @@ class ActivityLocalDataSource {
   }
 
   Future<void> delete(String activityId) async {
-    final activity =
-        await (db.select(db.activities)
-          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    // Wrap both deletes in a transaction so a crash or stream-close between
+    // them can't leave orphan activity_points rows pointing at a missing
+    // activity. SQLite-level cascade isn't declared on the FK either.
+    await db.transaction(() async {
+      final activity =
+          await (db.select(db.activities)
+            ..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
-    if (activity == null) throw AppError('Activity not found');
+      if (activity == null) throw AppError('Activity not found');
 
-    await (db.delete(db.activityPoints)
-      ..where((t) => t.activityId.equals(activityId))).go();
+      await (db.delete(db.activityPoints)
+        ..where((t) => t.activityId.equals(activityId))).go();
 
-    await (db.delete(db.activities)
-      ..where((t) => t.id.equals(activityId))).go();
+      await (db.delete(db.activities)
+        ..where((t) => t.id.equals(activityId))).go();
+    });
   }
 }

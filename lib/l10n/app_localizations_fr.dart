@@ -64,9 +64,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnApply => 'Appliquer';
 
   @override
-  String get btnShare => 'Partager';
-
-  @override
   String get btnStarGitHub => 'Étoile sur GitHub';
 
   @override
@@ -320,18 +317,19 @@ class AppLocalizationsFr extends AppLocalizations {
       'Es-tu sûr de vouloir supprimer tous les journaux ? Cette action est irréversible.';
 
   @override
+  String newVersionAvailable(String version) {
+    return 'Télécharge la dernière version $version';
+  }
+
+  @override
+  String get btnDownload => 'Télécharger';
+
+  @override
   String get supportTitle => 'Soutenir le développement';
 
   @override
   String get supportDescription =>
       'Cette app est construite et maintenue sur mon temps libre. Ton soutien aide à la garder vivante.';
-
-  @override
-  String get notifBgTrackingTitle => 'Suivi actif';
-
-  @override
-  String get notifBgTrackingMsg =>
-      'Balaye pour arrêter le suivi en arrière-plan.';
 
   @override
   String get changelogTitle => 'Nouveautés';

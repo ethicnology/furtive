@@ -64,9 +64,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get btnApply => 'Застосувати';
 
   @override
-  String get btnShare => 'Поділитися';
-
-  @override
   String get btnStarGitHub => 'Зірка на GitHub';
 
   @override
@@ -317,17 +314,19 @@ class AppLocalizationsUk extends AppLocalizations {
       'Точно хочеш видалити всі журнали? Цю дію неможливо скасувати.';
 
   @override
+  String newVersionAvailable(String version) {
+    return 'Завантаж останню версію $version';
+  }
+
+  @override
+  String get btnDownload => 'Завантажити';
+
+  @override
   String get supportTitle => 'Підтримати розробку';
 
   @override
   String get supportDescription =>
       'Цей застосунок створюється та підтримується у вільний час. Твоя підтримка допомагає йому розвиватися.';
-
-  @override
-  String get notifBgTrackingTitle => 'Відстеження активне';
-
-  @override
-  String get notifBgTrackingMsg => 'Змахни, щоб зупинити фонове відстеження.';
 
   @override
   String get changelogTitle => 'Що нового';

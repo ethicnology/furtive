@@ -12,6 +12,12 @@ class MyLogs {
   final Directory dir;
   final dep.LoggerColorful logger;
   static const _logFilename = 'logs.tsv';
+  /// Hard cap for the log file. SEVERE/WARNING-only writes mean realistic
+  /// growth is slow, but with no rotation a long-lived install would
+  /// accumulate indefinitely — bad for disk usage AND privacy (older
+  /// session data sitting on disk forever). Trimmed on startup from
+  /// `ensureLogsExist`.
+  static const _maxLogBytes = 1024 * 1024; // 1 MB
   File get logsFile => File('${dir.path}/$_logFilename');
 
   Future<void>? _currentWrite;
@@ -67,13 +73,43 @@ class MyLogs {
 
   Future<void> ensureLogsExist() async {
     try {
-      if (await logsFile.exists()) return;
+      if (await logsFile.exists()) {
+        await _trimIfOversized();
+        return;
+      }
 
       await logsFile.create(recursive: true);
       fine('Logs created');
       addContextInfos();
     } catch (e) {
       severe('Logs existence: $e');
+    }
+  }
+
+  /// Trim the log file by dropping the oldest lines if it has grown past
+  /// [_maxLogBytes]. Keeps roughly the most recent 75% of the cap so we
+  /// don't trim again on the very next launch.
+  Future<void> _trimIfOversized() async {
+    try {
+      final length = await logsFile.length();
+      if (length <= _maxLogBytes) return;
+
+      // Read the tail, find the first complete line within it, write back.
+      final keepBytes = (_maxLogBytes * 0.75).round();
+      final raf = await logsFile.open();
+      try {
+        await raf.setPosition(length - keepBytes);
+        final tail = await raf.read(keepBytes);
+        // Drop the leading partial line so we don't keep a half-record.
+        final firstNl = tail.indexOf(0x0A); // '\n'
+        final keep = firstNl >= 0 ? tail.sublist(firstNl + 1) : tail;
+        await logsFile.writeAsBytes(keep);
+      } finally {
+        await raf.close();
+      }
+    } catch (e) {
+      // Logging in here would just append to the file we just trimmed —
+      // do nothing rather than risk a recursive failure loop.
     }
   }
 

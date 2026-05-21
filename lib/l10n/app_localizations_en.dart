@@ -63,9 +63,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnApply => 'Apply';
 
   @override
-  String get btnShare => 'Share';
-
-  @override
   String get btnStarGitHub => 'Star on GitHub';
 
   @override
@@ -317,17 +314,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to delete all logs? This action cannot be undone.';
 
   @override
+  String newVersionAvailable(String version) {
+    return 'Download the latest version $version';
+  }
+
+  @override
+  String get btnDownload => 'Download';
+
+  @override
   String get supportTitle => 'Support Development';
 
   @override
   String get supportDescription =>
       'This app is built and maintained on my free time. Your support helps keep it alive and growing.';
-
-  @override
-  String get notifBgTrackingTitle => 'Tracking active';
-
-  @override
-  String get notifBgTrackingMsg => 'Swipe to stop background tracking.';
 
   @override
   String get changelogTitle => 'What\'\'s new';

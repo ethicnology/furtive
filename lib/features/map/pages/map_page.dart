@@ -30,7 +30,7 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage>
     with AutomaticKeepAliveClientMixin {
   final _mapController = MapController();
-  final _kFloatingActionButtonWidth = 115.0;
+  static const _kFloatingActionButtonWidth = 115.0;
 
   // Stay alive across BottomNavigation tab switches so the F6 cease →
   // stats listener keeps firing even when the user is on Activities or
@@ -74,6 +74,7 @@ class _MapPageState extends State<MapPage>
   @override
   void dispose() {
     _ceaseSub?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 

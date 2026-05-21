@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -47,19 +48,20 @@ Future<void> checkNewVersion(BuildContext context) async {
     if (latest == current) return;
 
     if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Download the latest version $latest',
+          l10n.newVersionAvailable(latest),
           style: TextStyle(
             color: AppColors.primary.foreground,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: AppColors.primary.background,
-        duration: Duration(seconds: 10),
+        duration: const Duration(seconds: 10),
         action: SnackBarAction(
-          label: 'Download',
+          label: l10n.btnDownload,
           onPressed: () => launchUrl(latestUrl),
         ),
       ),

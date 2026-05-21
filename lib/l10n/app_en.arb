@@ -19,7 +19,6 @@
   "btnRename": "Rename",
   "btnDelete": "Delete",
   "btnApply": "Apply",
-  "btnShare": "Share",
   "btnStarGitHub": "Star on GitHub",
   "btnSponsor": "Sponsor",
 
@@ -152,11 +151,16 @@
   "dlgDeleteLogsTitle": "Delete logs",
   "dlgDeleteLogsConfirm": "Are you sure you want to delete all logs? This action cannot be undone.",
 
+  "newVersionAvailable": "Download the latest version {version}",
+  "@newVersionAvailable": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "btnDownload": "Download",
+
   "supportTitle": "Support Development",
   "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
-
-  "notifBgTrackingTitle": "Tracking active",
-  "notifBgTrackingMsg": "Swipe to stop background tracking.",
 
   "changelogTitle": "What''s new",
   "changelogGotIt": "Got it",

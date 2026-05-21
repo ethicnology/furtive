@@ -64,9 +64,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get btnApply => 'Применить';
 
   @override
-  String get btnShare => 'Поделиться';
-
-  @override
   String get btnStarGitHub => 'Звезда на GitHub';
 
   @override
@@ -318,18 +315,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Уверен, что хочешь удалить все журналы? Это действие необратимо.';
 
   @override
+  String newVersionAvailable(String version) {
+    return 'Скачай последнюю версию $version';
+  }
+
+  @override
+  String get btnDownload => 'Скачать';
+
+  @override
   String get supportTitle => 'Поддержать разработку';
 
   @override
   String get supportDescription =>
       'Приложение создаётся и поддерживается в моё свободное время. Твоя поддержка помогает развивать его.';
-
-  @override
-  String get notifBgTrackingTitle => 'Отслеживание активно';
-
-  @override
-  String get notifBgTrackingMsg =>
-      'Смахни, чтобы остановить фоновое отслеживание.';
 
   @override
   String get changelogTitle => 'Что нового';

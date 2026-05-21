@@ -56,6 +56,12 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     _loadMapStyle();
   }
 
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadMapStyle() async {
     try {
       final style = await _getMapConfigUseCase();
@@ -72,9 +78,17 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Un-renamed activities carry the English sentinel 'Track' — swap for
+    // the localised display copy so RU/UK/FR users don't see English in
+    // the AppBar.
+    final l10n = AppLocalizations.of(context);
+    final displayName =
+        _currentName == kDefaultActivityName
+            ? l10n.activityDefaultName
+            : _currentName;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentName),
+        title: Text(displayName),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),

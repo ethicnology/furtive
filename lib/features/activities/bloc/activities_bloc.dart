@@ -28,7 +28,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     FetchActivities event,
     Emitter<ActivitiesState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: null));
     try {
       final activities = await _getActivitiesUseCase();
       // B30: single terminal emit avoids two extra rebuilds and the
@@ -50,7 +50,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     UpdateActivityName event,
     Emitter<ActivitiesState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: null));
     try {
       await _updateActivityNameUseCase(event.activityId, event.newName);
       final activities = await _getActivitiesUseCase();
@@ -67,7 +67,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     DeleteActivity event,
     Emitter<ActivitiesState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: null));
     try {
       await _deleteActivityUseCase(event.activityId);
       final activities = await _getActivitiesUseCase();
