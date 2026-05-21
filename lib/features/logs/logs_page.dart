@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class LogsPage extends StatefulWidget {
   const LogsPage({super.key});
@@ -156,8 +157,9 @@ class _LogsPageState extends State<LogsPage> {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _formatDate(BuildContext context, DateTime date) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMd(locale).format(date);
   }
 
   @override
@@ -210,8 +212,8 @@ class _LogsPageState extends State<LogsPage> {
                           children: [
                             Text(
                               l10n.logsFiltered(
-                                _formatDate(_startDate!),
-                                _formatDate(_endDate!),
+                                _formatDate(context, _startDate!),
+                                _formatDate(context, _endDate!),
                               ),
                               style: const TextStyle(
                                 color: Colors.white70,

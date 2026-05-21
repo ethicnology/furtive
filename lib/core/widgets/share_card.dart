@@ -3,6 +3,7 @@ import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 /// Fixed-size shareable card rendered offscreen, captured by
 /// ShareActivityUseCase via RepaintBoundary.toImage(). Deliberately does
@@ -25,7 +26,13 @@ class ShareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final activeSegments = activity.activeSegments;
-    final dateLabel = activity.startedAt.toLocal().toString().substring(0, 16);
+    // Locale-aware date+time. Older versions used the ISO substring, which
+    // showed a "T" separator and the user's hour:minute:second in a fixed
+    // english-friendly form.
+    final localeName = Localizations.localeOf(context).toString();
+    final dateLabel = DateFormat.yMMMd(localeName)
+        .add_Hm()
+        .format(activity.startedAt.toLocal());
     final activityName =
         (activity.name.isNotEmpty && activity.name != kDefaultActivityName)
             ? activity.name

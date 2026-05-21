@@ -58,8 +58,17 @@ class ImportActivityFromGpxUseCase {
     // don't) and gives sane timestamps for GPX exports that strip time
     // entirely (lastTime stays null on entry → falls back to now()).
     DateTime? lastTime;
-    for (final trkpt in root.findAllElements('trkpt')) {
-      final parsed = parseTrkpt(trkpt);
+    // Walk both <trkpt> (track points — the standard form) and <rtept>
+    // (route points — Garmin Connect exports planned/imported workouts
+    // this way). Both elements share the lat/lon/<ele>/<time> shape so
+    // parseTrkpt handles either. If a file ships only <wpt> waypoints
+    // with no track or route we fall through to GpxNoPointsError below.
+    final pointElements = [
+      ...root.findAllElements('trkpt'),
+      ...root.findAllElements('rtept'),
+    ];
+    for (final element in pointElements) {
+      final parsed = parseTrkpt(element);
       if (parsed == null) continue;
       final time =
           parsed.time ??

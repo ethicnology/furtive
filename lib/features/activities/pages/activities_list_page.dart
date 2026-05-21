@@ -9,6 +9,7 @@ import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class ActivitiesListPage extends StatefulWidget {
   const ActivitiesListPage({super.key});
@@ -121,14 +122,15 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
               );
             }
 
+            // Locale-aware "Mar 15, 2026 14:30" / "15/03/2026 14:30" etc.
+            // — ISO substring used to leak a "T" separator into the UI.
+            final localeName = Localizations.localeOf(context).toString();
+            final dateFormat = DateFormat.yMMMd(localeName).add_Hm();
             return ListView.builder(
               itemCount: activities.length,
               itemBuilder: (context, index) {
                 final activity = activities[index];
-                var title = activity.startedAt.toLocal().toString().substring(
-                  0,
-                  19,
-                );
+                var title = dateFormat.format(activity.startedAt.toLocal());
                 if (activity.name.isNotEmpty &&
                     activity.name != kDefaultActivityName) {
                   title = activity.name;
