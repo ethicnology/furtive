@@ -63,10 +63,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnApply => 'Apply';
 
   @override
+  String get btnShare => 'Share';
+
+  @override
   String get btnStarGitHub => 'Star on GitHub';
 
   @override
   String get btnSponsor => 'Sponsor';
+
+  @override
+  String shareSummary(String distance, String duration) {
+    return '$distance km in $duration with Furtive';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Couldn\'\'t share activity: $error';
+  }
+
+  @override
+  String get shareTooltip => 'Share activity';
 
   @override
   String get navMap => 'Map';
@@ -188,6 +204,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statDistance => 'Distance';
+
+  @override
+  String get statDuration => 'Duration';
 
   @override
   String get statPace => 'Pace';

@@ -57,6 +57,7 @@ dependencies:
   url_launcher: ^6.3.2
   device_info_plus: ^12.4.0 # 13.x requires win32 6 (incompatible with package_info_plus 9.x)
   file_selector: ^1.1.0
+  share_plus: ^12.0.2 # ^13 pulls win32 ^6 which conflicts with device_info_plus 12.x's win32 ^5
 
 dev_dependencies:
   flutter_test:

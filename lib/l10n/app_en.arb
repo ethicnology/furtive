@@ -19,8 +19,24 @@
   "btnRename": "Rename",
   "btnDelete": "Delete",
   "btnApply": "Apply",
+  "btnShare": "Share",
   "btnStarGitHub": "Star on GitHub",
   "btnSponsor": "Sponsor",
+
+  "shareSummary": "{distance} km in {duration} with Furtive",
+  "@shareSummary": {
+    "placeholders": {
+      "distance": { "type": "String" },
+      "duration": { "type": "String" }
+    }
+  },
+  "shareFailed": "Couldn''t share activity: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "shareTooltip": "Share activity",
 
   "navMap": "Map",
   "navActivities": "Activities",
@@ -71,6 +87,7 @@
 
   "statsRecordingTitle": "Recording Activity",
   "statDistance": "Distance",
+  "statDuration": "Duration",
   "statPace": "Pace",
   "statSpeed": "Speed",
   "statElevation": "Elevation",

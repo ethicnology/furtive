@@ -19,8 +19,13 @@
   "btnRename": "Renommer",
   "btnDelete": "Supprimer",
   "btnApply": "Appliquer",
+  "btnShare": "Partager",
   "btnStarGitHub": "Étoile sur GitHub",
   "btnSponsor": "Sponsoriser",
+
+  "shareSummary": "{distance} km en {duration} avec Furtive",
+  "shareFailed": "Impossible de partager l''activité : {error}",
+  "shareTooltip": "Partager l''activité",
 
   "navMap": "Carte",
   "navActivities": "Activités",
@@ -66,6 +71,7 @@
 
   "statsRecordingTitle": "Enregistrement",
   "statDistance": "Distance",
+  "statDuration": "Durée",
   "statPace": "Allure",
   "statSpeed": "Vitesse",
   "statElevation": "Dénivelé",

@@ -210,6 +210,12 @@ abstract class AppLocalizations {
   /// **'Apply'**
   String get btnApply;
 
+  /// No description provided for @btnShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get btnShare;
+
   /// No description provided for @btnStarGitHub.
   ///
   /// In en, this message translates to:
@@ -221,6 +227,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sponsor'**
   String get btnSponsor;
+
+  /// No description provided for @shareSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km in {duration} with Furtive'**
+  String shareSummary(String distance, String duration);
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'\'t share activity: {error}'**
+  String shareFailed(String error);
+
+  /// No description provided for @shareTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share activity'**
+  String get shareTooltip;
 
   /// No description provided for @navMap.
   ///
@@ -443,6 +467,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Distance'**
   String get statDistance;
+
+  /// No description provided for @statDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get statDuration;
 
   /// No description provided for @statPace.
   ///

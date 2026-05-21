@@ -64,10 +64,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get btnApply => 'Застосувати';
 
   @override
+  String get btnShare => 'Поділитися';
+
+  @override
   String get btnStarGitHub => 'Зірка на GitHub';
 
   @override
   String get btnSponsor => 'Підтримати';
+
+  @override
+  String shareSummary(String distance, String duration) {
+    return '$distance км за $duration з Furtive';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Не вдалося поділитися тренуванням: $error';
+  }
+
+  @override
+  String get shareTooltip => 'Поділитися тренуванням';
 
   @override
   String get navMap => 'Мапа';
@@ -189,6 +205,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get statDistance => 'Відстань';
+
+  @override
+  String get statDuration => 'Час';
 
   @override
   String get statPace => 'Темп';

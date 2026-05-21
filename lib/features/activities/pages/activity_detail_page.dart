@@ -11,6 +11,7 @@ import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
 import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
+import 'package:furtive/core/usecases/share_activity_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
@@ -42,8 +43,10 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
   final _mapController = MapController();
   final _getMapConfigUseCase = GetMapConfigUseCase();
   final _exportActivityToGpxUseCase = ExportActivityToGpxUseCase();
+  final _shareActivityUseCase = ShareActivityUseCase();
   Style? _mapStyle;
   bool _isLoading = true;
+  bool _isSharing = false;
   late String _currentName;
 
   @override
@@ -82,7 +85,18 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
             onPressed: _showDeleteDialog,
           ),
           IconButton(
-            onPressed: _isLoading ? null : _exportToGpx,
+            onPressed: (_isLoading || _isSharing) ? null : _share,
+            tooltip: AppLocalizations.of(context).shareTooltip,
+            icon: _isSharing
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(),
+                  )
+                : const Icon(Icons.share),
+          ),
+          IconButton(
+            onPressed: (_isLoading || _isSharing) ? null : _exportToGpx,
             icon:
                 _isLoading
                     ? SizedBox(
@@ -235,6 +249,26 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       }
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _share() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    try {
+      await _shareActivityUseCase(context, widget.activity);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).shareFailed(e.toString()),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
     }
   }
 

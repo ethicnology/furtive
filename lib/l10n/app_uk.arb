@@ -19,8 +19,13 @@
   "btnRename": "Перейменувати",
   "btnDelete": "Видалити",
   "btnApply": "Застосувати",
+  "btnShare": "Поділитися",
   "btnStarGitHub": "Зірка на GitHub",
   "btnSponsor": "Підтримати",
+
+  "shareSummary": "{distance} км за {duration} з Furtive",
+  "shareFailed": "Не вдалося поділитися тренуванням: {error}",
+  "shareTooltip": "Поділитися тренуванням",
 
   "navMap": "Мапа",
   "navActivities": "Тренування",
@@ -66,6 +71,7 @@
 
   "statsRecordingTitle": "Запис",
   "statDistance": "Відстань",
+  "statDuration": "Час",
   "statPace": "Темп",
   "statSpeed": "Швидкість",
   "statElevation": "Набір висоти",
