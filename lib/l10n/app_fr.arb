@@ -21,6 +21,7 @@
   "btnApply": "Appliquer",
   "btnStarGitHub": "Étoile sur GitHub",
   "btnSponsor": "Sponsoriser",
+  "linkOpenFailed": "Impossible d''ouvrir {url}",
 
   "shareSummary": "{distance} km en {duration} avec Furtive",
   "shareFailed": "Impossible de partager l''activité : {error}",

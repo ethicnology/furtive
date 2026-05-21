@@ -41,6 +41,18 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   bool _hintShown = false;
 
   @override
+  void didUpdateWidget(covariant HoldToConfirmButton old) {
+    super.didUpdateWidget(old);
+    // The AnimationController is `late final`, so swapping holdDuration on
+    // the widget without this hook would silently ignore the new value.
+    // Today every callsite passes the default (3s) but this defends
+    // against latent bugs if the widget is reused with a dynamic duration.
+    if (widget.holdDuration != old.holdDuration) {
+      _controller.duration = widget.holdDuration;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

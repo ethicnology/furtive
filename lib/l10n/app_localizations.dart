@@ -222,6 +222,12 @@ abstract class AppLocalizations {
   /// **'Sponsor'**
   String get btnSponsor;
 
+  /// No description provided for @linkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'\'t open {url}'**
+  String linkOpenFailed(String url);
+
   /// No description provided for @shareSummary.
   ///
   /// In en, this message translates to:

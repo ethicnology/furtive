@@ -140,6 +140,16 @@ class _MapPageState extends State<MapPage>
                   current.activity!.points.isNotEmpty,
           listener: (context, state) {
             final firstPoint = state.activity!.points.first;
+            // Belt-and-suspenders: LocationRepository already drops
+            // non-finite GPS frames so points.first should always be
+            // finite, but if anything ever lets a NaN through, calling
+            // _mapController.move(LatLng(NaN,NaN)) poisons the camera and
+            // every subsequent gesture/tile-update throws — observed in
+            // production logs prior to the LocationRepository fix.
+            if (!firstPoint.position.latitude.isFinite ||
+                !firstPoint.position.longitude.isFinite) {
+              return;
+            }
             _mapController.move(firstPoint.position.toLatLng(), Global.maxZoom);
           },
         ),
@@ -150,14 +160,25 @@ class _MapPageState extends State<MapPage>
                   current.userLocation != null &&
                   previous.userLocation != current.userLocation,
           listener: (context, state) {
+            final loc = state.userLocation!;
+            if (!loc.latitude.isFinite || !loc.longitude.isFinite) {
+              return;
+            }
             final camera = _mapController.camera;
-            _mapController.move(state.userLocation!.toLatLng(), camera.zoom);
+            _mapController.move(loc.toLatLng(), camera.zoom);
           },
         ),
       ],
       child: BlocBuilder<MapBloc, MapState>(
         builder: (context, state) {
-          if (state.style == null || state.userLocation == null) {
+          // Treat a non-finite userLocation as if it weren't there at all.
+          // LocationRepository drops these at source, but if any path ever
+          // lets a NaN through, passing it as initialCenter sets the map
+          // camera to LatLng(NaN,NaN) and every subsequent gesture throws.
+          final loc = state.userLocation;
+          final hasFiniteLocation =
+              loc != null && loc.latitude.isFinite && loc.longitude.isFinite;
+          if (state.style == null || !hasFiniteLocation) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

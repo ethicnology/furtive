@@ -57,10 +57,12 @@ class LocalDatabase extends _$LocalDatabase {
             lastShownChangelogVersion: Value('0.0.0'),
           ),
         );
-        // Indices on hot foreign-key columns. Fresh installs get them via
-        // m.createAll(); v1 users need them created explicitly here.
+        // Indices on hot columns: foreign keys + the startedAt column the
+        // activities list page sorts by on every fetch. Fresh installs get
+        // them via m.createAll(); v1 users need them created explicitly.
         await m.createIndex(idxActivityPointsActivityId);
         await m.createIndex(idxTracePointsTraceId);
+        await m.createIndex(idxActivitiesStartedAt);
       }
     },
     beforeOpen: (details) async {

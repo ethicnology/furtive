@@ -53,5 +53,11 @@
 	<array>
 		<string>location</string>
 	</array>
+	<!-- Export-compliance declaration: this app uses only the standard
+	     HTTPS / TLS provided by iOS, with no custom or non-exempt
+	     encryption. Without this key, TestFlight asks the question on
+	     every upload and may delay app review. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

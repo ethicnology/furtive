@@ -69,6 +69,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnSponsor => 'Sponsor';
 
   @override
+  String linkOpenFailed(String url) {
+    return 'Couldn\'\'t open $url';
+  }
+
+  @override
   String shareSummary(String distance, String duration) {
     return '$distance km in $duration with Furtive';
   }

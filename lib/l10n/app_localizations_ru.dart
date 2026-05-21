@@ -70,6 +70,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get btnSponsor => 'Поддержать';
 
   @override
+  String linkOpenFailed(String url) {
+    return 'Не удалось открыть $url';
+  }
+
+  @override
   String shareSummary(String distance, String duration) {
     return '$distance км за $duration с Furtive';
   }

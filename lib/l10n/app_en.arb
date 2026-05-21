@@ -21,6 +21,12 @@
   "btnApply": "Apply",
   "btnStarGitHub": "Star on GitHub",
   "btnSponsor": "Sponsor",
+  "linkOpenFailed": "Couldn''t open {url}",
+  "@linkOpenFailed": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
 
   "shareSummary": "{distance} km in {duration} with Furtive",
   "@shareSummary": {

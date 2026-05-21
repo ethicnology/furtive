@@ -21,6 +21,7 @@
   "btnApply": "Применить",
   "btnStarGitHub": "Звезда на GitHub",
   "btnSponsor": "Поддержать",
+  "linkOpenFailed": "Не удалось открыть {url}",
 
   "shareSummary": "{distance} км за {duration} с Furtive",
   "shareFailed": "Не удалось поделиться тренировкой: {error}",
