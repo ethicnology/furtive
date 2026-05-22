@@ -65,8 +65,6 @@
   },
 
   "settingsThemeLabel": "Theme",
-  "settingsAccuracyLabel": "GPS accuracy",
-  "settingsAccuracyHint": "Minimum distance (m) between recorded points. Lower = more detail, more battery. 0 = every fix.",
   "settingsUiLanguageLabel": "App language",
   "settingsUiLanguageSystem": "System default",
 
@@ -169,7 +167,7 @@
   "changelogTitle": "What's new",
   "changelogGotIt": "Got it",
   "changelogV120I18n": "Multi-language: app, map labels, and date formats follow your locale — English, French, Russian, Ukrainian. Override in Settings or the wizard.",
-  "changelogV120Wizard": "First-launch wizard: pick your defaults (theme, language, GPS accuracy) and grant location permissions in one flow.",
+  "changelogV120Wizard": "First-launch wizard: pick your defaults (theme, language) and grant location permissions in one flow.",
   "changelogV120Recording": "Activity recording: animated location marker with pulse and accuracy circle, kilometre markers on the map, hold Stop for 3 seconds to end (no accidental taps), auto-redirect to stats.",
   "changelogV120Stats": "Activity stats: per-kilometre splits chart with pace ⇄ speed toggle, D+ elevation gain (matches Strava/Garmin convention).",
   "changelogV120Share": "Share an activity as a card with map and stats via the system share sheet.",

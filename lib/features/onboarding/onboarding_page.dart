@@ -21,7 +21,7 @@ import 'package:furtive/l10n/app_localizations.dart';
 
 /// First-launch wizard:
 /// 1. Welcome
-/// 2. Settings (theme + language + accuracy)
+/// 2. Settings (theme + UI language)
 /// 3. Permissions (locationWhenInUse required; locationAlways and
 ///    notification optional). Finish is disabled until locationWhenInUse
 ///    is granted.
@@ -39,7 +39,6 @@ class _OnboardingPageState extends State<OnboardingPage>
   late final PermissionsBloc _permissionsBloc;
 
   MapThemeEntity _theme = MapThemeEntity.dark;
-  int _accuracyMeters = 0;
   String? _uiLocale; // null = follow system
   int _currentStep = 0;
   bool _saving = false;
@@ -92,7 +91,10 @@ class _OnboardingPageState extends State<OnboardingPage>
           // no longer user-editable. Map labels follow uiLocale at fetch
           // time. Default to English here for new installs.
           mapLanguage: MapLanguageEntity.en,
-          accuracyInMeters: _accuracyMeters,
+          // accuracyInMeters is legacy: the column still exists on disk
+          // but is no longer user-editable. The location data source uses
+          // distanceFilter=0 (every fix) directly. Stored as 0 here.
+          accuracyInMeters: 0,
           hasCompletedOnboarding: true,
           uiLocale: _uiLocale,
           // Stamp the current version so the post-upgrade changelog doesn't
@@ -105,8 +107,8 @@ class _OnboardingPageState extends State<OnboardingPage>
       getIt<LocaleCubit>().setLocale(_uiLocale);
 
       // MapBloc was instantiated at app start with the DB defaults — re-fire
-      // InitMap so the user's chosen theme/language/accuracy take effect
-      // before the map page is shown.
+      // InitMap so the user's chosen theme/language take effect before the
+      // map page is shown.
       getIt<MapBloc>().add(const InitMap());
 
       if (!mounted) return;
@@ -147,11 +149,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                     _WelcomeStep(),
                     _SettingsStep(
                       theme: _theme,
-                      accuracyMeters: _accuracyMeters,
                       uiLocale: _uiLocale,
                       onThemeChanged: (v) => setState(() => _theme = v),
-                      onAccuracyChanged:
-                          (v) => setState(() => _accuracyMeters = v),
                       onUiLocaleChanged: (v) {
                         setState(() => _uiLocale = v);
                         // Preview locale change live so the wizard itself
@@ -293,18 +292,14 @@ class _WelcomeStep extends StatelessWidget {
 
 class _SettingsStep extends StatelessWidget {
   final MapThemeEntity theme;
-  final int accuracyMeters;
   final String? uiLocale;
   final ValueChanged<MapThemeEntity> onThemeChanged;
-  final ValueChanged<int> onAccuracyChanged;
   final ValueChanged<String?> onUiLocaleChanged;
 
   const _SettingsStep({
     required this.theme,
-    required this.accuracyMeters,
     required this.uiLocale,
     required this.onThemeChanged,
-    required this.onAccuracyChanged,
     required this.onUiLocaleChanged,
   });
 
@@ -344,30 +339,6 @@ class _SettingsStep extends StatelessWidget {
                           ? l10n.settingsUiLanguageSystem
                           : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
               onChanged: onUiLocaleChanged,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.settingsAccuracyLabel,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.settingsAccuracyHint,
-              style: TextStyle(color: AppColors.tertiary.foreground),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$accuracyMeters m',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            Slider(
-              value: accuracyMeters.toDouble(),
-              min: 0,
-              max: 50,
-              divisions: 50,
-              label: '$accuracyMeters m',
-              onChanged: (v) => onAccuracyChanged(v.toInt()),
             ),
           ],
         ),

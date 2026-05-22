@@ -44,8 +44,6 @@
   "onboardSaveError": "Impossibile salvare le tue scelte: {error}",
 
   "settingsThemeLabel": "Tema",
-  "settingsAccuracyLabel": "Precisione GPS",
-  "settingsAccuracyHint": "Distanza minima (m) tra punti registrati. Più bassa = più dettaglio, più batteria. 0 = ogni punto.",
   "settingsUiLanguageLabel": "Lingua dell'app",
   "settingsUiLanguageSystem": "Predefinita di sistema",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Novità",
   "changelogGotIt": "Capito",
   "changelogV120I18n": "Multilingua: app, etichette della mappa e formati data seguono la tua locale. Modificabile in Impostazioni o nell'assistente.",
-  "changelogV120Wizard": "Assistente al primo avvio: scegli i tuoi valori predefiniti (tema, lingua, precisione GPS) e concedi i permessi di posizione in un unico flusso.",
+  "changelogV120Wizard": "Assistente al primo avvio: scegli i tuoi valori predefiniti (tema, lingua) e concedi i permessi di posizione in un unico flusso.",
   "changelogV120Recording": "Registrazione attività: marcatore di posizione animato con pulsazione e cerchio di precisione, marcatori chilometrici sulla mappa, tieni premuto Stop per 3 secondi per terminare (niente tap accidentali), reindirizzamento automatico alle statistiche.",
   "changelogV120Stats": "Statistiche: grafico degli split chilometrici con interruttore passo ⇄ velocità, dislivello positivo D+ (convenzione Strava/Garmin).",
   "changelogV120Share": "Condividi un'attività come carta con mappa e statistiche tramite il menu di condivisione del sistema.",

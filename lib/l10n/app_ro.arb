@@ -44,8 +44,6 @@
   "onboardSaveError": "Alegerile nu au putut fi salvate: {error}",
 
   "settingsThemeLabel": "Temă",
-  "settingsAccuracyLabel": "Precizie GPS",
-  "settingsAccuracyHint": "Distanța minimă (m) între punctele înregistrate. Mai mică = mai mult detaliu, mai multă baterie. 0 = fiecare poziție.",
   "settingsUiLanguageLabel": "Limba aplicației",
   "settingsUiLanguageSystem": "Implicit din sistem",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Noutăți",
   "changelogGotIt": "Am înțeles",
   "changelogV120I18n": "Multilingv: aplicația, etichetele hărții și formatele de dată urmează localizarea ta. Suprascrie în Setări sau wizard.",
-  "changelogV120Wizard": "Wizard la prima lansare: alege setările implicite (temă, limbă, precizie GPS) și acordă permisiunile de locație într-un singur flux.",
+  "changelogV120Wizard": "Wizard la prima lansare: alege setările implicite (temă, limbă) și acordă permisiunile de locație într-un singur flux.",
   "changelogV120Recording": "Înregistrarea activității: marcaj de poziție animat cu puls și cerc de precizie, marcaje kilometrice pe hartă, ține apăsat Stop 3 secunde pentru a încheia (fără atingeri accidentale), redirecționare automată către statistici.",
   "changelogV120Stats": "Statistici: grafic al intervalelor pe kilometri cu comutator ritm ⇄ viteză, diferență de nivel D+ (convenție Strava/Garmin).",
   "changelogV120Share": "Partajează o activitate ca un card cu hartă și statistici prin meniul de partajare al sistemului.",

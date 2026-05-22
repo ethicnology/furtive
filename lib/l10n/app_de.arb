@@ -44,8 +44,6 @@
   "onboardSaveError": "Einstellungen konnten nicht gespeichert werden: {error}",
 
   "settingsThemeLabel": "Design",
-  "settingsAccuracyLabel": "GPS-Genauigkeit",
-  "settingsAccuracyHint": "Minimaler Abstand (m) zwischen aufgezeichneten Punkten. Geringer = mehr Detail, mehr Akkuverbrauch. 0 = jeder Punkt.",
   "settingsUiLanguageLabel": "App-Sprache",
   "settingsUiLanguageSystem": "Systemsprache",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Neuigkeiten",
   "changelogGotIt": "Verstanden",
   "changelogV120I18n": "Mehrsprachig: App, Kartenbeschriftungen und Datumsformate folgen deiner Locale. Überschreibbar in den Einstellungen oder im Assistenten.",
-  "changelogV120Wizard": "Ersteinrichtungs-Assistent: wähle deine Standardwerte (Design, Sprache, GPS-Genauigkeit) und erteile Standortberechtigungen in einem Ablauf.",
+  "changelogV120Wizard": "Ersteinrichtungs-Assistent: wähle deine Standardwerte (Design, Sprache) und erteile Standortberechtigungen in einem Ablauf.",
   "changelogV120Recording": "Aktivitätsaufzeichnung: animierter Positionsmarker mit Puls und Genauigkeitskreis, Kilometermarker auf der Karte, halte Stopp 3 Sekunden gedrückt zum Beenden (keine versehentlichen Taps), automatische Weiterleitung zur Statistik.",
   "changelogV120Stats": "Aktivitätsstatistik: Kilometer-Splits-Diagramm mit Umschalter Pace ⇄ Geschwindigkeit, D+ Höhenmeter (Strava/Garmin-Konvention).",
   "changelogV120Share": "Teile eine Aktivität als Karte mit Karte und Statistik über das System-Teilen-Menü.",

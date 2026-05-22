@@ -2,6 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:furtive/core/errors.dart';
 
+// 0 = record every GPS fix. Used to be user-configurable but the setting
+// confused more than it helped; the activity-recording use case wants the
+// densest possible trace and the battery cost is acceptable for the
+// foreground-service window.
+const int _kDistanceFilterMeters = 0;
+
 class LocationGpsDataSource {
   Future<Position> getCurrentLocation() async {
     final hasPermission = await checkLocationPermission();
@@ -14,11 +20,8 @@ class LocationGpsDataSource {
     return position;
   }
 
-  Stream<Position> getPositionStream({required int accuracyInMeters}) {
-    final locationSettings = getLocationSettings(
-      accuracyInMeters: accuracyInMeters,
-    );
-    return Geolocator.getPositionStream(locationSettings: locationSettings);
+  Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(locationSettings: getLocationSettings());
   }
 
   Stream<ServiceStatus> getServiceStatusStream() {
@@ -41,13 +44,13 @@ class LocationGpsDataSource {
     return await Geolocator.isLocationServiceEnabled();
   }
 
-  LocationSettings getLocationSettings({required int accuracyInMeters}) {
+  LocationSettings getLocationSettings() {
     late LocationSettings locationSettings;
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: accuracyInMeters,
+        distanceFilter: _kDistanceFilterMeters,
         forceLocationManager: true,
         intervalDuration: const Duration(milliseconds: 5000),
         useMSLAltitude: true,
@@ -74,7 +77,7 @@ class LocationGpsDataSource {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.fitness,
-        distanceFilter: accuracyInMeters,
+        distanceFilter: _kDistanceFilterMeters,
         pauseLocationUpdatesAutomatically: true,
         // Only set to true if our app will be started up in the background.
         showBackgroundLocationIndicator: true,
@@ -83,7 +86,7 @@ class LocationGpsDataSource {
     } else {
       locationSettings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: accuracyInMeters,
+        distanceFilter: _kDistanceFilterMeters,
       );
     }
     return locationSettings;

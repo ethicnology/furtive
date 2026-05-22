@@ -44,8 +44,6 @@
   "onboardSaveError": "Impossible d'enregistrer tes choix : {error}",
 
   "settingsThemeLabel": "Thème",
-  "settingsAccuracyLabel": "Précision GPS",
-  "settingsAccuracyHint": "Distance minimale (m) entre deux points enregistrés. Moins = plus de détails, mais ça gruge la pile plus vite. 0 = chaque position.",
   "settingsUiLanguageLabel": "Langue de l'application",
   "settingsUiLanguageSystem": "Système",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Quoi de neuf",
   "changelogGotIt": "Correct",
   "changelogV120I18n": "Multilingue : l'interface, les libellés de la carte et le format des dates suivent ta langue. Modifiable dans les réglages ou l'assistant.",
-  "changelogV120Wizard": "Assistant de première utilisation : choisis tes valeurs par défaut (thème, langue, précision GPS) et accorde les permissions de localisation d'un seul coup.",
+  "changelogV120Wizard": "Assistant de première utilisation : choisis tes valeurs par défaut (thème, langue) et accorde les permissions de localisation d'un seul coup.",
   "changelogV120Recording": "Enregistrement de sortie : marqueur de position animé avec pulsation et cercle de précision, marqueurs kilométriques sur la carte, tiens Arrêt enfoncé 3 secondes pour finir (finis les arrêts par accident), redirection automatique vers les statistiques.",
   "changelogV120Stats": "Statistiques de sortie : graphique des intervalles par kilomètre avec bascule allure ⇄ vitesse, dénivelé positif D+ (convention Strava/Garmin).",
   "changelogV120Share": "Partage une sortie sous forme de fiche avec carte et statistiques via le menu de partage du système.",

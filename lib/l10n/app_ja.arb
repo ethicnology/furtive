@@ -44,8 +44,6 @@
   "onboardSaveError": "選択を保存できませんでした: {error}",
 
   "settingsThemeLabel": "テーマ",
-  "settingsAccuracyLabel": "GPS 精度",
-  "settingsAccuracyHint": "記録ポイント間の最小距離(m)。低いほど詳細で、バッテリー消費が増えます。0 = すべての位置。",
   "settingsUiLanguageLabel": "アプリ言語",
   "settingsUiLanguageSystem": "システムデフォルト",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "新着情報",
   "changelogGotIt": "了解",
   "changelogV120I18n": "多言語対応: アプリ、マップラベル、日付フォーマットがあなたのロケールに従います。設定またはウィザードで上書き可能。",
-  "changelogV120Wizard": "初回起動ウィザード: デフォルト(テーマ、言語、GPS 精度)を選び、位置情報権限を一連の流れで許可。",
+  "changelogV120Wizard": "初回起動ウィザード: デフォルト(テーマ、言語)を選び、位置情報権限を一連の流れで許可。",
   "changelogV120Recording": "アクティビティ記録: パルスと精度サークル付きのアニメーション位置マーカー、マップ上のキロメートルマーカー、停止を 3 秒長押しで終了(誤タップなし)、統計への自動リダイレクト。",
   "changelogV120Stats": "アクティビティ統計: キロメートル毎のスプリットチャート、ペース ⇄ 速度切り替え、D+ 標高獲得(Strava/Garmin の規約)。",
   "changelogV120Share": "システムの共有メニューからマップと統計付きカードとしてアクティビティを共有。",

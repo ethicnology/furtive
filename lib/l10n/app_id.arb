@@ -44,8 +44,6 @@
   "onboardSaveError": "Tidak dapat menyimpan pilihanmu: {error}",
 
   "settingsThemeLabel": "Tema",
-  "settingsAccuracyLabel": "Akurasi GPS",
-  "settingsAccuracyHint": "Jarak minimum (m) antar titik yang direkam. Lebih rendah = lebih detail, lebih boros baterai. 0 = setiap posisi.",
   "settingsUiLanguageLabel": "Bahasa aplikasi",
   "settingsUiLanguageSystem": "Standar sistem",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Apa yang baru",
   "changelogGotIt": "Mengerti",
   "changelogV120I18n": "Multibahasa: aplikasi, label peta, dan format tanggal mengikuti locale-mu. Ubah di Pengaturan atau wizard.",
-  "changelogV120Wizard": "Wizard pertama kali: pilih defaultmu (tema, bahasa, akurasi GPS) dan beri izin lokasi dalam satu alur.",
+  "changelogV120Wizard": "Wizard pertama kali: pilih defaultmu (tema, bahasa) dan beri izin lokasi dalam satu alur.",
   "changelogV120Recording": "Rekaman aktivitas: penanda posisi beranimasi dengan denyut dan lingkaran akurasi, penanda kilometer di peta, tahan Berhenti 3 detik untuk mengakhiri (tanpa ketukan tak sengaja), pengalihan otomatis ke statistik.",
   "changelogV120Stats": "Statistik aktivitas: grafik split per kilometer dengan tombol pace ⇄ kecepatan, kenaikan elevasi D+ (konvensi Strava/Garmin).",
   "changelogV120Share": "Bagikan aktivitas sebagai kartu dengan peta dan statistik melalui menu berbagi sistem.",

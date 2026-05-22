@@ -44,8 +44,6 @@
   "onboardSaveError": "Imeshindwa kuhifadhi chaguo zako: {error}",
 
   "settingsThemeLabel": "Mandhari",
-  "settingsAccuracyLabel": "Usahihi wa GPS",
-  "settingsAccuracyHint": "Umbali mdogo zaidi (m) kati ya pointi zilizorekodiwa. Chini = maelezo zaidi, betri zaidi. 0 = kila eneo.",
   "settingsUiLanguageLabel": "Lugha ya programu",
   "settingsUiLanguageSystem": "Chaguomsingi la mfumo",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Mpya",
   "changelogGotIt": "Sawa",
   "changelogV120I18n": "Lugha nyingi: programu, lebo za ramani na muundo wa tarehe hufuata lugha yako. Bandilishe katika Mipangilio au msaidizi.",
-  "changelogV120Wizard": "Msaidizi wa uzinduzi wa kwanza: chagua chaguomsingi zako (mandhari, lugha, usahihi wa GPS) na toa idhini za eneo katika mtiririko mmoja.",
+  "changelogV120Wizard": "Msaidizi wa uzinduzi wa kwanza: chagua chaguomsingi zako (mandhari, lugha) na toa idhini za eneo katika mtiririko mmoja.",
   "changelogV120Recording": "Kurekodi shughuli: alama ya eneo iliyohuishwa na mapigo na duara la usahihi, alama za kilomita kwenye ramani, shikilia Simamisha sekunde 3 kumaliza (hakuna kugusa bila kukusudia), kuelekezwa kiotomatiki kwenye takwimu.",
   "changelogV120Stats": "Takwimu za shughuli: chati ya migawanyiko ya kilomita na kibadilishaji mwendo ⇄ kasi, mwinuko D+ (kanuni ya Strava/Garmin).",
   "changelogV120Share": "Shiriki shughuli kama kadi yenye ramani na takwimu kupitia menyu ya kushiriki ya mfumo.",

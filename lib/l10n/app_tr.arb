@@ -44,8 +44,6 @@
   "onboardSaveError": "Seçimlerin kaydedilemedi: {error}",
 
   "settingsThemeLabel": "Tema",
-  "settingsAccuracyLabel": "GPS doğruluğu",
-  "settingsAccuracyHint": "Kaydedilen noktalar arası minimum mesafe (m). Daha az = daha fazla ayrıntı, daha fazla pil. 0 = her konum.",
   "settingsUiLanguageLabel": "Uygulama dili",
   "settingsUiLanguageSystem": "Sistem varsayılanı",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Yenilikler",
   "changelogGotIt": "Anladım",
   "changelogV120I18n": "Çok dilli: uygulama, harita etiketleri ve tarih biçimleri yerel ayarına uyar. Ayarlar veya sihirbazdan değiştirilebilir.",
-  "changelogV120Wizard": "İlk açılış sihirbazı: varsayılanları (tema, dil, GPS doğruluğu) seç ve konum izinlerini tek akışta ver.",
+  "changelogV120Wizard": "İlk açılış sihirbazı: varsayılanları (tema, dil) seç ve konum izinlerini tek akışta ver.",
   "changelogV120Recording": "Etkinlik kaydı: nabız ve doğruluk halkalı animasyonlu konum işaretçisi, haritada kilometre işaretleri, bitirmek için Durdur'a 3 saniye basılı tut (kazara dokunma yok), istatistiklere otomatik yönlendirme.",
   "changelogV120Stats": "Etkinlik istatistikleri: kilometre başına bölme grafiği, tempo ⇄ hız geçişi, D+ irtifa kazancı (Strava/Garmin standardı).",
   "changelogV120Share": "Bir etkinliği sistem paylaşım menüsü üzerinden harita ve istatistiklerle kart olarak paylaş.",

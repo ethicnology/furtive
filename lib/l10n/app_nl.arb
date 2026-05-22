@@ -44,8 +44,6 @@
   "onboardSaveError": "Kon je keuzes niet opslaan: {error}",
 
   "settingsThemeLabel": "Thema",
-  "settingsAccuracyLabel": "GPS-nauwkeurigheid",
-  "settingsAccuracyHint": "Minimale afstand (m) tussen geregistreerde punten. Lager = meer detail, meer batterij. 0 = elke positie.",
   "settingsUiLanguageLabel": "App-taal",
   "settingsUiLanguageSystem": "Systeemstandaard",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Wat is er nieuw",
   "changelogGotIt": "Begrepen",
   "changelogV120I18n": "Meertalig: app, kaartlabels en datumnotaties volgen je locale. Aanpasbaar in Instellingen of de wizard.",
-  "changelogV120Wizard": "Welkomstwizard: kies je standaardinstellingen (thema, taal, GPS-nauwkeurigheid) en geef locatietoestemming in één stroom.",
+  "changelogV120Wizard": "Welkomstwizard: kies je standaardinstellingen (thema, taal) en geef locatietoestemming in één stroom.",
   "changelogV120Recording": "Activiteitsopname: geanimeerde positiemarker met pulsatie en nauwkeurigheidscirkel, kilometerstandmarkers op de kaart, houd Stop 3 seconden vast om te eindigen (geen toevallige taps), automatische doorverwijzing naar statistieken.",
   "changelogV120Stats": "Statistieken: kilometer-splits-grafiek met schakelaar tempo ⇄ snelheid, D+ hoogtemeters (Strava/Garmin-conventie).",
   "changelogV120Share": "Deel een activiteit als kaart met kaart en statistieken via het systeemdeelmenu.",

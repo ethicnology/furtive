@@ -44,8 +44,6 @@
   "onboardSaveError": "선택 사항을 저장할 수 없습니다: {error}",
 
   "settingsThemeLabel": "테마",
-  "settingsAccuracyLabel": "GPS 정확도",
-  "settingsAccuracyHint": "기록된 지점 간 최소 거리(m). 낮을수록 더 세밀, 배터리 소모 증가. 0 = 모든 위치.",
   "settingsUiLanguageLabel": "앱 언어",
   "settingsUiLanguageSystem": "시스템 기본값",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "새로운 기능",
   "changelogGotIt": "확인",
   "changelogV120I18n": "다국어 지원: 앱, 지도 라벨, 날짜 형식이 로케일을 따릅니다. 설정 또는 마법사에서 재정의 가능.",
-  "changelogV120Wizard": "첫 실행 마법사: 기본값(테마, 언어, GPS 정확도)을 선택하고 한 흐름으로 위치 권한을 부여하세요.",
+  "changelogV120Wizard": "첫 실행 마법사: 기본값(테마, 언어)을 선택하고 한 흐름으로 위치 권한을 부여하세요.",
   "changelogV120Recording": "활동 기록: 펄스와 정확도 원이 있는 애니메이션 위치 마커, 지도의 킬로미터 마커, 종료하려면 정지를 3초간 길게 누르기(실수로 탭하지 않음), 통계로 자동 이동.",
   "changelogV120Stats": "활동 통계: 페이스 ⇄ 속도 토글과 함께 킬로미터별 스플릿 차트, D+ 고도 상승(Strava/Garmin 표준).",
   "changelogV120Share": "시스템 공유 시트를 통해 지도와 통계가 포함된 카드 형태로 활동 공유.",

@@ -44,8 +44,6 @@
   "onboardSaveError": "无法保存你的选择: {error}",
 
   "settingsThemeLabel": "主题",
-  "settingsAccuracyLabel": "GPS 精度",
-  "settingsAccuracyHint": "记录点之间的最小距离（米）。越低 = 越细节,越耗电。0 = 每个位置。",
   "settingsUiLanguageLabel": "应用语言",
   "settingsUiLanguageSystem": "系统默认",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "新功能",
   "changelogGotIt": "了解",
   "changelogV120I18n": "多语言: 应用、地图标签和日期格式跟随你的语言环境。可在设置或向导中覆盖。",
-  "changelogV120Wizard": "首次启动向导: 选择你的默认值（主题、语言、GPS 精度）并在一个流程中授予位置权限。",
+  "changelogV120Wizard": "首次启动向导: 选择你的默认值（主题、语言）并在一个流程中授予位置权限。",
   "changelogV120Recording": "活动记录: 带脉冲和精度圈的动画位置标记、地图上的公里标记、按住停止 3 秒以结束（无意外点击）、自动跳转到统计页面。",
   "changelogV120Stats": "活动统计: 每公里分段图表,带配速 ⇄ 速度切换、D+ 海拔增益（Strava/Garmin 标准）。",
   "changelogV120Share": "通过系统分享菜单将活动作为带地图和统计的卡片分享。",

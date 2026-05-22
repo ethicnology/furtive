@@ -44,8 +44,6 @@
   "onboardSaveError": "Valintojen tallennus epäonnistui: {error}",
 
   "settingsThemeLabel": "Teema",
-  "settingsAccuracyLabel": "GPS-tarkkuus",
-  "settingsAccuracyHint": "Pienin etäisyys (m) tallennettujen pisteiden välillä. Pienempi = enemmän tarkkuutta, enemmän akun kulutusta. 0 = jokainen piste.",
   "settingsUiLanguageLabel": "Sovelluksen kieli",
   "settingsUiLanguageSystem": "Järjestelmän oletus",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Uutta",
   "changelogGotIt": "Selvä",
   "changelogV120I18n": "Monikielisyys: sovellus, kartan tekstit ja päivämäärämuodot seuraavat aluetietoasi. Muutettavissa asetuksista tai ohjatusta toiminnosta.",
-  "changelogV120Wizard": "Ensimmäisen käynnistyksen ohjattu toiminto: valitse oletusasetukset (teema, kieli, GPS-tarkkuus) ja anna sijainnin käyttöoikeudet yhdellä kertaa.",
+  "changelogV120Wizard": "Ensimmäisen käynnistyksen ohjattu toiminto: valitse oletusasetukset (teema, kieli) ja anna sijainnin käyttöoikeudet yhdellä kertaa.",
   "changelogV120Recording": "Aktiviteetin tallennus: animoitu sijaintimerkki sykkivällä pulssilla ja tarkkuusympyrällä, kilometrimerkit kartalla, pidä Pysäytä-painiketta 3 sekuntia lopettaaksesi (ei vahinkopainalluksia), automaattinen ohjaus tilastoihin.",
   "changelogV120Stats": "Aktiviteetin tilastot: kilometriväliaikojen kaavio tahti ⇄ nopeus -kytkimellä, D+ nousu (Strava/Garmin-käytäntö).",
   "changelogV120Share": "Jaa aktiviteetti korttina kartalla ja tilastoilla järjestelmän jakovalikon kautta.",

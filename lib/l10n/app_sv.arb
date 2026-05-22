@@ -44,8 +44,6 @@
   "onboardSaveError": "Kunde inte spara dina val: {error}",
 
   "settingsThemeLabel": "Tema",
-  "settingsAccuracyLabel": "GPS-noggrannhet",
-  "settingsAccuracyHint": "Minimalt avstånd (m) mellan registrerade punkter. Lägre = mer detalj, mer batteri. 0 = varje position.",
   "settingsUiLanguageLabel": "Appspråk",
   "settingsUiLanguageSystem": "Systemets standard",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Nyheter",
   "changelogGotIt": "Uppfattat",
   "changelogV120I18n": "Flerspråkigt: app, kartetiketter och datumformat följer din lokal. Ändra i Inställningar eller guiden.",
-  "changelogV120Wizard": "Välkomstguide: välj dina standardvärden (tema, språk, GPS-noggrannhet) och bevilja platsbehörigheter i ett flöde.",
+  "changelogV120Wizard": "Välkomstguide: välj dina standardvärden (tema, språk) och bevilja platsbehörigheter i ett flöde.",
   "changelogV120Recording": "Aktivitetsinspelning: animerad positionsmarkör med puls och noggrannhetscirkel, kilometermarkeringar på kartan, håll Stopp i 3 sekunder för att avsluta (inga oavsiktliga tryck), automatisk omdirigering till statistik.",
   "changelogV120Stats": "Aktivitetsstatistik: kilometersplits-diagram med växlare tempo ⇄ hastighet, D+ stigning (Strava/Garmin-konvention).",
   "changelogV120Share": "Dela en aktivitet som ett kort med karta och statistik via systemets delningsmeny.",

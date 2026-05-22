@@ -44,8 +44,6 @@
   "onboardSaveError": "Nie udało się zapisać wyborów: {error}",
 
   "settingsThemeLabel": "Motyw",
-  "settingsAccuracyLabel": "Dokładność GPS",
-  "settingsAccuracyHint": "Minimalna odległość (m) między rejestrowanymi punktami. Mniej = więcej szczegółów, więcej baterii. 0 = każdy punkt.",
   "settingsUiLanguageLabel": "Język aplikacji",
   "settingsUiLanguageSystem": "Domyślny systemowy",
 
@@ -116,7 +114,7 @@
   "changelogTitle": "Nowości",
   "changelogGotIt": "Rozumiem",
   "changelogV120I18n": "Wielojęzyczność: aplikacja, etykiety mapy i formaty dat dostosowują się do twojej lokalizacji. Zmiana w Ustawieniach lub kreatorze.",
-  "changelogV120Wizard": "Kreator pierwszego uruchomienia: wybierz domyślne ustawienia (motyw, język, dokładność GPS) i udziel uprawnień lokalizacji w jednym przepływie.",
+  "changelogV120Wizard": "Kreator pierwszego uruchomienia: wybierz domyślne ustawienia (motyw, język) i udziel uprawnień lokalizacji w jednym przepływie.",
   "changelogV120Recording": "Nagrywanie aktywności: animowany znacznik pozycji z pulsem i kołem dokładności, znaczniki kilometrów na mapie, przytrzymaj Stop przez 3 sekundy, aby zakończyć (bez przypadkowych dotknięć), automatyczne przekierowanie do statystyk.",
   "changelogV120Stats": "Statystyki aktywności: wykres odcinków kilometrowych z przełącznikiem tempo ⇄ prędkość, przewyższenie D+ (konwencja Strava/Garmin).",
   "changelogV120Share": "Udostępniaj aktywność jako kartę z mapą i statystykami przez systemowe menu udostępniania.",
