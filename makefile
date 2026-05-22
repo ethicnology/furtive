@@ -1,4 +1,4 @@
-.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible
 
 fvm-check:
 	@echo "🔍 Checking FVM"
@@ -21,7 +21,7 @@ clean:
 
 deps:
 	@echo "🏃 Fetch dependencies"
-	@fvm flutter pub get
+	@fvm flutter pub get --enforce-lockfile
 
 build-runner:
 	@echo "🏗️ Build runner"
@@ -109,16 +109,46 @@ ifneq ($(strip $(PROTOMAPS_URL)),)
   DART_DEFINES += --dart-define=PROTOMAPS_URL=$(PROTOMAPS_URL)
 endif
 
+# Pin every timestamp the build embeds (zip entries, .class files, manifest
+# attrs) to the source commit so builds are reproducible across hosts and
+# wall-clock times. Honored by Gradle/AGP, Kotlin compiler, Flutter tools.
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --format=%ct 2>/dev/null || echo 0)
+
 apk: container-app
 	@echo "🔨 Building $(FORMAT) ($(MODE)) via $(CONTAINER)"
+	@echo "   SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)"
 	@$(CONTAINER) rm -f furtive-build > /dev/null 2>&1 || true
 	@$(CONTAINER) run --name furtive-build \
 		--ulimit nofile=65536:65536 \
+		-e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		furtive-app bash -c 'cd /app && $(FLUTTER_BUILD) $(DART_DEFINES)'
 	@$(CONTAINER) cp furtive-build:$(CONTAINER_OUTPUT) $(HOST_OUTPUT)
 	@$(CONTAINER) rm furtive-build > /dev/null
 	@echo "✅ Output extracted: $(HOST_OUTPUT)"
 	@sha256sum $(HOST_OUTPUT) 2>/dev/null || shasum -a 256 $(HOST_OUTPUT)
+
+# Build twice with identical inputs and compare SHA-256. Passes if bytes
+# match, fails loudly with a diff hint otherwise. Use this in CI to catch
+# reproducibility regressions early.
+verify-reproducible:
+	@echo "🔁 Reproducibility check: building twice and comparing"
+	@$(MAKE) apk MODE=$(or $(MODE),release) FORMAT=$(or $(FORMAT),apk) PROTOMAPS_KEY=$(PROTOMAPS_KEY) PROTOMAPS_URL=$(PROTOMAPS_URL)
+	@mv $(HOST_OUTPUT) $(HOST_OUTPUT).run1
+	@$(MAKE) apk MODE=$(or $(MODE),release) FORMAT=$(or $(FORMAT),apk) PROTOMAPS_KEY=$(PROTOMAPS_KEY) PROTOMAPS_URL=$(PROTOMAPS_URL)
+	@mv $(HOST_OUTPUT) $(HOST_OUTPUT).run2
+	@SUM1=$$(sha256sum $(HOST_OUTPUT).run1 2>/dev/null || shasum -a 256 $(HOST_OUTPUT).run1); \
+	 SUM2=$$(sha256sum $(HOST_OUTPUT).run2 2>/dev/null || shasum -a 256 $(HOST_OUTPUT).run2); \
+	 echo "run1: $$SUM1"; \
+	 echo "run2: $$SUM2"; \
+	 H1=$$(echo $$SUM1 | awk '{print $$1}'); \
+	 H2=$$(echo $$SUM2 | awk '{print $$1}'); \
+	 if [ "$$H1" = "$$H2" ]; then \
+	   echo "✅ Bit-identical"; \
+	   rm -f $(HOST_OUTPUT).run2; mv $(HOST_OUTPUT).run1 $(HOST_OUTPUT); \
+	 else \
+	   echo "❌ Differs. Investigate with: diffoscope $(HOST_OUTPUT).run1 $(HOST_OUTPUT).run2"; \
+	   exit 1; \
+	 fi
 
 PROJECT := $(notdir $(CURDIR))
 

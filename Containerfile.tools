@@ -1,4 +1,6 @@
-FROM --platform=linux/amd64 debian:trixie
+# Pinned digest for reproducibility. Update by running:
+#   podman pull debian:trixie && podman image inspect debian:trixie --format '{{.Digest}}'
+FROM --platform=linux/amd64 debian:trixie@sha256:b1e30180b5678df3c17d6b0e659f7107ae4c299506e97427a9373640804db927
 
 ENV DEBIAN_FRONTEND=noninteractive
 
