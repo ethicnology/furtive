@@ -1,4 +1,5 @@
 *mapper.dart
+lib/l10n/app_localizations*.dart
 
 # Miscellaneous
 *.class

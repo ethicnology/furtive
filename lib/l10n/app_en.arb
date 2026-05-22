@@ -21,7 +21,7 @@
   "btnApply": "Apply",
   "btnStarGitHub": "Star on GitHub",
   "btnSponsor": "Sponsor",
-  "linkOpenFailed": "Couldn''t open {url}",
+  "linkOpenFailed": "Couldn't open {url}",
   "@linkOpenFailed": {
     "placeholders": {
       "url": { "type": "String" }
@@ -35,7 +35,7 @@
       "duration": { "type": "String" }
     }
   },
-  "shareFailed": "Couldn''t share activity: {error}",
+  "shareFailed": "Couldn't share activity: {error}",
   "@shareFailed": {
     "placeholders": {
       "error": { "type": "String" }
@@ -52,7 +52,7 @@
   "menuLogs": "Logs",
 
   "onboardWelcomeTitle": "Welcome to Furtive",
-  "onboardWelcomeSubtitle": "Privacy-first activity tracking. No accounts, no telemetry, no Google services. Let''s pick a few defaults.",
+  "onboardWelcomeSubtitle": "Privacy-first activity tracking. No accounts, no telemetry, no Google services. Let's pick a few defaults.",
   "onboardSettingsTitle": "Map settings",
   "onboardSettingsSubtitle": "Pick your defaults — you can change them later in settings.",
   "onboardPermissionsTitle": "Permissions",
@@ -65,7 +65,6 @@
   },
 
   "settingsThemeLabel": "Theme",
-  "settingsLanguageLabel": "Language",
   "settingsAccuracyLabel": "GPS accuracy",
   "settingsAccuracyHint": "Minimum distance (m) between recorded points. Lower = more detail, more battery. 0 = every fix.",
   "settingsUiLanguageLabel": "App language",
@@ -73,7 +72,6 @@
 
   "preferencesTitle": "Preferences",
   "prefMapTheme": "Map Theme",
-  "prefMapLanguage": "Map Language",
   "prefAppLanguage": "App Language",
 
   "permissionsTitle": "Permissions",
@@ -168,10 +166,13 @@
   "supportTitle": "Support Development",
   "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
 
-  "changelogTitle": "What''s new",
+  "changelogTitle": "What's new",
   "changelogGotIt": "Got it",
-  "changelogV120Share": "Share an activity as a card with map and stats.",
-  "changelogV120GpxImport": "Import GPX files exported from other apps (Garmin, Strava, etc.).",
-  "changelogV120LocaleDates": "Activity dates now follow your locale''s format.",
-  "changelogV120Stability": "Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation."
+  "changelogV120I18n": "Multi-language: app, map labels, and date formats follow your locale — English, French, Russian, Ukrainian. Override in Settings or the wizard.",
+  "changelogV120Wizard": "First-launch wizard: pick your defaults (theme, language, GPS accuracy) and grant location permissions in one flow.",
+  "changelogV120Recording": "Activity recording: animated location marker with pulse and accuracy circle, kilometre markers on the map, hold Stop for 3 seconds to end (no accidental taps), auto-redirect to stats.",
+  "changelogV120Stats": "Activity stats: per-kilometre splits chart with pace ⇄ speed toggle, D+ elevation gain (matches Strava/Garmin convention).",
+  "changelogV120Share": "Share an activity as a card with map and stats via the system share sheet.",
+  "changelogV120GpxImport": "Import GPX files from other apps (Garmin, Strava, etc.) — both track and route points supported.",
+  "changelogV120Stability": "Stability: hardened against junk GPS fixes, background auto-cease watchdog, automatic log rotation, stricter GPX validation, HTTP timeouts."
 }

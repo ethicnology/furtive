@@ -62,10 +62,24 @@ const Set<String> protomapsSupportedLanguages = {
   'vi',
 };
 
+/// Resolve the best Protomaps label language for the given locale tag, or
+/// for the device locale when [userLocaleTag] is null. Falls back to 'en'
+/// when no match exists. Special-cases Chinese: a bare 'zh' maps to
+/// 'zh-Hans' (simplified), which has the wider speaker base.
+String resolveMapLabelLanguage(String? userLocaleTag) {
+  final tag =
+      userLocaleTag ?? PlatformDispatcher.instance.locale.toLanguageTag();
+  if (protomapsSupportedLanguages.contains(tag)) return tag;
+  final lang = tag.split(RegExp(r'[-_]')).first;
+  if (lang == 'zh') return 'zh-Hans';
+  if (protomapsSupportedLanguages.contains(lang)) return lang;
+  return 'en';
+}
+
 class MapRemoteDataSource {
   Future<Style> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
-    MapLanguageColumn language = MapLanguageColumn.en,
+    String? userLocaleTag,
   }) async {
     if (_protomapsKey.isEmpty) {
       throw Exception(
@@ -73,7 +87,7 @@ class MapRemoteDataSource {
       );
     }
 
-    final lang = language.name;
+    final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl =
         '$_protomapsUrl/${theme.name}/$lang.json?key=$_protomapsKey';
 

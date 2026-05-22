@@ -14,9 +14,12 @@ List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
   ChangelogRelease(
     version: '1.2.0',
     bullets: [
+      l10n.changelogV120I18n,
+      l10n.changelogV120Wizard,
+      l10n.changelogV120Recording,
+      l10n.changelogV120Stats,
       l10n.changelogV120Share,
       l10n.changelogV120GpxImport,
-      l10n.changelogV120LocaleDates,
       l10n.changelogV120Stability,
     ],
   ),

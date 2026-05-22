@@ -67,8 +67,6 @@ class _PreferencesPageState extends State<PreferencesPage> {
                   children: [
                     _buildMapThemeSection(context, state),
                     const SizedBox(height: 24),
-                    _buildMapLanguageSection(context, state),
-                    const SizedBox(height: 24),
                     _buildAppLanguageSection(context, state),
                     const Spacer(),
                     SizedBox(
@@ -117,26 +115,6 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
         labelFor: (t) => t.name.toUpperCase(),
         onChanged:
             (v) => context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
-      ),
-    ],
-  );
-}
-
-Widget _buildMapLanguageSection(BuildContext context, PreferencesState state) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        AppLocalizations.of(context).prefMapLanguage,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 8),
-      LabeledDropdown<MapLanguageEntity>(
-        value: state.preferences.mapLanguage,
-        items: MapLanguageEntity.values,
-        labelFor: (l) => l.name.toUpperCase(),
-        onChanged:
-            (v) => context.read<PreferencesBloc>().add(ChangeMapLanguage(v)),
       ),
     ],
   );

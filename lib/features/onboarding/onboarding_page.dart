@@ -39,7 +39,6 @@ class _OnboardingPageState extends State<OnboardingPage>
   late final PermissionsBloc _permissionsBloc;
 
   MapThemeEntity _theme = MapThemeEntity.dark;
-  MapLanguageEntity _language = MapLanguageEntity.en;
   int _accuracyMeters = 0;
   String? _uiLocale; // null = follow system
   int _currentStep = 0;
@@ -89,7 +88,10 @@ class _OnboardingPageState extends State<OnboardingPage>
       await _updatePreferences(
         PreferencesEntity(
           mapTheme: _theme,
-          mapLanguage: _language,
+          // mapLanguage is legacy: the column still exists on disk but is
+          // no longer user-editable. Map labels follow uiLocale at fetch
+          // time. Default to English here for new installs.
+          mapLanguage: MapLanguageEntity.en,
           accuracyInMeters: _accuracyMeters,
           hasCompletedOnboarding: true,
           uiLocale: _uiLocale,
@@ -145,11 +147,9 @@ class _OnboardingPageState extends State<OnboardingPage>
                     _WelcomeStep(),
                     _SettingsStep(
                       theme: _theme,
-                      language: _language,
                       accuracyMeters: _accuracyMeters,
                       uiLocale: _uiLocale,
                       onThemeChanged: (v) => setState(() => _theme = v),
-                      onLanguageChanged: (v) => setState(() => _language = v),
                       onAccuracyChanged:
                           (v) => setState(() => _accuracyMeters = v),
                       onUiLocaleChanged: (v) {
@@ -293,21 +293,17 @@ class _WelcomeStep extends StatelessWidget {
 
 class _SettingsStep extends StatelessWidget {
   final MapThemeEntity theme;
-  final MapLanguageEntity language;
   final int accuracyMeters;
   final String? uiLocale;
   final ValueChanged<MapThemeEntity> onThemeChanged;
-  final ValueChanged<MapLanguageEntity> onLanguageChanged;
   final ValueChanged<int> onAccuracyChanged;
   final ValueChanged<String?> onUiLocaleChanged;
 
   const _SettingsStep({
     required this.theme,
-    required this.language,
     required this.accuracyMeters,
     required this.uiLocale,
     required this.onThemeChanged,
-    required this.onLanguageChanged,
     required this.onAccuracyChanged,
     required this.onUiLocaleChanged,
   });
@@ -332,18 +328,6 @@ class _SettingsStep extends StatelessWidget {
               items: MapThemeEntity.values,
               labelFor: (t) => t.name.toUpperCase(),
               onChanged: onThemeChanged,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.settingsLanguageLabel,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            LabeledDropdown<MapLanguageEntity>(
-              value: language,
-              items: MapLanguageEntity.values,
-              labelFor: (l) => l.name.toUpperCase(),
-              onChanged: onLanguageChanged,
             ),
             const SizedBox(height: 24),
             Text(

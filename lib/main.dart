@@ -9,6 +9,7 @@ import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/presentation/pages/check_permission_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:path_provider/path_provider.dart';
 import 'core/locator.dart';
 import 'core/logs.dart';
@@ -18,6 +19,10 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      // Load intl date-format symbols for every locale we ship. Without this,
+      // DateFormat.yMd('zh').format(...) throws LocaleDataException for any
+      // non-en locale.
+      await initializeDateFormatting();
       await Global.init();
 
       final appDir = await getApplicationDocumentsDirectory();
@@ -34,7 +39,9 @@ void main() {
       Locale? storedLocale;
       try {
         final prefs = await GetPreferencesUseCase()();
-        if (prefs.uiLocale != null) storedLocale = Locale(prefs.uiLocale!);
+        if (prefs.uiLocale != null) {
+          storedLocale = parseLocaleTag(prefs.uiLocale!);
+        }
       } catch (e, st) {
         logs.warning('Failed to read locale preference', error: e, trace: st);
       }

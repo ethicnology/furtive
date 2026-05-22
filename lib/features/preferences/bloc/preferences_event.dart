@@ -20,12 +20,6 @@ class ChangeMapTheme extends PreferencesEvent {
   const ChangeMapTheme(this.theme);
 }
 
-class ChangeMapLanguage extends PreferencesEvent {
-  final MapLanguageEntity language;
-
-  const ChangeMapLanguage(this.language);
-}
-
 class ChangeAccuracy extends PreferencesEvent {
   final int accuracyInMeters;
 

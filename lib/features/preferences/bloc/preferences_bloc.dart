@@ -18,7 +18,6 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<LoadPreferences>(_onLoadPreferences);
     on<UpdatePreferences>(_onUpdatePreferences);
     on<ChangeMapTheme>(_onChangeMapTheme);
-    on<ChangeMapLanguage>(_onChangeMapLanguage);
     on<ChangeAccuracy>(_onChangeAccuracy);
     on<ChangeUiLocale>(_onChangeUiLocale);
   }
@@ -45,16 +44,6 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
 
   void _onChangeMapTheme(ChangeMapTheme event, Emitter<PreferencesState> emit) {
     final newPreferences = state.preferences.copyWith(mapTheme: event.theme);
-    emit(state.copyWith(preferences: newPreferences));
-  }
-
-  void _onChangeMapLanguage(
-    ChangeMapLanguage event,
-    Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      mapLanguage: event.language,
-    );
     emit(state.copyWith(preferences: newPreferences));
   }
 

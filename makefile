@@ -1,4 +1,4 @@
-.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations
 
 fvm-check:
 	@echo "🔍 Checking FVM"
@@ -34,6 +34,19 @@ build-runner-watch:
 drift-migrations:
 	@echo "🔄 Create schema and sum migrations"
 	@fvm dart run drift_dev make-migrations
+
+translations:
+	@echo "🌐 Generating localizations from lib/l10n/*.arb"
+	@fvm flutter gen-l10n
+	@echo "🔎 Checking ARB key parity against app_en.arb"
+	@python3 -c "import json, os, sys; \
+d = 'lib/l10n'; \
+arbs = {f[4:-4]: {k for k in json.load(open(os.path.join(d,f))).keys() if not k.startswith('@')} \
+        for f in sorted(os.listdir(d)) if f.startswith('app_') and f.endswith('.arb')}; \
+en = arbs['en']; \
+bad = [(loc, sorted(en - keys), sorted(keys - en)) for loc, keys in arbs.items() if loc != 'en' and (en - keys or keys - en)]; \
+print(f'  {len(arbs)} locales, {len(en)} keys each'); \
+sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing={m} extra={e}') for loc,m,e in bad], sys.exit(1))"
 
 ios-pod-update:
 	@if [ "$$(uname)" != "Darwin" ]; then echo "Skipping pod update (not macOS)"; exit 0; fi

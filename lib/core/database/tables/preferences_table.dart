@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/widgets.dart' show Locale;
 
 @DataClassName('PreferencesRow')
 class Preferences extends Table {
@@ -23,23 +22,8 @@ class Preferences extends Table {
 
 enum MapThemeColumn { light, dark }
 
-/// Subset of the 41 BCP-47 codes accepted by the Protomaps v5 style endpoint
-/// (docs.protomaps.com/basemaps/localization). Limited to the languages the
-/// app's UI itself supports — extending the picker beyond the UI languages
-/// has no value since the user wouldn't be able to read the surrounding
-/// chrome anyway.
-enum MapLanguageColumn {
-  en,
-  fr,
-  ru,
-  uk;
-
-  /// Pick the best Protomaps label language for a Flutter [locale]. Falls
-  /// back to English when [locale]'s language code isn't one of ours.
-  static MapLanguageColumn fromLocale(Locale locale) {
-    for (final candidate in values) {
-      if (candidate.name == locale.languageCode) return candidate;
-    }
-    return MapLanguageColumn.en;
-  }
-}
+/// Legacy column: map-label language is now derived from the UI locale at
+/// fetch time (see `resolveMapLabelLanguage` in `map_remote_data_source`).
+/// The enum + column are kept to avoid a SQLite schema change; new rows
+/// always write `en` and the value is never read back into UI flows.
+enum MapLanguageColumn { en, fr, ru, uk }
