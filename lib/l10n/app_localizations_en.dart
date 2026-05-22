@@ -354,24 +354,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get changelogV120Stability =>
       'Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation.';
-
-  @override
-  String get changelogV110I18n =>
-      'App is now available in English, French, Russian and Ukrainian.';
-
-  @override
-  String get changelogV110Splits =>
-      'Per-kilometre splits chart on the activity detail page, with pace ⇄ speed toggle.';
-
-  @override
-  String get changelogV110HoldToStop =>
-      'Hold the Stop button for 3 seconds to end an activity — no accidental taps.';
-
-  @override
-  String get changelogV110MapLabels =>
-      'Map labels now render in your selected language.';
-
-  @override
-  String get changelogV110NanDefense =>
-      'Hardened GPS pipeline against junk fixes that used to crash the activity detail map.';
 }

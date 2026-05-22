@@ -173,10 +173,5 @@
   "changelogV120Share": "Share an activity as a card with map and stats.",
   "changelogV120GpxImport": "Import GPX files exported from other apps (Garmin, Strava, etc.).",
   "changelogV120LocaleDates": "Activity dates now follow your locale''s format.",
-  "changelogV120Stability": "Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation.",
-  "changelogV110I18n": "App is now available in English, French, Russian and Ukrainian.",
-  "changelogV110Splits": "Per-kilometre splits chart on the activity detail page, with pace ⇄ speed toggle.",
-  "changelogV110HoldToStop": "Hold the Stop button for 3 seconds to end an activity — no accidental taps.",
-  "changelogV110MapLabels": "Map labels now render in your selected language.",
-  "changelogV110NanDefense": "Hardened GPS pipeline against junk fixes that used to crash the activity detail map."
+  "changelogV120Stability": "Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation."
 }

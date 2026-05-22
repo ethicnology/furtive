@@ -354,24 +354,4 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get changelogV120Stability =>
       'Стабільність: укріплений GPS-конвеєр, автоматична ротація журналів, суворіша валідація GPX.';
-
-  @override
-  String get changelogV110I18n =>
-      'Застосунок доступний англійською, французькою, російською та українською мовами.';
-
-  @override
-  String get changelogV110Splits =>
-      'Графік відрізків по кілометрах на сторінці тренування, перемикач темп ⇄ швидкість.';
-
-  @override
-  String get changelogV110HoldToStop =>
-      'Утримуй Стоп 3 секунди, щоб завершити тренування — без випадкових натискань.';
-
-  @override
-  String get changelogV110MapLabels =>
-      'Підписи на мапі відображаються обраною мовою.';
-
-  @override
-  String get changelogV110NanDefense =>
-      'GPS-конвеєр стійкий до сміттєвих координат, через які падала мапа тренування.';
 }

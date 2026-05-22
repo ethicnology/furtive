@@ -20,14 +20,4 @@ List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
       l10n.changelogV120Stability,
     ],
   ),
-  ChangelogRelease(
-    version: '1.1.0',
-    bullets: [
-      l10n.changelogV110I18n,
-      l10n.changelogV110Splits,
-      l10n.changelogV110HoldToStop,
-      l10n.changelogV110MapLabels,
-      l10n.changelogV110NanDefense,
-    ],
-  ),
 ];

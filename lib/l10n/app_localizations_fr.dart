@@ -357,24 +357,4 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get changelogV120Stability =>
       'Stabilité : pipeline GPS renforcé, rotation automatique des journaux, validation GPX plus stricte.';
-
-  @override
-  String get changelogV110I18n =>
-      'L\'\'application est désormais disponible en anglais, français, russe et ukrainien.';
-
-  @override
-  String get changelogV110Splits =>
-      'Graphique des splits par kilomètre sur la fiche d\'\'activité, avec bascule allure ⇄ vitesse.';
-
-  @override
-  String get changelogV110HoldToStop =>
-      'Maintiens Stop 3 secondes pour terminer une activité — fini les arrêts accidentels.';
-
-  @override
-  String get changelogV110MapLabels =>
-      'Les libellés de la carte s\'\'affichent maintenant dans la langue sélectionnée.';
-
-  @override
-  String get changelogV110NanDefense =>
-      'Le pipeline GPS résiste aux relevés aberrants qui faisaient planter la carte de la fiche d\'\'activité.';
 }
