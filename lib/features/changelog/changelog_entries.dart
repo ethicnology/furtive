@@ -12,6 +12,15 @@ class ChangelogRelease {
 /// versions on disk; rotate older ones out as they become irrelevant.
 List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
   ChangelogRelease(
+    version: '1.2.0',
+    bullets: [
+      l10n.changelogV120Share,
+      l10n.changelogV120GpxImport,
+      l10n.changelogV120LocaleDates,
+      l10n.changelogV120Stability,
+    ],
+  ),
+  ChangelogRelease(
     version: '1.1.0',
     bullets: [
       l10n.changelogV110I18n,

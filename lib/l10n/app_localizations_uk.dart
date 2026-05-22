@@ -340,6 +340,22 @@ class AppLocalizationsUk extends AppLocalizations {
   String get changelogGotIt => 'Зрозуміло';
 
   @override
+  String get changelogV120Share =>
+      'Поділися тренуванням як карточкою з мапою та статистикою.';
+
+  @override
+  String get changelogV120GpxImport =>
+      'Імпорт GPX-файлів з інших застосунків (Garmin, Strava тощо).';
+
+  @override
+  String get changelogV120LocaleDates =>
+      'Дати тренувань тепер у форматі твоєї локалі.';
+
+  @override
+  String get changelogV120Stability =>
+      'Стабільність: укріплений GPS-конвеєр, автоматична ротація журналів, суворіша валідація GPX.';
+
+  @override
   String get changelogV110I18n =>
       'Застосунок доступний англійською, французькою, російською та українською мовами.';
 

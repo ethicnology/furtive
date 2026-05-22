@@ -702,6 +702,30 @@ abstract class AppLocalizations {
   /// **'Got it'**
   String get changelogGotIt;
 
+  /// No description provided for @changelogV120Share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share an activity as a card with map and stats.'**
+  String get changelogV120Share;
+
+  /// No description provided for @changelogV120GpxImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import GPX files exported from other apps (Garmin, Strava, etc.).'**
+  String get changelogV120GpxImport;
+
+  /// No description provided for @changelogV120LocaleDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity dates now follow your locale\'\'s format.'**
+  String get changelogV120LocaleDates;
+
+  /// No description provided for @changelogV120Stability.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation.'**
+  String get changelogV120Stability;
+
   /// No description provided for @changelogV110I18n.
   ///
   /// In en, this message translates to:

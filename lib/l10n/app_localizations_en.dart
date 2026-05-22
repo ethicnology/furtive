@@ -340,6 +340,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changelogGotIt => 'Got it';
 
   @override
+  String get changelogV120Share =>
+      'Share an activity as a card with map and stats.';
+
+  @override
+  String get changelogV120GpxImport =>
+      'Import GPX files exported from other apps (Garmin, Strava, etc.).';
+
+  @override
+  String get changelogV120LocaleDates =>
+      'Activity dates now follow your locale\'\'s format.';
+
+  @override
+  String get changelogV120Stability =>
+      'Stability: hardened GPS pipeline, automatic log rotation, stricter GPX validation.';
+
+  @override
   String get changelogV110I18n =>
       'App is now available in English, French, Russian and Ukrainian.';
 

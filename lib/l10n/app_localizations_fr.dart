@@ -343,6 +343,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get changelogGotIt => 'Compris';
 
   @override
+  String get changelogV120Share =>
+      'Partage une activité sous forme de carte avec carte et statistiques.';
+
+  @override
+  String get changelogV120GpxImport =>
+      'Importe des fichiers GPX exportés depuis d\'\'autres apps (Garmin, Strava, etc.).';
+
+  @override
+  String get changelogV120LocaleDates =>
+      'Les dates d\'\'activité suivent maintenant le format de ta langue.';
+
+  @override
+  String get changelogV120Stability =>
+      'Stabilité : pipeline GPS renforcé, rotation automatique des journaux, validation GPX plus stricte.';
+
+  @override
   String get changelogV110I18n =>
       'L\'\'application est désormais disponible en anglais, français, russe et ukrainien.';
 
