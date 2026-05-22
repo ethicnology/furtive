@@ -1,6 +1,12 @@
-# Pinned digest for reproducibility. Update by running:
-#   podman pull debian:trixie && podman image inspect debian:trixie --format '{{.Digest}}'
-FROM --platform=linux/amd64 debian:trixie@sha256:b1e30180b5678df3c17d6b0e659f7107ae4c299506e97427a9373640804db927
+# Pinned multi-arch index digest for reproducibility. MUST be the manifest
+# LIST digest (so `--platform=linux/amd64` resolves correctly) — a per-arch
+# manifest digest will break cross-arch builds with "Exec format error".
+# Refresh by running:
+#   TOKEN=$(curl -s 'https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/debian:pull' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])') && \
+#   curl -sI -H "Authorization: Bearer $TOKEN" \
+#     -H 'Accept: application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.index.v1+json' \
+#     https://registry-1.docker.io/v2/library/debian/manifests/trixie | grep -i docker-content-digest
+FROM --platform=linux/amd64 debian:trixie@sha256:4ae67669760b807c19f23902a3fd7c121a6a70cf2ae709035674b23e712e4d62
 
 ENV DEBIAN_FRONTEND=noninteractive
 
