@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
+import 'package:furtive/core/theme.dart';
+import 'package:furtive/l10n/app_localizations.dart';
 
 class ActivityStatsWidget extends StatelessWidget {
   final ActivityEntity activity;
   final Duration elapsedTime;
+  // When true (live recording overlay on the map), paint a black backdrop
+  // so the stats stand out over the map tiles. When false (inside a themed
+  // bottom sheet), inherit the parent surface so we don't render a black
+  // rectangle inside the blueGrey sheet.
+  final bool opaqueBackground;
 
   const ActivityStatsWidget({
     super.key,
     required this.activity,
     required this.elapsedTime,
+    this.opaqueBackground = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final l10n = AppLocalizations.of(context);
+    final fg = AppColors.tertiary.foreground;
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(color: Colors.black),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -25,9 +34,9 @@ class ActivityStatsWidget extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  'Recording Activity',
+                  l10n.statsRecordingTitle,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: fg,
                     fontSize: 24,
                     fontWeight: FontWeight.w500,
                   ),
@@ -36,34 +45,35 @@ class ActivityStatsWidget extends StatelessWidget {
               Text(
                 elapsedTime.toHHMMSS(),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: fg,
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 6),
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: 145),
+            constraints: const BoxConstraints(maxHeight: 145),
             child: PageView(
               children: [
                 _buildStatsPage(
-                  label: 'Active',
+                  l10n: l10n,
                   duration: activity.activeDuration.toHHMMSS(),
-                  distance: activity.activeDistanceInKm.toStringAsFixed(1),
-                  speed: activity.activeSpeedKmh.toStringAsFixed(1),
+                  distance: activity.activeDistanceInKm.fmt2,
+                  speed: activity.activeSpeedKmh.fmt2,
                   pace: activity.activePaceMinPerKm,
-                  elevation: activity.activeElevation,
+                  elevationGain: activity.activeElevationGain,
+                  foreground: fg,
                 ),
                 _buildStatsPage(
-                  label: 'Paused',
+                  l10n: l10n,
                   duration: activity.pausedDuration.toHHMMSS(),
-                  distance: activity.pausedDistanceInKm.toStringAsFixed(1),
-                  speed: activity.pausedSpeedKmh.toStringAsFixed(1),
+                  distance: activity.pausedDistanceInKm.fmt2,
+                  speed: activity.pausedSpeedKmh.fmt2,
                   pace: activity.pausedPaceMinPerKm,
-                  elevation: null,
+                  elevationGain: null,
+                  foreground: fg,
                 ),
               ],
             ),
@@ -71,16 +81,19 @@ class ActivityStatsWidget extends StatelessWidget {
         ],
       ),
     );
+    if (!opaqueBackground) return content;
+    return ColoredBox(color: Colors.black, child: content);
   }
 }
 
 Widget _buildStatsPage({
-  required String label,
+  required AppLocalizations l10n,
   required String duration,
   required String distance,
   required String speed,
   required String pace,
-  required ({double gain, double loss})? elevation,
+  required double? elevationGain,
+  required Color foreground,
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -93,23 +106,34 @@ Widget _buildStatsPage({
           children: [
             _StatItem(
               icon: Icons.straighten,
-              label: 'Distance',
+              label: l10n.statDistance,
               value: '$distance km',
+              foreground: foreground,
             ),
-            _StatItem(icon: Icons.timer, label: 'Pace', value: pace),
+            _StatItem(
+              icon: Icons.timer,
+              label: l10n.statPace,
+              value: pace,
+              foreground: foreground,
+            ),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _StatItem(icon: Icons.speed, label: 'Speed', value: '$speed km/h'),
-            if (elevation != null)
+            _StatItem(
+              icon: Icons.speed,
+              label: l10n.statSpeed,
+              value: '$speed km/h',
+              foreground: foreground,
+            ),
+            if (elevationGain != null)
               _StatItem(
                 icon: Icons.terrain,
-                label: 'Elevation',
-                value:
-                    '${elevation.gain.toStringAsFixed(0)}/${elevation.loss.toStringAsFixed(0)}m',
+                label: l10n.statElevation,
+                value: '${elevationGain.round()} m',
+                foreground: foreground,
               ),
           ],
         ),
@@ -122,11 +146,13 @@ class _StatItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color foreground;
 
   const _StatItem({
     required this.icon,
     required this.label,
     required this.value,
+    required this.foreground,
   });
 
   @override
@@ -134,18 +160,26 @@ class _StatItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20),
-        SizedBox(width: 8),
+        Icon(icon, size: 20, color: foreground),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: foreground,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             Text(
               value,
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: foreground,
+                fontSize: 25,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),

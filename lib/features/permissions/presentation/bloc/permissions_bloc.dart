@@ -47,11 +47,9 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
         ),
       );
     } catch (e) {
-      if (e is AppError) {
-        emit(state.copyWith(errorMessage: e));
-      } else {
-        emit(state.copyWith(errorMessage: AppError(e.toString())));
-      }
+      // B17: must clear isLoading on error or the page is stuck on a spinner
+      final err = e is AppError ? e : AppError(e.toString());
+      emit(state.copyWith(errorMessage: err, isLoading: false));
     }
   }
 

@@ -20,14 +20,9 @@ class ChangeMapTheme extends PreferencesEvent {
   const ChangeMapTheme(this.theme);
 }
 
-class ChangeMapLanguage extends PreferencesEvent {
-  final MapLanguageEntity language;
+class ChangeUiLocale extends PreferencesEvent {
+  // null = follow device locale
+  final String? languageCode;
 
-  const ChangeMapLanguage(this.language);
-}
-
-class ChangeAccuracy extends PreferencesEvent {
-  final int accuracyInMeters;
-
-  const ChangeAccuracy(this.accuracyInMeters);
+  const ChangeUiLocale(this.languageCode);
 }

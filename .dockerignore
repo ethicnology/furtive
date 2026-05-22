@@ -1,0 +1,14 @@
+.git/
+.dart_tool/
+build/
+.fvm/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+android/.gradle/
+android/build/
+android/app/build/
+**/.DS_Store
+*.apk
+*.aab

@@ -10,14 +10,14 @@ class StartActivityUseCase {
     final startedAt = DateTime.now().toUtc();
     final newActivity = ActivityEntity(
       id: startedAt.toIso8601String(),
-      name: 'Track',
+      name: kDefaultActivityName,
       description: '',
       createdAt: startedAt,
       startedAt: startedAt,
       stoppedAt: null,
     );
 
-    activityRepository.store(newActivity);
+    await activityRepository.store(newActivity);
     return newActivity;
   }
 }

@@ -1,0 +1,72 @@
+# Pinned digest for reproducibility. Update by running:
+#   podman pull debian:trixie && podman image inspect debian:trixie --format '{{.Digest}}'
+FROM --platform=linux/amd64 debian:trixie@sha256:b1e30180b5678df3c17d6b0e659f7107ae4c299506e97427a9373640804db927
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG USERNAME="furtive"
+ENV USER=$USERNAME
+ARG FVM_VERSION="4.1.0"
+ARG FLUTTER_VERSION="3.41.9"
+ARG ANDROID_CMDLINE_TOOLS_VERSION="14742923"
+
+# Android versions (passed via --build-arg from makefile, defaults as fallback)
+ARG JVM_TARGET="21"
+ARG ANDROID_API_LEVEL="36"
+ARG ANDROID_BUILD_TOOLS="34.0.0"
+ARG ANDROID_NDK="29.0.14206865"
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# Install OS dependencies
+RUN apt-get update && apt-get install -y \
+    sudo \
+    ca-certificates \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    wget \
+    make \
+    jq \
+    openjdk-${JVM_TARGET}-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create user
+RUN adduser --disabled-password --gecos '' $USER \
+ && adduser $USER sudo \
+ && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+USER $USER
+
+# Install FVM
+RUN curl -fsSL https://fvm.app/install.sh -o /tmp/fvm-install.sh \
+ && bash /tmp/fvm-install.sh ${FVM_VERSION} \
+ && rm /tmp/fvm-install.sh
+ENV PATH="/home/$USER/fvm/bin:${PATH}"
+
+# Install Flutter via FVM
+RUN fvm install ${FLUTTER_VERSION} \
+ && fvm global ${FLUTTER_VERSION}
+ENV PATH="/home/$USER/fvm/default/bin:${PATH}"
+
+# Download Android cmdline-tools
+RUN sudo mkdir -p ${ANDROID_HOME}/cmdline-tools \
+ && sudo wget -q https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS_VERSION}_latest.zip -O /tmp/android-cmdline-tools.zip \
+ && sudo unzip -q /tmp/android-cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools \
+ && sudo mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest \
+ && sudo rm /tmp/android-cmdline-tools.zip \
+ && sudo chown -R $USER ${ANDROID_HOME}
+
+# Install Android SDK components
+RUN yes | sdkmanager --sdk_root=${ANDROID_HOME} --licenses \
+ && sdkmanager --sdk_root=${ANDROID_HOME} "platform-tools" \
+ && sdkmanager --sdk_root=${ANDROID_HOME} "platforms;android-${ANDROID_API_LEVEL}" \
+ && sdkmanager --sdk_root=${ANDROID_HOME} "build-tools;${ANDROID_BUILD_TOOLS}" \
+ && sdkmanager --sdk_root=${ANDROID_HOME} "ndk;${ANDROID_NDK}"
+
+# Pre-cache Flutter engine artifacts and disable telemetry
+RUN fvm flutter precache --android \
+ && fvm flutter config --no-analytics --android-sdk=${ANDROID_HOME} \
+ && fvm dart --disable-analytics

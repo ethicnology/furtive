@@ -20,7 +20,7 @@ class ScoreActivityUseCase {
       time: DateTime.now().toUtc(),
     );
 
-    activityRepository.score(activityId, [newPoint]);
+    await activityRepository.score(activityId, [newPoint]);
 
     return newPoint;
   }

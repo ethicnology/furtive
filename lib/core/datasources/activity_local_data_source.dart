@@ -27,20 +27,25 @@ class ActivityLocalDataSource {
   }
 
   Future<void> score(String activityId, List<ActivityPointModel> points) async {
-    for (final point in points) {
-      await db
-          .into(db.activityPoints)
-          .insert(
-            ActivityPointsCompanion(
-              activityId: Value(activityId),
-              latitude: Value(point.latitude),
-              longitude: Value(point.longitude),
-              elevation: Value(point.elevation),
-              time: Value(point.time),
-              status: Value(point.status),
-            ),
-          );
-    }
+    if (points.isEmpty) return;
+    // Batched insert: compile the statement once and run it for each point,
+    // wrapped in an implicit transaction. Orders of magnitude faster than
+    // N awaited inserts for long activities.
+    await db.batch((batch) {
+      batch.insertAll(
+        db.activityPoints,
+        points.map(
+          (point) => ActivityPointsCompanion(
+            activityId: Value(activityId),
+            latitude: Value(point.latitude),
+            longitude: Value(point.longitude),
+            elevation: Value(point.elevation),
+            time: Value(point.time),
+            status: Value(point.status),
+          ),
+        ),
+      );
+    });
   }
 
   Future<void> cease(String activityId) async {
@@ -120,16 +125,21 @@ class ActivityLocalDataSource {
   }
 
   Future<void> delete(String activityId) async {
-    final activity =
-        await (db.select(db.activities)
-          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    // Wrap both deletes in a transaction so a crash or stream-close between
+    // them can't leave orphan activity_points rows pointing at a missing
+    // activity. SQLite-level cascade isn't declared on the FK either.
+    await db.transaction(() async {
+      final activity =
+          await (db.select(db.activities)
+            ..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
-    if (activity == null) throw AppError('Activity not found');
+      if (activity == null) throw AppError('Activity not found');
 
-    await (db.delete(db.activityPoints)
-      ..where((t) => t.activityId.equals(activityId))).go();
+      await (db.delete(db.activityPoints)
+        ..where((t) => t.activityId.equals(activityId))).go();
 
-    await (db.delete(db.activities)
-      ..where((t) => t.id.equals(activityId))).go();
+      await (db.delete(db.activities)
+        ..where((t) => t.id.equals(activityId))).go();
+    });
   }
 }

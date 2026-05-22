@@ -12,7 +12,7 @@ class ExportActivityToGpxUseCase {
     final gpx = _generateGpx(activity);
 
     final fileName =
-        '${activity.name.replaceAll(' ', '_')}-${activity.startedAt.millisecondsSinceEpoch}.gpx';
+        '${_sanitizeForFilename(activity.name)}-${activity.startedAt.millisecondsSinceEpoch}.gpx';
 
     await FileSystemFacade.save(
       content: gpx,
@@ -59,6 +59,16 @@ class ExportActivityToGpxUseCase {
     buffer.writeln('</gpx>');
 
     return buffer.toString();
+  }
+
+  /// Whitelist filename chars so a user-supplied activity name can't escape
+  /// the documents directory (`..`) or use platform-reserved chars (`/`,
+  /// `\`, null, control bytes). Falls back to a default if the name has no
+  /// usable chars.
+  String _sanitizeForFilename(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final trimmed = cleaned.replaceAll(RegExp(r'^[._]+|[._]+$'), '');
+    return trimmed.isEmpty ? 'activity' : trimmed;
   }
 
   String _escapeXml(String text) {

@@ -3,6 +3,7 @@ import 'package:furtive/core/database/tables/activities_table.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 
 @DataClassName('ActivityPointsRow')
+@TableIndex(name: 'idx_activity_points_activity_id', columns: {#activityId})
 class ActivityPoints extends Table {
   IntColumn get id => integer().autoIncrement()();
   RealColumn get latitude => real()();
@@ -17,7 +18,9 @@ enum ActivityPointsStatusColumn {
   active,
   paused;
 
-  static fromEntity(ActivityPointStatusEntity status) {
+  static ActivityPointsStatusColumn fromEntity(
+    ActivityPointStatusEntity status,
+  ) {
     switch (status) {
       case ActivityPointStatusEntity.active:
         return ActivityPointsStatusColumn.active;
@@ -26,7 +29,7 @@ enum ActivityPointsStatusColumn {
     }
   }
 
-  toEntity() {
+  ActivityPointStatusEntity toEntity() {
     switch (this) {
       case ActivityPointsStatusColumn.active:
         return ActivityPointStatusEntity.active;

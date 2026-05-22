@@ -45,21 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs to access your location to track your activity when you are running.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs to access your location to track your activity when you are running.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs to access your location to track your activity when you are running in the background.</string>
+	<string>Keeps tracking accurate during long activities, even if the OS suspends the app.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
-		<string>remote-notification</string>
 	</array>
+	<!-- Export-compliance declaration: this app uses only the standard
+	     HTTPS / TLS provided by iOS, with no custom or non-exempt
+	     encryption. Without this key, TestFlight asks the question on
+	     every upload and may delay app review. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

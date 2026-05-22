@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Privacy-first: opt out of Android Auto Backup entirely.
+  Without this, the system can ship the drift sqlite DB (activities,
+  GPS points, preferences) to the user's Google Drive backup transparently.
+-->
+<full-backup-content>
+    <exclude domain="root" />
+    <exclude domain="file" />
+    <exclude domain="database" />
+    <exclude domain="sharedpref" />
+    <exclude domain="external" />
+</full-backup-content>

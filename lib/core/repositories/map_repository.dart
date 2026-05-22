@@ -10,9 +10,12 @@ class MapRepository {
 
   Future<Style> getMapConfig(PreferencesEntity preferences) async {
     final model = PreferencesModel.fromEntity(preferences);
+    // Map label language is derived from the UI locale (or device locale
+    // when there's no override). The dedicated "Map Language" picker is
+    // gone — having two language settings was redundant.
     return await remoteDataSource.getMapConfig(
       theme: model.mapTheme,
-      language: model.mapLanguage,
+      userLocaleTag: preferences.uiLocale,
     );
   }
 }

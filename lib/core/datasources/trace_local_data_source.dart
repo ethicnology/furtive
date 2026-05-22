@@ -9,29 +9,33 @@ class TraceLocalDataSource {
   TraceLocalDataSource();
 
   Future<void> store(TraceModel trace) async {
-    final traceId = await db
-        .into(db.traceMetadatas)
-        .insert(
-          TraceMetadatasCompanion(
-            name: Value(trace.name),
-            description: Value(trace.description),
-            url: Value(trace.url),
-          ),
-        );
-
-    for (final point in trace.points) {
-      await db
-          .into(db.tracePoints)
+    await db.transaction(() async {
+      final traceId = await db
+          .into(db.traceMetadatas)
           .insert(
-            TracePointsCompanion(
+            TraceMetadatasCompanion(
+              name: Value(trace.name),
+              description: Value(trace.description),
+              url: Value(trace.url),
+            ),
+          );
+
+      if (trace.points.isEmpty) return;
+      await db.batch((batch) {
+        batch.insertAll(
+          db.tracePoints,
+          trace.points.map(
+            (point) => TracePointsCompanion(
               latitude: Value(point.latitude),
               longitude: Value(point.longitude),
               elevation: Value(point.elevation),
               time: Value(point.time),
               traceId: Value(traceId),
             ),
-          );
-    }
+          ),
+        );
+      });
+    });
   }
 
   Future<List<TraceModel>> fetch() async {

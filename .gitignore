@@ -1,4 +1,5 @@
 *mapper.dart
+lib/l10n/app_localizations*.dart
 
 # Miscellaneous
 *.class
@@ -45,6 +46,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# APK build artifacts dropped in repo root
+*.apk
 
 #env
 .env

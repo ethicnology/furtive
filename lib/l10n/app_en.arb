@@ -1,0 +1,176 @@
+{
+  "@@locale": "en",
+  "appTitle": "Furtive",
+
+  "btnNext": "Next",
+  "btnFinish": "Finish",
+  "btnGrant": "Grant",
+  "btnGrantPermission": "Grant Permission",
+  "btnFollow": "Follow",
+  "btnPause": "Pause",
+  "btnResume": "Resume",
+  "btnStart": "Start",
+  "btnStarting": "Starting",
+  "btnStop": "Stop",
+  "btnContinue": "Continue",
+  "btnGrantToContinue": "Grant Required Permissions to Continue",
+  "btnViewStats": "View Statistics",
+  "btnCancel": "Cancel",
+  "btnRename": "Rename",
+  "btnDelete": "Delete",
+  "btnApply": "Apply",
+  "btnStarGitHub": "Star on GitHub",
+  "btnSponsor": "Sponsor",
+  "linkOpenFailed": "Couldn't open {url}",
+  "@linkOpenFailed": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+
+  "shareSummary": "{distance} km in {duration} with Furtive",
+  "@shareSummary": {
+    "placeholders": {
+      "distance": { "type": "String" },
+      "duration": { "type": "String" }
+    }
+  },
+  "shareFailed": "Couldn't share activity: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "shareTooltip": "Share activity",
+
+  "navMap": "Map",
+  "navActivities": "Activities",
+  "navSettings": "Settings",
+
+  "menuPermissions": "Permissions",
+  "menuPreferences": "Preferences",
+  "menuLogs": "Logs",
+
+  "onboardWelcomeTitle": "Welcome to Furtive",
+  "onboardWelcomeSubtitle": "Privacy-first activity tracking. No accounts, no telemetry, no Google services. Let's pick a few defaults.",
+  "onboardSettingsTitle": "Map settings",
+  "onboardSettingsSubtitle": "Pick your defaults — you can change them later in settings.",
+  "onboardPermissionsTitle": "Permissions",
+  "onboardPermissionsSubtitle": "Grant location to track your runs. Notifications and background access are optional.",
+  "onboardSaveError": "Could not save your choices: {error}",
+  "@onboardSaveError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "settingsThemeLabel": "Theme",
+  "settingsUiLanguageLabel": "App language",
+  "settingsUiLanguageSystem": "System default",
+
+  "preferencesTitle": "Preferences",
+  "prefMapTheme": "Map Theme",
+  "prefAppLanguage": "App Language",
+
+  "permissionsTitle": "Permissions",
+  "permissionsInstructions": "This app needs the following permissions to work properly",
+  "permOptional": "Optional",
+  "permDeniedMsg": "Denied — enable it in app settings.",
+  "permPermanentlyDenied": "This permission has to be enabled in app settings.",
+  "permLocationWhileUsingName": "Location While Using",
+  "permLocationWhileUsingDesc": "Required to track your position and display it on the map.",
+  "permLocationAlwaysName": "Location Always",
+  "permLocationAlwaysDesc": "Optional: keeps tracking accurate during long activities, even if the OS suspends the app.",
+
+  "mapActivityStartedMsg": "Activity started",
+  "mapStopHint": "Hold Stop for 3 seconds to end activity",
+  "mapLoadFailed": "Failed to load map",
+
+  "statsRecordingTitle": "Recording Activity",
+  "statDistance": "Distance",
+  "statDuration": "Duration",
+  "statPace": "Pace",
+  "statSpeed": "Speed",
+  "statElevation": "Elevation",
+
+  "splitsTitle": "Splits",
+  "splitsNotEnoughData": "Not enough data for splits yet.",
+  "metricPace": "Pace",
+  "metricSpeed": "Speed",
+
+  "activitiesEmpty": "No activities found",
+  "activitiesImportTooltip": "Import a GPX file",
+  "importStarted": "Importing…",
+  "importSuccess": "Activity imported",
+  "activityNameLabel": "Activity name",
+  "activityDeleteSuccess": "Activity deleted successfully",
+  "dlgRenameTitle": "Rename",
+  "dlgDeleteTitle": "Delete",
+  "dlgDeleteConfirm": "Are you sure you want to delete this activity?",
+
+  "gpxExportSuccess": "GPX exported successfully",
+  "gpxExportFailed": "Export failed: {error}",
+  "@gpxExportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "logsTitle": "Logs",
+  "logsEmpty": "No logs found",
+  "logsTooltipClear": "Clear log",
+  "logsTooltipFilterDate": "Filter by date",
+  "logsTooltipClearFilter": "Clear filter",
+  "logsTooltipShare": "Share",
+  "logsFiltered": "Filtered: {start} - {end}",
+  "@logsFiltered": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "logsShowingCount": "Showing {shown} of {total}",
+  "@logsShowingCount": {
+    "placeholders": {
+      "shown": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "activityDefaultName": "Track",
+  "logsLoadError": "Failed to load logs: {error}",
+  "@logsLoadError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "logCopiedMsg": "Log copied to clipboard",
+  "logsCopiedMsg": "{count} logs copied to clipboard",
+  "@logsCopiedMsg": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "dlgDeleteLogsTitle": "Delete logs",
+  "dlgDeleteLogsConfirm": "Are you sure you want to delete all logs? This action cannot be undone.",
+
+  "newVersionAvailable": "Download the latest version {version}",
+  "@newVersionAvailable": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "btnDownload": "Download",
+
+  "supportTitle": "Support Development",
+  "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
+
+  "changelogTitle": "What's new",
+  "changelogGotIt": "Got it",
+  "changelogV120I18n": "Multi-language: app, map labels, and date formats follow your locale — English, French, Russian, Ukrainian. Override in Settings or the wizard.",
+  "changelogV120Wizard": "First-launch wizard: pick your defaults (theme, language) and grant location permissions in one flow.",
+  "changelogV120Recording": "Activity recording: animated location marker with pulse and accuracy circle, kilometre markers on the map, hold Stop for 3 seconds to end (no accidental taps), auto-redirect to stats.",
+  "changelogV120Stats": "Activity stats: per-kilometre splits chart with pace ⇄ speed toggle, D+ elevation gain (matches Strava/Garmin convention).",
+  "changelogV120Share": "Share an activity as a card with map and stats via the system share sheet.",
+  "changelogV120GpxImport": "Import GPX files from other apps (Garmin, Strava, etc.) — both track and route points supported.",
+  "changelogV120Stability": "Stability: hardened against junk GPS fixes, background auto-cease watchdog, automatic log rotation, stricter GPX validation, HTTP timeouts."
+}

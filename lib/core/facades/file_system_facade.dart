@@ -13,7 +13,6 @@ class FileSystemFacade {
       final path = await getDirectoryPath();
       if (path == null) throw AppError('Location not selected by the user');
 
-      const String mimeType = 'text/plain';
       final XFile textFile = XFile.fromData(
         Uint8List.fromList(content.codeUnits),
         mimeType: mimeType,

@@ -9,7 +9,6 @@ import 'package:furtive/core/usecases/start_track_position_use_case.dart';
 import 'package:furtive/core/usecases/score_activity_use_case.dart';
 import 'package:furtive/core/usecases/start_activity_use_case.dart';
 import 'package:furtive/core/usecases/cease_activity_use_case.dart';
-import 'package:furtive/core/usecases/activity_notification_use_case.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
@@ -40,13 +39,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final _ceaseActivityUsecase = CeaseActivityUseCase();
   final _startTrackPositionUsecase = StartTrackPositionUseCase();
   final _getUserLocationUseCase = GetUserLocationUseCase();
-  final _activityNotificationUseCase = ActivityNotificationUseCase();
 
-  late StreamSubscription<PositionEntity> _positionStream;
+  StreamSubscription<PositionEntity>? _positionStream;
   Timer? _elapsedTimer;
+  Timer? _positionWatchdog;
   DateTime? _activityStartTime;
   DateTime? _pauseStartTime;
   Duration _totalPausedDuration = Duration.zero;
+
+  // If the geolocator position stream stays silent for this long while an
+  // activity is running and not paused, assume the foreground service was
+  // killed (e.g. user swiped the notification away on Android) and cease
+  // the activity. Stream.onDone is not reliable for this case — verified
+  // against Baseflow/flutter-geolocator issues #1023, #1395.
+  static const _positionWatchdogDuration = Duration(seconds: 90);
 
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
@@ -61,12 +67,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ToggleFollowUser>(_onToggleFollowUser);
     on<StopFollowingUser>(_onStopFollowingUser);
 
-    add(const InitMap());
+    // InitMap is NOT auto-fired here — it triggers the OS location-permission
+    // dialog, and the bloc is instantiated at app start (via the BlocProvider
+    // in MyApp) which happens before the onboarding wizard's permissions
+    // step. MapPage.initState and OnboardingPage._finish fire it explicitly
+    // once the user is ready to see the map.
   }
 
   void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit) {
     try {
-      if (state.activity != null) add(ScoreActivity(position: event.position));
+      if (state.activity != null) {
+        add(ScoreActivity(position: event.position));
+        if (!state.isPaused) _armPositionWatchdog();
+      }
       emit(state.copyWith(userLocation: event.position));
     } catch (e) {
       logs.severe('$UpdateUserLocation: $e');
@@ -74,11 +87,24 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
+  void _armPositionWatchdog() {
+    _positionWatchdog?.cancel();
+    _positionWatchdog = Timer(_positionWatchdogDuration, () {
+      if (state.activity != null && !state.isPaused) {
+        logs.severe(
+          'Position stream silent for $_positionWatchdogDuration; '
+          'ceasing activity (foreground service likely killed).',
+        );
+        add(const CeaseActivity());
+      }
+    });
+  }
+
   @override
   Future<void> close() async {
-    await _positionStream.cancel();
+    await _positionStream?.cancel();
     _elapsedTimer?.cancel();
-    _elapsedTimer = null;
+    _positionWatchdog?.cancel();
     return super.close();
   }
 
@@ -86,10 +112,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
 
+      // B38: InitMap can fire more than once (from the onboarding finish and
+      // from PreferencesBloc.UpdatePreferences). Cancel the previous
+      // subscription before opening a new one so we don't leak listeners
+      // that keep dispatching UpdateUserLocation events.
+      await _positionStream?.cancel();
       final userPositionStream = await _startTrackPositionUsecase();
       _positionStream = userPositionStream
           .handleError((error) => logs.severe('error: $error'))
-          .listen((position) => add(UpdateUserLocation(position: position)));
+          .listen(
+            (position) => add(UpdateUserLocation(position: position)),
+            // When the user swipes the geolocator foreground-service
+            // notification away, the position stream closes. Treat that as
+            // an explicit "stop tracking" gesture and end any active activity.
+            onDone: () {
+              if (state.activity != null) add(const CeaseActivity());
+            },
+          );
 
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
@@ -128,6 +167,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         const Duration(seconds: 1),
         (_) => add(const UpdateElapsedTime()),
       );
+      _armPositionWatchdog();
 
       emit(state.copyWith(activity: activity));
     } catch (e) {
@@ -157,15 +197,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         position: position,
         status: status,
       );
-      final newPoints = [...state.activity!.points, newPoint];
+      // Use the locally-captured `activity` (line above the await), not
+      // state.activity — a concurrent CeaseActivity between the await and
+      // here would null state.activity and crash the null-bang.
+      final newPoints = [...activity.points, newPoint];
       final updatedActivity = activity.copyWith(points: newPoints);
 
       emit(state.copyWith(activity: updatedActivity));
     } catch (e) {
       logs.severe('$ScoreActivity: $e');
-      emit(
-        state.copyWith(error: AppError('$_onScoreActivity: ${e.toString()}')),
-      );
+      emit(state.copyWith(error: AppError('ScoreActivity: $e')));
     }
   }
 
@@ -184,9 +225,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           const Duration(seconds: 1),
           (_) => add(const UpdateElapsedTime()),
         );
+        _armPositionWatchdog();
       } else {
         _pauseStartTime = DateTime.now();
         _elapsedTimer?.cancel();
+        _positionWatchdog?.cancel();
       }
 
       emit(state.copyWith(isPaused: !state.isPaused));
@@ -196,16 +239,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void _onCeaseActivity(CeaseActivity event, Emitter<MapState> emit) {
+  Future<void> _onCeaseActivity(
+    CeaseActivity event,
+    Emitter<MapState> emit,
+  ) async {
     try {
-      _ceaseActivityUsecase(state.activity!.id);
+      await _ceaseActivityUsecase(state.activity!.id);
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
+      _positionWatchdog?.cancel();
+      _positionWatchdog = null;
       _activityStartTime = null;
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
-
-      _activityNotificationUseCase.cancelActivityNotification();
 
       emit(
         state.copyWith(
@@ -226,18 +272,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   void _onUpdateElapsedTime(UpdateElapsedTime event, Emitter<MapState> emit) {
     try {
-      if (_activityStartTime != null) {
-        final elapsed =
-            DateTime.now().difference(_activityStartTime!) -
-            _totalPausedDuration;
-        emit(state.copyWith(elapsedTime: elapsed));
+      if (_activityStartTime == null) return;
 
-        _activityNotificationUseCase.showActivityNotification(
-          activity: state.activity!,
-          elapsed: elapsed,
-          isPaused: state.isPaused,
-        );
-      }
+      final elapsed =
+          DateTime.now().difference(_activityStartTime!) - _totalPausedDuration;
+      emit(state.copyWith(elapsedTime: elapsed));
     } catch (e) {
       logs.severe('$UpdateElapsedTime: $e');
       emit(state.copyWith(error: AppError(e.toString())));
