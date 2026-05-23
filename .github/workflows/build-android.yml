@@ -1,4 +1,4 @@
-name: build-android
+name: Android Build APK
 
 on:
   workflow_dispatch:
@@ -28,6 +28,8 @@ jobs:
 
       - name: Build APK
         # makefile uses `podman` directly; ubuntu-24.04 ships podman 4.9.3 preinstalled.
+        env:
+          PROTOMAPS_KEY: ${{ secrets.PROTOMAPS_KEY }}
         run: make apk ${{ inputs.mode }}
 
       - uses: actions/upload-artifact@v7
