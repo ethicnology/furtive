@@ -2,7 +2,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 
 part 'preferences_entity.mapper.dart';
 
-enum MapThemeEntity { light, dark }
+enum MapThemeEntity { light, dark, white, grayscale, black }
 
 enum MapLanguageEntity { en, fr, ru, uk }
 

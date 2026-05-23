@@ -1,7 +1,6 @@
 {
   "@@locale": "cs",
   "appTitle": "Furtive",
-
   "btnNext": "Další",
   "btnFinish": "Dokončit",
   "btnGrant": "Povolit",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Hvězda na GitHubu",
   "btnSponsor": "Podpořit",
   "linkOpenFailed": "Nelze otevřít {url}",
-
   "shareSummary": "{distance} km za {duration} s Furtive",
   "shareFailed": "Aktivitu se nepodařilo sdílet: {error}",
   "shareTooltip": "Sdílet aktivitu",
-
   "navMap": "Mapa",
   "navActivities": "Aktivity",
   "navSettings": "Nastavení",
-
   "menuPermissions": "Oprávnění",
   "menuPreferences": "Předvolby",
   "menuLogs": "Záznamy",
-
   "onboardWelcomeTitle": "Vítej ve Furtive",
   "onboardWelcomeSubtitle": "Sledování aktivit s důrazem na soukromí. Žádné účty, žádná telemetrie, žádné služby Google. Vyberme pár předvoleb.",
   "onboardSettingsTitle": "Nastavení mapy",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Oprávnění",
   "onboardPermissionsSubtitle": "Udělte přístup k poloze pro sledování běhů. Oznámení a přístup na pozadí jsou volitelné.",
   "onboardSaveError": "Volby nelze uložit: {error}",
-
   "settingsThemeLabel": "Motiv",
   "settingsUiLanguageLabel": "Jazyk aplikace",
   "settingsUiLanguageSystem": "Výchozí systému",
-
   "preferencesTitle": "Předvolby",
   "prefMapTheme": "Motiv mapy",
   "prefAppLanguage": "Jazyk aplikace",
-
   "permissionsTitle": "Oprávnění",
   "permissionsInstructions": "Aplikace potřebuje pro správnou funkci následující oprávnění",
   "permOptional": "Volitelné",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Nutné pro sledování polohy a její zobrazení na mapě.",
   "permLocationAlwaysName": "Poloha vždy",
   "permLocationAlwaysDesc": "Volitelné: zachovává přesné sledování během dlouhých aktivit, i když systém aplikaci pozastaví.",
-
   "mapActivityStartedMsg": "Aktivita zahájena",
   "mapStopHint": "Pro ukončení aktivity podrž Stop 3 sekundy",
   "mapLoadFailed": "Mapu se nepodařilo načíst",
-
   "statsRecordingTitle": "Záznam aktivity",
   "statDistance": "Vzdálenost",
   "statDuration": "Čas",
   "statPace": "Tempo",
   "statSpeed": "Rychlost",
   "statElevation": "Převýšení",
-
   "splitsTitle": "Mezičasy",
   "splitsNotEnoughData": "Zatím nedostatek dat pro mezičasy.",
   "metricPace": "Tempo",
   "metricSpeed": "Rychlost",
-
   "activitiesEmpty": "Žádné aktivity",
   "activitiesImportTooltip": "Importovat soubor GPX",
   "importStarted": "Importování…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Přejmenovat",
   "dlgDeleteTitle": "Smazat",
   "dlgDeleteConfirm": "Opravdu chceš tuto aktivitu smazat?",
-
   "gpxExportSuccess": "GPX úspěšně exportován",
   "gpxExportFailed": "Export selhal: {error}",
-
   "logsTitle": "Záznamy",
   "logsEmpty": "Žádné záznamy",
   "logsTooltipClear": "Vyčistit záznamy",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} záznamů zkopírováno do schránky",
   "dlgDeleteLogsTitle": "Smazat záznamy",
   "dlgDeleteLogsConfirm": "Opravdu chceš smazat všechny záznamy? Tuto akci nelze vrátit.",
-
   "newVersionAvailable": "Stáhni si nejnovější verzi {version}",
   "btnDownload": "Stáhnout",
-
   "supportTitle": "Podpoř vývoj",
   "supportDescription": "Tato aplikace je vytvářena a udržována v mém volném čase. Tvoje podpora pomáhá udržet ji při životě a růst.",
-
+  "notifTrackingTitle": "Sledování aktivní",
+  "notifTrackingBodyAlways": "Nezapomeň zavřít aplikaci, až budeš hotov, abys zastavil sledování.",
+  "notifTrackingBodyForeground": "Sledování na pozadí se může pozastavit, když aplikace není viditelná. Aktivuj polohu „Vždy\" v systémových nastaveních pro dlouhé aktivity.",
   "changelogTitle": "Novinky",
   "changelogGotIt": "Rozumím",
-  "changelogV120I18n": "Vícejazyčnost: aplikace, štítky mapy a formáty data se přizpůsobují tvému jazyku. Nastavitelné v Nastavení nebo průvodci.",
+  "changelogV120I18n": "Vícejazyčnost: rozhraní aplikace v 26 jazycích, štítky mapy v 41, formáty data dle vaší lokalizace. Nastavitelné v Nastavení nebo průvodci.",
   "changelogV120Wizard": "Průvodce prvním spuštěním: vyber výchozí hodnoty (motiv, jazyk) a uděl oprávnění k poloze v jednom kroku.",
   "changelogV120Recording": "Záznam aktivity: animovaný značkovač polohy s pulzem a kruhem přesnosti, kilometrové značky na mapě, podrž Stop 3 sekundy pro ukončení (žádná náhodná stisknutí), automatické přesměrování na statistiky.",
   "changelogV120Stats": "Statistiky aktivity: graf kilometrových mezičasů s přepínačem tempo ⇄ rychlost, převýšení D+ (konvence Strava/Garmin).",
   "changelogV120Share": "Sdílej aktivitu jako kartu s mapou a statistikami přes systémové menu sdílení.",
   "changelogV120GpxImport": "Importuj GPX soubory z jiných aplikací (Garmin, Strava atd.) — podporovány body tras i tras (track + route).",
+  "changelogV120MapThemes": "Pět motivů mapy: Světlý, Tmavý, Bílý, Stupně šedi, Černý — vyber v Nastavení ten, který ti vyhovuje.",
+  "changelogV120Notification": "Oznámení o aktivitě odráží tvé oprávnění k poloze — varuje, když se sledování na pozadí může pozastavit, a doporučuje „Vždy\" pro dlouhé aktivity.",
+  "changelogV120Reproducible": "Reprodukovatelné sestavení: kdokoli může znovu sestavit ze zdrojového kódu a ověřit, že zveřejněný APK je bajt po bajtu identický — žádný skrytý kód, žádná manipulace.",
   "changelogV120Stability": "Stabilita: ochrana před chybnými GPS údaji, watchdog pro automatické zastavení na pozadí, automatická rotace záznamů, přísnější validace GPX, časové limity HTTP."
 }

@@ -1,7 +1,6 @@
 {
   "@@locale": "fr",
   "appTitle": "Furtive",
-
   "btnNext": "Suivant",
   "btnFinish": "Terminer",
   "btnGrant": "Autoriser",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Étoile sur GitHub",
   "btnSponsor": "Sponsoriser",
   "linkOpenFailed": "Impossible d'ouvrir {url}",
-
   "shareSummary": "{distance} km en {duration} avec Furtive",
   "shareFailed": "Impossible de partager l'activité : {error}",
   "shareTooltip": "Partager l'activité",
-
   "navMap": "Carte",
   "navActivities": "Activités",
   "navSettings": "Paramètres",
-
   "menuPermissions": "Permissions",
   "menuPreferences": "Préférences",
   "menuLogs": "Journaux",
-
   "onboardWelcomeTitle": "Bienvenue dans Furtive",
   "onboardWelcomeSubtitle": "Suivi d'activité respectueux de la vie privée. Pas de comptes, pas de télémétrie, pas de services Google. Choisissons quelques préférences.",
   "onboardSettingsTitle": "Paramètres de la carte",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Permissions",
   "onboardPermissionsSubtitle": "Autorise la localisation pour suivre tes courses. Les notifications et l'accès en arrière-plan sont optionnels.",
   "onboardSaveError": "Impossible d'enregistrer tes choix : {error}",
-
   "settingsThemeLabel": "Thème",
   "settingsUiLanguageLabel": "Langue de l'app",
   "settingsUiLanguageSystem": "Système",
-
   "preferencesTitle": "Préférences",
   "prefMapTheme": "Thème de la carte",
   "prefAppLanguage": "Langue de l'application",
-
   "permissionsTitle": "Permissions",
   "permissionsInstructions": "Cette application nécessite les permissions suivantes pour fonctionner correctement",
   "permOptional": "Optionnel",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Requise pour suivre ta position et l'afficher sur la carte.",
   "permLocationAlwaysName": "Localisation continue",
   "permLocationAlwaysDesc": "Optionnel : maintient le suivi précis pendant les longues activités, même si le système suspend l'app.",
-
   "mapActivityStartedMsg": "Activité lancée",
   "mapStopHint": "Maintiens Stop 3 secondes pour terminer l'activité",
   "mapLoadFailed": "Impossible de charger la carte",
-
   "statsRecordingTitle": "Enregistrement",
   "statDistance": "Distance",
   "statDuration": "Durée",
   "statPace": "Allure",
   "statSpeed": "Vitesse",
   "statElevation": "Dénivelé",
-
   "splitsTitle": "Splits",
   "splitsNotEnoughData": "Pas assez de données pour les splits.",
   "metricPace": "Allure",
   "metricSpeed": "Vitesse",
-
   "activitiesEmpty": "Aucune activité",
   "activitiesImportTooltip": "Importer un fichier GPX",
   "importStarted": "Import en cours…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Renommer",
   "dlgDeleteTitle": "Supprimer",
   "dlgDeleteConfirm": "Es-tu sûr de vouloir supprimer cette activité ?",
-
   "gpxExportSuccess": "GPX exporté avec succès",
   "gpxExportFailed": "Échec de l'export : {error}",
-
   "logsTitle": "Journaux",
   "logsEmpty": "Aucun journal",
   "logsTooltipClear": "Effacer les journaux",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} journaux copiés dans le presse-papiers",
   "dlgDeleteLogsTitle": "Supprimer les journaux",
   "dlgDeleteLogsConfirm": "Es-tu sûr de vouloir supprimer tous les journaux ? Cette action est irréversible.",
-
   "newVersionAvailable": "Télécharge la dernière version {version}",
   "btnDownload": "Télécharger",
-
   "supportTitle": "Soutenir le développement",
   "supportDescription": "Cette app est construite et maintenue sur mon temps libre. Ton soutien aide à la garder vivante.",
-
+  "notifTrackingTitle": "Suivi actif",
+  "notifTrackingBodyAlways": "N'oublie pas de fermer l'application une fois terminé pour arrêter le suivi.",
+  "notifTrackingBodyForeground": "Le suivi en arrière-plan peut s'interrompre quand l'app n'est pas visible. Active la localisation « Toujours » dans les paramètres système pour les longues activités.",
   "changelogTitle": "Nouveautés",
   "changelogGotIt": "Compris",
-  "changelogV120I18n": "Multilingue : interface, libellés de carte et formats de date suivent ta locale — anglais, français, russe, ukrainien. Modifiable dans les paramètres ou le wizard.",
+  "changelogV120I18n": "Multilingue : interface en 26 langues, libellés de carte en 41, formats de date selon ta locale. Modifiable dans les paramètres ou l'assistant.",
   "changelogV120Wizard": "Assistant de première utilisation : choisis tes valeurs par défaut (thème, langue) et accorde les permissions de localisation en un flux.",
   "changelogV120Recording": "Enregistrement d'activité : marqueur de position animé avec pulsation et cercle de précision, marqueurs kilométriques sur la carte, maintiens Stop 3 secondes pour terminer (fini les arrêts accidentels), redirection automatique vers les statistiques.",
   "changelogV120Stats": "Statistiques d'activité : graphique des splits par kilomètre avec bascule allure ⇄ vitesse, dénivelé positif D+ (convention Strava/Garmin).",
   "changelogV120Share": "Partage une activité sous forme de carte avec carte et statistiques via le menu de partage système.",
   "changelogV120GpxImport": "Importe des fichiers GPX depuis d'autres apps (Garmin, Strava, etc.) — points de trace et de route supportés.",
+  "changelogV120MapThemes": "Cinq thèmes de carte : Clair, Sombre, Blanc, Niveaux de gris, Noir — choisis celui qui te convient dans les paramètres.",
+  "changelogV120Notification": "La notification d'activité reflète ta permission de localisation — t'avertit quand le suivi en arrière-plan risque de s'arrêter et recommande d'activer « Toujours » pour les longues activités.",
+  "changelogV120Reproducible": "Builds reproductibles : n'importe qui peut reconstruire depuis les sources et vérifier que l'APK publié est identique octet pour octet — aucun code caché, aucune altération.",
   "changelogV120Stability": "Stabilité : protection contre les relevés GPS aberrants, watchdog d'arrêt automatique en arrière-plan, rotation automatique des journaux, validation GPX plus stricte, timeouts HTTP."
 }

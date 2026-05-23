@@ -1,7 +1,6 @@
 {
   "@@locale": "sw",
   "appTitle": "Furtive",
-
   "btnNext": "Endelea",
   "btnFinish": "Maliza",
   "btnGrant": "Ruhusu",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Mpe nyota GitHub",
   "btnSponsor": "Saidia",
   "linkOpenFailed": "Imeshindwa kufungua {url}",
-
   "shareSummary": "{distance} km kwa {duration} na Furtive",
   "shareFailed": "Imeshindwa kushiriki shughuli: {error}",
   "shareTooltip": "Shiriki shughuli",
-
   "navMap": "Ramani",
   "navActivities": "Shughuli",
   "navSettings": "Mipangilio",
-
   "menuPermissions": "Idhini",
   "menuPreferences": "Mapendeleo",
   "menuLogs": "Kumbukumbu",
-
   "onboardWelcomeTitle": "Karibu Furtive",
   "onboardWelcomeSubtitle": "Ufuatiliaji wa shughuli wenye kuheshimu faragha. Hakuna akaunti, hakuna telemetri, hakuna huduma za Google. Tuchague mapendeleo machache.",
   "onboardSettingsTitle": "Mipangilio ya ramani",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Idhini",
   "onboardPermissionsSubtitle": "Toa idhini ya eneo ili kufuatilia mbio zako. Arifa na ufikiaji wa nyuma ya pazia ni hiari.",
   "onboardSaveError": "Imeshindwa kuhifadhi chaguo zako: {error}",
-
   "settingsThemeLabel": "Mandhari",
   "settingsUiLanguageLabel": "Lugha ya programu",
   "settingsUiLanguageSystem": "Chaguomsingi la mfumo",
-
   "preferencesTitle": "Mapendeleo",
   "prefMapTheme": "Mandhari ya ramani",
   "prefAppLanguage": "Lugha ya programu",
-
   "permissionsTitle": "Idhini",
   "permissionsInstructions": "Programu hii inahitaji idhini zifuatazo ili kufanya kazi vizuri",
   "permOptional": "Hiari",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Inahitajika kufuatilia eneo lako na kulionyesha kwenye ramani.",
   "permLocationAlwaysName": "Eneo daima",
   "permLocationAlwaysDesc": "Hiari: huweka ufuatiliaji sahihi wakati wa shughuli ndefu, hata kama mfumo unasimamisha programu.",
-
   "mapActivityStartedMsg": "Shughuli imeanza",
   "mapStopHint": "Shikilia Simamisha kwa sekunde 3 ili kumaliza shughuli",
   "mapLoadFailed": "Imeshindwa kupakia ramani",
-
   "statsRecordingTitle": "Inarekodi shughuli",
   "statDistance": "Umbali",
   "statDuration": "Muda",
   "statPace": "Mwendo",
   "statSpeed": "Kasi",
   "statElevation": "Mwinuko",
-
   "splitsTitle": "Migawanyiko",
   "splitsNotEnoughData": "Bado data haitoshi kwa migawanyiko.",
   "metricPace": "Mwendo",
   "metricSpeed": "Kasi",
-
   "activitiesEmpty": "Hakuna shughuli",
   "activitiesImportTooltip": "Ingiza faili ya GPX",
   "importStarted": "Inaingiza…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Badilisha jina",
   "dlgDeleteTitle": "Futa",
   "dlgDeleteConfirm": "Una uhakika unataka kufuta shughuli hii?",
-
   "gpxExportSuccess": "GPX imetolewa kwa mafanikio",
   "gpxExportFailed": "Imeshindwa kutoa: {error}",
-
   "logsTitle": "Kumbukumbu",
   "logsEmpty": "Hakuna kumbukumbu",
   "logsTooltipClear": "Futa kumbukumbu",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "Kumbukumbu {count} zimenakiliwa kwenye ubao wa kunakili",
   "dlgDeleteLogsTitle": "Futa kumbukumbu",
   "dlgDeleteLogsConfirm": "Una uhakika unataka kufuta kumbukumbu zote? Kitendo hiki hakiwezi kutenduliwa.",
-
   "newVersionAvailable": "Pakua toleo jipya {version}",
   "btnDownload": "Pakua",
-
   "supportTitle": "Saidia maendeleo",
   "supportDescription": "Programu hii inajengwa na kudumishwa katika muda wangu wa ziada. Msaada wako unasaidia kuiweka hai na kukua.",
-
+  "notifTrackingTitle": "Ufuatiliaji unaendelea",
+  "notifTrackingBodyAlways": "Usisahau kufunga programu ukimaliza ili kusimamisha ufuatiliaji.",
+  "notifTrackingBodyForeground": "Ufuatiliaji nyuma ya pazia unaweza kusimama wakati programu haionekani. Wezesha eneo 'Daima' kwenye mipangilio ya mfumo kwa shughuli ndefu.",
   "changelogTitle": "Mpya",
   "changelogGotIt": "Sawa",
-  "changelogV120I18n": "Lugha nyingi: programu, lebo za ramani na muundo wa tarehe hufuata lugha yako. Bandilishe katika Mipangilio au msaidizi.",
+  "changelogV120I18n": "Lugha nyingi: kiolesura cha programu katika lugha 26, lebo za ramani 41, muundo wa tarehe hufuata eneo lako. Badilisha kwenye Mipangilio au msaidizi.",
   "changelogV120Wizard": "Msaidizi wa uzinduzi wa kwanza: chagua chaguomsingi zako (mandhari, lugha) na toa idhini za eneo katika mtiririko mmoja.",
   "changelogV120Recording": "Kurekodi shughuli: alama ya eneo iliyohuishwa na mapigo na duara la usahihi, alama za kilomita kwenye ramani, shikilia Simamisha sekunde 3 kumaliza (hakuna kugusa bila kukusudia), kuelekezwa kiotomatiki kwenye takwimu.",
   "changelogV120Stats": "Takwimu za shughuli: chati ya migawanyiko ya kilomita na kibadilishaji mwendo ⇄ kasi, mwinuko D+ (kanuni ya Strava/Garmin).",
   "changelogV120Share": "Shiriki shughuli kama kadi yenye ramani na takwimu kupitia menyu ya kushiriki ya mfumo.",
   "changelogV120GpxImport": "Ingiza faili za GPX kutoka programu zingine (Garmin, Strava, n.k.) — pointi za track na route zinatumika.",
+  "changelogV120MapThemes": "Mada tano za ramani: Mwanga, Giza, Nyeupe, Kijivu, Nyeusi — chagua inayokufaa kwenye Mipangilio.",
+  "changelogV120Notification": "Arifa ya shughuli inaonyesha idhini ya eneo lako — inakuonya wakati ufuatiliaji nyuma ya pazia unaweza kusimama na inapendekeza 'Daima' kwa shughuli ndefu.",
+  "changelogV120Reproducible": "Ujenzi unaoweza kurudiwa: mtu yeyote anaweza kujenga upya kutoka kwa msimbo wa chanzo na kuthibitisha kuwa APK iliyochapishwa ni ya sawa baiti kwa baiti — hakuna msimbo wa siri, hakuna uharibifu.",
   "changelogV120Stability": "Uthabiti: ulinzi dhidi ya usomaji mbaya wa GPS, mlinzi wa kusimama kiotomatiki nyuma ya pazia, mzunguko wa kumbukumbu kiotomatiki, uthibitishaji mkali wa GPX, muda wa HTTP."
 }

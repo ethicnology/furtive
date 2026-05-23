@@ -1,7 +1,6 @@
 {
   "@@locale": "nl",
   "appTitle": "Furtive",
-
   "btnNext": "Volgende",
   "btnFinish": "Klaar",
   "btnGrant": "Toestaan",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Ster geven op GitHub",
   "btnSponsor": "Sponsor",
   "linkOpenFailed": "Kon {url} niet openen",
-
   "shareSummary": "{distance} km in {duration} met Furtive",
   "shareFailed": "Kon activiteit niet delen: {error}",
   "shareTooltip": "Activiteit delen",
-
   "navMap": "Kaart",
   "navActivities": "Activiteiten",
   "navSettings": "Instellingen",
-
   "menuPermissions": "Toestemmingen",
   "menuPreferences": "Voorkeuren",
   "menuLogs": "Logs",
-
   "onboardWelcomeTitle": "Welkom bij Furtive",
   "onboardWelcomeSubtitle": "Activiteitstracking met privacy voorop. Geen accounts, geen telemetrie, geen Google-services. Laten we een paar voorkeuren kiezen.",
   "onboardSettingsTitle": "Kaartinstellingen",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Toestemmingen",
   "onboardPermissionsSubtitle": "Geef locatietoegang om je hardlooproutes te volgen. Meldingen en achtergrondtoegang zijn optioneel.",
   "onboardSaveError": "Kon je keuzes niet opslaan: {error}",
-
   "settingsThemeLabel": "Thema",
   "settingsUiLanguageLabel": "App-taal",
   "settingsUiLanguageSystem": "Systeemstandaard",
-
   "preferencesTitle": "Voorkeuren",
   "prefMapTheme": "Kaartthema",
   "prefAppLanguage": "App-taal",
-
   "permissionsTitle": "Toestemmingen",
   "permissionsInstructions": "Deze app heeft de volgende toestemmingen nodig om correct te werken",
   "permOptional": "Optioneel",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Nodig om je positie te volgen en op de kaart weer te geven.",
   "permLocationAlwaysName": "Locatie altijd",
   "permLocationAlwaysDesc": "Optioneel: houdt de tracking nauwkeurig tijdens lange activiteiten, ook als het systeem de app onderbreekt.",
-
   "mapActivityStartedMsg": "Activiteit gestart",
   "mapStopHint": "Houd Stop 3 seconden vast om de activiteit te beëindigen",
   "mapLoadFailed": "Kaart kon niet worden geladen",
-
   "statsRecordingTitle": "Activiteit opnemen",
   "statDistance": "Afstand",
   "statDuration": "Duur",
   "statPace": "Tempo",
   "statSpeed": "Snelheid",
   "statElevation": "Hoogtemeters",
-
   "splitsTitle": "Splits",
   "splitsNotEnoughData": "Nog niet genoeg gegevens voor splits.",
   "metricPace": "Tempo",
   "metricSpeed": "Snelheid",
-
   "activitiesEmpty": "Geen activiteiten",
   "activitiesImportTooltip": "GPX-bestand importeren",
   "importStarted": "Importeren…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Hernoemen",
   "dlgDeleteTitle": "Verwijderen",
   "dlgDeleteConfirm": "Weet je zeker dat je deze activiteit wilt verwijderen?",
-
   "gpxExportSuccess": "GPX succesvol geëxporteerd",
   "gpxExportFailed": "Export mislukt: {error}",
-
   "logsTitle": "Logs",
   "logsEmpty": "Geen logs",
   "logsTooltipClear": "Logs wissen",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} logs gekopieerd naar klembord",
   "dlgDeleteLogsTitle": "Logs verwijderen",
   "dlgDeleteLogsConfirm": "Weet je zeker dat je alle logs wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
-
   "newVersionAvailable": "Download de nieuwste versie {version}",
   "btnDownload": "Downloaden",
-
   "supportTitle": "Steun de ontwikkeling",
   "supportDescription": "Deze app wordt in mijn vrije tijd gebouwd en onderhouden. Jouw steun helpt om hem in leven te houden en te laten groeien.",
-
+  "notifTrackingTitle": "Tracking actief",
+  "notifTrackingBodyAlways": "Vergeet niet de app te sluiten als je klaar bent om de tracking te stoppen.",
+  "notifTrackingBodyForeground": "Achtergrond-tracking kan pauzeren wanneer de app niet zichtbaar is. Schakel locatie 'Altijd' in de systeeminstellingen in voor lange activiteiten.",
   "changelogTitle": "Wat is er nieuw",
   "changelogGotIt": "Begrepen",
-  "changelogV120I18n": "Meertalig: app, kaartlabels en datumnotaties volgen je locale. Aanpasbaar in Instellingen of de wizard.",
+  "changelogV120I18n": "Meertalig: app-interface in 26 talen, kaartlabels in 41, datumnotaties volgen je locale. Aanpasbaar in Instellingen of de wizard.",
   "changelogV120Wizard": "Welkomstwizard: kies je standaardinstellingen (thema, taal) en geef locatietoestemming in één stroom.",
   "changelogV120Recording": "Activiteitsopname: geanimeerde positiemarker met pulsatie en nauwkeurigheidscirkel, kilometerstandmarkers op de kaart, houd Stop 3 seconden vast om te eindigen (geen toevallige taps), automatische doorverwijzing naar statistieken.",
   "changelogV120Stats": "Statistieken: kilometer-splits-grafiek met schakelaar tempo ⇄ snelheid, D+ hoogtemeters (Strava/Garmin-conventie).",
   "changelogV120Share": "Deel een activiteit als kaart met kaart en statistieken via het systeemdeelmenu.",
   "changelogV120GpxImport": "Importeer GPX-bestanden uit andere apps (Garmin, Strava enz.) — zowel track- als routepunten worden ondersteund.",
+  "changelogV120MapThemes": "Vijf kaartthema's: Licht, Donker, Wit, Grijswaarden, Zwart — kies wat je het beste vindt in Instellingen.",
+  "changelogV120Notification": "De activiteitsmelding past zich aan je locatietoestemming aan — waarschuwt wanneer achtergrond-tracking kan pauzeren en raadt 'Altijd' aan voor lange activiteiten.",
+  "changelogV120Reproducible": "Reproduceerbare builds: iedereen kan herbouwen vanaf de broncode en verifiëren dat de gepubliceerde APK byte-voor-byte identiek is — geen verborgen code, geen sabotage.",
   "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, achtergrond-watchdog voor automatische stop, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts."
 }

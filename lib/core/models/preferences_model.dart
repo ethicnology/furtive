@@ -48,6 +48,12 @@ extension MapThemeExtension on MapThemeColumn {
         return MapThemeColumn.light;
       case MapThemeEntity.dark:
         return MapThemeColumn.dark;
+      case MapThemeEntity.white:
+        return MapThemeColumn.white;
+      case MapThemeEntity.grayscale:
+        return MapThemeColumn.grayscale;
+      case MapThemeEntity.black:
+        return MapThemeColumn.black;
     }
   }
 
@@ -57,6 +63,12 @@ extension MapThemeExtension on MapThemeColumn {
         return MapThemeEntity.light;
       case MapThemeColumn.dark:
         return MapThemeEntity.dark;
+      case MapThemeColumn.white:
+        return MapThemeEntity.white;
+      case MapThemeColumn.grayscale:
+        return MapThemeEntity.grayscale;
+      case MapThemeColumn.black:
+        return MapThemeEntity.black;
     }
   }
 }

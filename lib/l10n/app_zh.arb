@@ -1,7 +1,6 @@
 {
   "@@locale": "zh",
   "appTitle": "Furtive",
-
   "btnNext": "下一步",
   "btnFinish": "完成",
   "btnGrant": "允许",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "在 GitHub 上加星",
   "btnSponsor": "赞助",
   "linkOpenFailed": "无法打开 {url}",
-
   "shareSummary": "用 Furtive 在 {duration} 内跑了 {distance} 公里",
   "shareFailed": "无法分享活动: {error}",
   "shareTooltip": "分享活动",
-
   "navMap": "地图",
   "navActivities": "活动",
   "navSettings": "设置",
-
   "menuPermissions": "权限",
   "menuPreferences": "偏好",
   "menuLogs": "日志",
-
   "onboardWelcomeTitle": "欢迎来到 Furtive",
   "onboardWelcomeSubtitle": "注重隐私的活动追踪。无账户、无遥测、无 Google 服务。我们来选择一些默认设置吧。",
   "onboardSettingsTitle": "地图设置",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "权限",
   "onboardPermissionsSubtitle": "授予位置权限以追踪你的跑步。通知和后台访问是可选的。",
   "onboardSaveError": "无法保存你的选择: {error}",
-
   "settingsThemeLabel": "主题",
   "settingsUiLanguageLabel": "应用语言",
   "settingsUiLanguageSystem": "系统默认",
-
   "preferencesTitle": "偏好",
   "prefMapTheme": "地图主题",
   "prefAppLanguage": "应用语言",
-
   "permissionsTitle": "权限",
   "permissionsInstructions": "此应用需要以下权限才能正常工作",
   "permOptional": "可选",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "需要追踪你的位置并在地图上显示。",
   "permLocationAlwaysName": "始终允许位置",
   "permLocationAlwaysDesc": "可选: 长时间活动中保持精确追踪,即使系统挂起应用。",
-
   "mapActivityStartedMsg": "活动已开始",
   "mapStopHint": "按住停止 3 秒以结束活动",
   "mapLoadFailed": "加载地图失败",
-
   "statsRecordingTitle": "正在记录活动",
   "statDistance": "距离",
   "statDuration": "时长",
   "statPace": "配速",
   "statSpeed": "速度",
   "statElevation": "海拔",
-
   "splitsTitle": "分段",
   "splitsNotEnoughData": "数据不足以生成分段。",
   "metricPace": "配速",
   "metricSpeed": "速度",
-
   "activitiesEmpty": "未找到活动",
   "activitiesImportTooltip": "导入 GPX 文件",
   "importStarted": "正在导入…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "重命名",
   "dlgDeleteTitle": "删除",
   "dlgDeleteConfirm": "确定要删除此活动吗？",
-
   "gpxExportSuccess": "GPX 已成功导出",
   "gpxExportFailed": "导出失败: {error}",
-
   "logsTitle": "日志",
   "logsEmpty": "未找到日志",
   "logsTooltipClear": "清除日志",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} 条日志已复制到剪贴板",
   "dlgDeleteLogsTitle": "删除日志",
   "dlgDeleteLogsConfirm": "确定要删除所有日志吗？此操作无法撤销。",
-
   "newVersionAvailable": "下载最新版本 {version}",
   "btnDownload": "下载",
-
   "supportTitle": "支持开发",
   "supportDescription": "这个应用是我利用业余时间构建和维护的。你的支持能帮助它持续运行和成长。",
-
+  "notifTrackingTitle": "追踪进行中",
+  "notifTrackingBodyAlways": "活动结束后别忘了关闭应用以停止追踪。",
+  "notifTrackingBodyForeground": "应用不可见时后台追踪可能暂停。在系统设置中启用「始终」位置权限以确保长时间活动的可靠性。",
   "changelogTitle": "新功能",
   "changelogGotIt": "了解",
-  "changelogV120I18n": "多语言: 应用、地图标签和日期格式跟随你的语言环境。可在设置或向导中覆盖。",
+  "changelogV120I18n": "多语言: 应用界面 26 种语言, 地图标签 41 种, 日期格式跟随你的语言环境。可在设置或向导中覆盖。",
   "changelogV120Wizard": "首次启动向导: 选择你的默认值（主题、语言）并在一个流程中授予位置权限。",
   "changelogV120Recording": "活动记录: 带脉冲和精度圈的动画位置标记、地图上的公里标记、按住停止 3 秒以结束（无意外点击）、自动跳转到统计页面。",
   "changelogV120Stats": "活动统计: 每公里分段图表,带配速 ⇄ 速度切换、D+ 海拔增益（Strava/Garmin 标准）。",
   "changelogV120Share": "通过系统分享菜单将活动作为带地图和统计的卡片分享。",
   "changelogV120GpxImport": "从其他应用（Garmin、Strava 等）导入 GPX 文件——支持轨迹和路线点。",
+  "changelogV120MapThemes": "五种地图主题: 浅色、深色、白色、灰度、黑色——在设置中挑选合适的。",
+  "changelogV120Notification": "活动通知反映你的位置权限——在后台追踪可能暂停时提醒你, 并建议长时间活动启用「始终」。",
+  "changelogV120Reproducible": "可复现构建: 任何人都可以从源代码重建并验证发布的 APK 是逐字节相同的——没有隐藏代码, 没有篡改。",
   "changelogV120Stability": "稳定性: 防御异常 GPS 读数、后台自动停止看门狗、日志自动轮换、更严格的 GPX 验证、HTTP 超时。"
 }

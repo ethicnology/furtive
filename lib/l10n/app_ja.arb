@@ -1,7 +1,6 @@
 {
   "@@locale": "ja",
   "appTitle": "Furtive",
-
   "btnNext": "次へ",
   "btnFinish": "完了",
   "btnGrant": "許可",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "GitHub でスター",
   "btnSponsor": "スポンサー",
   "linkOpenFailed": "{url} を開けませんでした",
-
   "shareSummary": "Furtive で {duration} に {distance} km",
   "shareFailed": "アクティビティを共有できませんでした: {error}",
   "shareTooltip": "アクティビティを共有",
-
   "navMap": "マップ",
   "navActivities": "アクティビティ",
   "navSettings": "設定",
-
   "menuPermissions": "権限",
   "menuPreferences": "設定",
   "menuLogs": "ログ",
-
   "onboardWelcomeTitle": "Furtive へようこそ",
   "onboardWelcomeSubtitle": "プライバシー重視のアクティビティ追跡。アカウント不要、テレメトリーなし、Google サービスなし。いくつかのデフォルトを選びましょう。",
   "onboardSettingsTitle": "マップ設定",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "権限",
   "onboardPermissionsSubtitle": "ランを追跡するために位置情報の権限を許可してください。通知とバックグラウンドアクセスは任意です。",
   "onboardSaveError": "選択を保存できませんでした: {error}",
-
   "settingsThemeLabel": "テーマ",
   "settingsUiLanguageLabel": "アプリ言語",
   "settingsUiLanguageSystem": "システムデフォルト",
-
   "preferencesTitle": "設定",
   "prefMapTheme": "マップテーマ",
   "prefAppLanguage": "アプリ言語",
-
   "permissionsTitle": "権限",
   "permissionsInstructions": "このアプリが正常に動作するには以下の権限が必要です",
   "permOptional": "任意",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "位置を追跡してマップに表示するために必要です。",
   "permLocationAlwaysName": "常時位置情報",
   "permLocationAlwaysDesc": "任意: 長時間のアクティビティ中、OS がアプリを一時停止しても追跡を正確に保ちます。",
-
   "mapActivityStartedMsg": "アクティビティを開始しました",
   "mapStopHint": "停止を 3 秒長押ししてアクティビティを終了",
   "mapLoadFailed": "マップの読み込みに失敗しました",
-
   "statsRecordingTitle": "アクティビティを記録中",
   "statDistance": "距離",
   "statDuration": "時間",
   "statPace": "ペース",
   "statSpeed": "速度",
   "statElevation": "標高",
-
   "splitsTitle": "スプリット",
   "splitsNotEnoughData": "スプリットのデータがまだ十分ではありません。",
   "metricPace": "ペース",
   "metricSpeed": "速度",
-
   "activitiesEmpty": "アクティビティがありません",
   "activitiesImportTooltip": "GPX ファイルをインポート",
   "importStarted": "インポート中…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "名前を変更",
   "dlgDeleteTitle": "削除",
   "dlgDeleteConfirm": "このアクティビティを削除してもよろしいですか？",
-
   "gpxExportSuccess": "GPX を正常にエクスポートしました",
   "gpxExportFailed": "エクスポート失敗: {error}",
-
   "logsTitle": "ログ",
   "logsEmpty": "ログがありません",
   "logsTooltipClear": "ログをクリア",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} 件のログをクリップボードにコピーしました",
   "dlgDeleteLogsTitle": "ログを削除",
   "dlgDeleteLogsConfirm": "すべてのログを削除してもよろしいですか？この操作は取り消せません。",
-
   "newVersionAvailable": "最新バージョン {version} をダウンロード",
   "btnDownload": "ダウンロード",
-
   "supportTitle": "開発をサポート",
   "supportDescription": "このアプリは私の自由時間に作られ、維持されています。あなたのサポートが、生き続け成長する助けになります。",
-
+  "notifTrackingTitle": "トラッキング中",
+  "notifTrackingBodyAlways": "終わったらトラッキングを停止するためにアプリを閉じるのを忘れずに。",
+  "notifTrackingBodyForeground": "アプリが非表示のときバックグラウンドトラッキングが一時停止する場合があります。長時間のアクティビティには、システム設定で位置情報を「常に」に設定してください。",
   "changelogTitle": "新着情報",
   "changelogGotIt": "了解",
-  "changelogV120I18n": "多言語対応: アプリ、マップラベル、日付フォーマットがあなたのロケールに従います。設定またはウィザードで上書き可能。",
+  "changelogV120I18n": "多言語対応: アプリ UI は 26 言語、マップラベルは 41 言語、日付フォーマットはあなたのロケールに従います。設定またはウィザードで上書き可能。",
   "changelogV120Wizard": "初回起動ウィザード: デフォルト(テーマ、言語)を選び、位置情報権限を一連の流れで許可。",
   "changelogV120Recording": "アクティビティ記録: パルスと精度サークル付きのアニメーション位置マーカー、マップ上のキロメートルマーカー、停止を 3 秒長押しで終了(誤タップなし)、統計への自動リダイレクト。",
   "changelogV120Stats": "アクティビティ統計: キロメートル毎のスプリットチャート、ペース ⇄ 速度切り替え、D+ 標高獲得(Strava/Garmin の規約)。",
   "changelogV120Share": "システムの共有メニューからマップと統計付きカードとしてアクティビティを共有。",
   "changelogV120GpxImport": "他のアプリ(Garmin、Strava など)から GPX ファイルをインポート — トラックとルートの両ポイントに対応。",
+  "changelogV120MapThemes": "マップテーマ 5 種類: ライト、ダーク、ホワイト、グレースケール、ブラック — 設定でお好みを選べます。",
+  "changelogV120Notification": "アクティビティ通知は位置情報権限を反映 — バックグラウンドトラッキングが一時停止する可能性がある場合に警告し、長時間のアクティビティには「常に」を推奨します。",
+  "changelogV120Reproducible": "再現可能なビルド: 誰でもソースから再ビルドして、公開された APK がバイト単位で同一であることを検証可能 — 隠しコードなし、改ざんなし。",
   "changelogV120Stability": "安定性: GPS のジャンクデータに強化、バックグラウンド自動停止ウォッチドッグ、ログの自動ローテーション、より厳格な GPX 検証、HTTP タイムアウト。"
 }

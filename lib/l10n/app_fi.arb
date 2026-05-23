@@ -1,7 +1,6 @@
 {
   "@@locale": "fi",
   "appTitle": "Furtive",
-
   "btnNext": "Seuraava",
   "btnFinish": "Valmis",
   "btnGrant": "Salli",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Tähti GitHubissa",
   "btnSponsor": "Tue",
   "linkOpenFailed": "Linkin {url} avaaminen epäonnistui",
-
   "shareSummary": "{distance} km ajassa {duration} Furtivella",
   "shareFailed": "Aktiviteetin jakaminen epäonnistui: {error}",
   "shareTooltip": "Jaa aktiviteetti",
-
   "navMap": "Kartta",
   "navActivities": "Aktiviteetit",
   "navSettings": "Asetukset",
-
   "menuPermissions": "Käyttöoikeudet",
   "menuPreferences": "Asetukset",
   "menuLogs": "Lokit",
-
   "onboardWelcomeTitle": "Tervetuloa Furtiveen",
   "onboardWelcomeSubtitle": "Yksityisyyttä kunnioittava aktiviteettien seuranta. Ei tilejä, ei telemetriaa, ei Google-palveluja. Valitaan muutama oletusasetus.",
   "onboardSettingsTitle": "Kartan asetukset",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Käyttöoikeudet",
   "onboardPermissionsSubtitle": "Anna sijainnin käyttöoikeus juoksujesi seuraamiseen. Ilmoitukset ja taustakäyttö ovat valinnaisia.",
   "onboardSaveError": "Valintojen tallennus epäonnistui: {error}",
-
   "settingsThemeLabel": "Teema",
   "settingsUiLanguageLabel": "Sovelluksen kieli",
   "settingsUiLanguageSystem": "Järjestelmän oletus",
-
   "preferencesTitle": "Asetukset",
   "prefMapTheme": "Kartan teema",
   "prefAppLanguage": "Sovelluksen kieli",
-
   "permissionsTitle": "Käyttöoikeudet",
   "permissionsInstructions": "Sovellus tarvitsee seuraavat käyttöoikeudet toimiakseen oikein",
   "permOptional": "Valinnainen",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Tarvitaan sijaintisi seuraamiseen ja näyttämiseen kartalla.",
   "permLocationAlwaysName": "Sijainti aina",
   "permLocationAlwaysDesc": "Valinnainen: pitää seurannan tarkkana pitkien aktiviteettien aikana, vaikka käyttöjärjestelmä keskeyttäisi sovelluksen.",
-
   "mapActivityStartedMsg": "Aktiviteetti aloitettu",
   "mapStopHint": "Pidä Pysäytä-painiketta 3 sekuntia lopettaaksesi aktiviteetin",
   "mapLoadFailed": "Kartan lataus epäonnistui",
-
   "statsRecordingTitle": "Tallentaa aktiviteettia",
   "statDistance": "Matka",
   "statDuration": "Kesto",
   "statPace": "Tahti",
   "statSpeed": "Nopeus",
   "statElevation": "Nousu",
-
   "splitsTitle": "Väliajat",
   "splitsNotEnoughData": "Ei vielä riittävästi dataa väliaikoihin.",
   "metricPace": "Tahti",
   "metricSpeed": "Nopeus",
-
   "activitiesEmpty": "Ei aktiviteetteja",
   "activitiesImportTooltip": "Tuo GPX-tiedosto",
   "importStarted": "Tuonti käynnissä…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Nimeä uudelleen",
   "dlgDeleteTitle": "Poista",
   "dlgDeleteConfirm": "Haluatko varmasti poistaa tämän aktiviteetin?",
-
   "gpxExportSuccess": "GPX viety onnistuneesti",
   "gpxExportFailed": "Vienti epäonnistui: {error}",
-
   "logsTitle": "Lokit",
   "logsEmpty": "Ei lokeja",
   "logsTooltipClear": "Tyhjennä lokit",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} lokia kopioitu leikepöydälle",
   "dlgDeleteLogsTitle": "Poista lokit",
   "dlgDeleteLogsConfirm": "Haluatko varmasti poistaa kaikki lokit? Tätä toimintoa ei voi peruuttaa.",
-
   "newVersionAvailable": "Lataa uusin versio {version}",
   "btnDownload": "Lataa",
-
   "supportTitle": "Tue kehitystä",
   "supportDescription": "Tämä sovellus on rakennettu ja ylläpidetty vapaa-ajallani. Tukesi auttaa pitämään sen elossa ja kasvamassa.",
-
+  "notifTrackingTitle": "Seuranta käynnissä",
+  "notifTrackingBodyAlways": "Muista sulkea sovellus lopetettuasi, jotta seuranta päättyy.",
+  "notifTrackingBodyForeground": "Taustaseuranta voi keskeytyä, kun sovellus ei ole näkyvissä. Ota sijainti 'Aina' käyttöön järjestelmäasetuksissa pitkiä aktiviteetteja varten.",
   "changelogTitle": "Uutta",
   "changelogGotIt": "Selvä",
-  "changelogV120I18n": "Monikielisyys: sovellus, kartan tekstit ja päivämäärämuodot seuraavat aluetietoasi. Muutettavissa asetuksista tai ohjatusta toiminnosta.",
+  "changelogV120I18n": "Monikielisyys: sovelluksen käyttöliittymä 26 kielellä, kartan tekstit 41 kielellä, päivämäärämuodot seuraavat aluetietoasi. Muutettavissa asetuksista tai ohjatusta toiminnosta.",
   "changelogV120Wizard": "Ensimmäisen käynnistyksen ohjattu toiminto: valitse oletusasetukset (teema, kieli) ja anna sijainnin käyttöoikeudet yhdellä kertaa.",
   "changelogV120Recording": "Aktiviteetin tallennus: animoitu sijaintimerkki sykkivällä pulssilla ja tarkkuusympyrällä, kilometrimerkit kartalla, pidä Pysäytä-painiketta 3 sekuntia lopettaaksesi (ei vahinkopainalluksia), automaattinen ohjaus tilastoihin.",
   "changelogV120Stats": "Aktiviteetin tilastot: kilometriväliaikojen kaavio tahti ⇄ nopeus -kytkimellä, D+ nousu (Strava/Garmin-käytäntö).",
   "changelogV120Share": "Jaa aktiviteetti korttina kartalla ja tilastoilla järjestelmän jakovalikon kautta.",
   "changelogV120GpxImport": "Tuo GPX-tiedostoja muista sovelluksista (Garmin, Strava jne.) — sekä reitti- että rata-pisteet tuetaan.",
+  "changelogV120MapThemes": "Viisi karttateemaa: Vaalea, Tumma, Valkoinen, Harmaasävy, Musta — valitse sinulle sopiva asetuksista.",
+  "changelogV120Notification": "Aktiviteetti-ilmoitus heijastaa sijaintilupasi — varoittaa, kun taustaseuranta voi keskeytyä, ja suosittelee 'Aina'-vaihtoehtoa pitkille aktiviteeteille.",
+  "changelogV120Reproducible": "Toistettavat koonnit: kuka tahansa voi rakentaa uudelleen lähdekoodista ja varmistaa, että julkaistu APK on tavu tavulta identtinen — ei piilotettua koodia, ei peukalointia.",
   "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, taustakäynnin automaattinen pysäytys-vahti, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut."
 }

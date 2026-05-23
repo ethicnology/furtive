@@ -1,7 +1,6 @@
 {
   "@@locale": "sv",
   "appTitle": "Furtive",
-
   "btnNext": "Nästa",
   "btnFinish": "Klar",
   "btnGrant": "Tillåt",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Stjärna på GitHub",
   "btnSponsor": "Stötta",
   "linkOpenFailed": "Kunde inte öppna {url}",
-
   "shareSummary": "{distance} km på {duration} med Furtive",
   "shareFailed": "Kunde inte dela aktivitet: {error}",
   "shareTooltip": "Dela aktivitet",
-
   "navMap": "Karta",
   "navActivities": "Aktiviteter",
   "navSettings": "Inställningar",
-
   "menuPermissions": "Behörigheter",
   "menuPreferences": "Inställningar",
   "menuLogs": "Loggar",
-
   "onboardWelcomeTitle": "Välkommen till Furtive",
   "onboardWelcomeSubtitle": "Aktivitetsspårning med integritet i fokus. Inga konton, ingen telemetri, inga Google-tjänster. Vi väljer några inställningar.",
   "onboardSettingsTitle": "Kartinställningar",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Behörigheter",
   "onboardPermissionsSubtitle": "Bevilja platsåtkomst för att spåra dina löprundor. Aviseringar och bakgrundsåtkomst är valfritt.",
   "onboardSaveError": "Kunde inte spara dina val: {error}",
-
   "settingsThemeLabel": "Tema",
   "settingsUiLanguageLabel": "Appspråk",
   "settingsUiLanguageSystem": "Systemets standard",
-
   "preferencesTitle": "Inställningar",
   "prefMapTheme": "Karttema",
   "prefAppLanguage": "Appspråk",
-
   "permissionsTitle": "Behörigheter",
   "permissionsInstructions": "Den här appen behöver följande behörigheter för att fungera korrekt",
   "permOptional": "Valfritt",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Krävs för att spåra din position och visa den på kartan.",
   "permLocationAlwaysName": "Plats alltid",
   "permLocationAlwaysDesc": "Valfritt: håller spårningen exakt under långa aktiviteter, även om systemet pausar appen.",
-
   "mapActivityStartedMsg": "Aktivitet startad",
   "mapStopHint": "Håll Stopp i 3 sekunder för att avsluta aktiviteten",
   "mapLoadFailed": "Kunde inte ladda kartan",
-
   "statsRecordingTitle": "Spelar in aktivitet",
   "statDistance": "Distans",
   "statDuration": "Tid",
   "statPace": "Tempo",
   "statSpeed": "Hastighet",
   "statElevation": "Stigning",
-
   "splitsTitle": "Splits",
   "splitsNotEnoughData": "Inte tillräckligt med data för splits ännu.",
   "metricPace": "Tempo",
   "metricSpeed": "Hastighet",
-
   "activitiesEmpty": "Inga aktiviteter",
   "activitiesImportTooltip": "Importera GPX-fil",
   "importStarted": "Importerar…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Byt namn",
   "dlgDeleteTitle": "Ta bort",
   "dlgDeleteConfirm": "Är du säker på att du vill ta bort den här aktiviteten?",
-
   "gpxExportSuccess": "GPX exporterad",
   "gpxExportFailed": "Export misslyckades: {error}",
-
   "logsTitle": "Loggar",
   "logsEmpty": "Inga loggar",
   "logsTooltipClear": "Rensa loggar",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} loggar kopierade till urklipp",
   "dlgDeleteLogsTitle": "Ta bort loggar",
   "dlgDeleteLogsConfirm": "Är du säker på att du vill ta bort alla loggar? Den här åtgärden kan inte ångras.",
-
   "newVersionAvailable": "Ladda ner senaste versionen {version}",
   "btnDownload": "Ladda ner",
-
   "supportTitle": "Stötta utvecklingen",
   "supportDescription": "Den här appen byggs och underhålls på min fritid. Ditt stöd hjälper till att hålla den levande och växande.",
-
+  "notifTrackingTitle": "Spårning aktiv",
+  "notifTrackingBodyAlways": "Glöm inte att stänga appen när du är klar för att stoppa spårningen.",
+  "notifTrackingBodyForeground": "Bakgrundsspårning kan pausa när appen inte är synlig. Aktivera plats 'Alltid' i systeminställningarna för långa aktiviteter.",
   "changelogTitle": "Nyheter",
   "changelogGotIt": "Uppfattat",
-  "changelogV120I18n": "Flerspråkigt: app, kartetiketter och datumformat följer din lokal. Ändra i Inställningar eller guiden.",
+  "changelogV120I18n": "Flerspråkigt: appgränssnitt på 26 språk, kartetiketter på 41, datumformat följer din lokal. Ändra i Inställningar eller guiden.",
   "changelogV120Wizard": "Välkomstguide: välj dina standardvärden (tema, språk) och bevilja platsbehörigheter i ett flöde.",
   "changelogV120Recording": "Aktivitetsinspelning: animerad positionsmarkör med puls och noggrannhetscirkel, kilometermarkeringar på kartan, håll Stopp i 3 sekunder för att avsluta (inga oavsiktliga tryck), automatisk omdirigering till statistik.",
   "changelogV120Stats": "Aktivitetsstatistik: kilometersplits-diagram med växlare tempo ⇄ hastighet, D+ stigning (Strava/Garmin-konvention).",
   "changelogV120Share": "Dela en aktivitet som ett kort med karta och statistik via systemets delningsmeny.",
   "changelogV120GpxImport": "Importera GPX-filer från andra appar (Garmin, Strava etc.) — både spår- och ruttpunkter stöds.",
+  "changelogV120MapThemes": "Fem kartteman: Ljus, Mörk, Vit, Gråskala, Svart — välj det som passar dig i Inställningar.",
+  "changelogV120Notification": "Aktivitetsaviseringen återspeglar din platsbehörighet — varnar när bakgrundsspårning kan pausa och rekommenderar 'Alltid' för långa aktiviteter.",
+  "changelogV120Reproducible": "Reproducerbara byggen: vem som helst kan bygga om från källkoden och verifiera att den publicerade APK:n är byte-för-byte identisk — ingen dold kod, ingen manipulering.",
   "changelogV120Stability": "Stabilitet: skyddad mot felaktiga GPS-värden, bakgrundsvakt för automatisk stopp, automatisk loggrotation, striktare GPX-validering, HTTP-timeouts."
 }

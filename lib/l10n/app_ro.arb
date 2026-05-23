@@ -1,7 +1,6 @@
 {
   "@@locale": "ro",
   "appTitle": "Furtive",
-
   "btnNext": "Înainte",
   "btnFinish": "Finalizează",
   "btnGrant": "Permite",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Stea pe GitHub",
   "btnSponsor": "Susține",
   "linkOpenFailed": "Nu s-a putut deschide {url}",
-
   "shareSummary": "{distance} km în {duration} cu Furtive",
   "shareFailed": "Nu s-a putut partaja activitatea: {error}",
   "shareTooltip": "Partajează activitatea",
-
   "navMap": "Hartă",
   "navActivities": "Activități",
   "navSettings": "Setări",
-
   "menuPermissions": "Permisiuni",
   "menuPreferences": "Preferințe",
   "menuLogs": "Jurnale",
-
   "onboardWelcomeTitle": "Bun venit în Furtive",
   "onboardWelcomeSubtitle": "Urmărirea activităților cu prioritate pe confidențialitate. Fără conturi, fără telemetrie, fără servicii Google. Hai să alegem câteva preferințe.",
   "onboardSettingsTitle": "Setări hartă",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Permisiuni",
   "onboardPermissionsSubtitle": "Acordă acces la locație pentru a urmări alergările. Notificările și accesul în fundal sunt opționale.",
   "onboardSaveError": "Alegerile nu au putut fi salvate: {error}",
-
   "settingsThemeLabel": "Temă",
   "settingsUiLanguageLabel": "Limba aplicației",
   "settingsUiLanguageSystem": "Implicit din sistem",
-
   "preferencesTitle": "Preferințe",
   "prefMapTheme": "Tema hărții",
   "prefAppLanguage": "Limba aplicației",
-
   "permissionsTitle": "Permisiuni",
   "permissionsInstructions": "Această aplicație necesită următoarele permisiuni pentru a funcționa corect",
   "permOptional": "Opțional",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Necesar pentru a-ți urmări poziția și a o afișa pe hartă.",
   "permLocationAlwaysName": "Locație întotdeauna",
   "permLocationAlwaysDesc": "Opțional: menține urmărirea precisă pe parcursul activităților lungi, chiar dacă sistemul suspendă aplicația.",
-
   "mapActivityStartedMsg": "Activitate începută",
   "mapStopHint": "Ține apăsat Stop 3 secunde pentru a termina activitatea",
   "mapLoadFailed": "Harta nu a putut fi încărcată",
-
   "statsRecordingTitle": "Înregistrează activitatea",
   "statDistance": "Distanță",
   "statDuration": "Durată",
   "statPace": "Ritm",
   "statSpeed": "Viteză",
   "statElevation": "Diferență de nivel",
-
   "splitsTitle": "Intervale",
   "splitsNotEnoughData": "Date insuficiente pentru intervale momentan.",
   "metricPace": "Ritm",
   "metricSpeed": "Viteză",
-
   "activitiesEmpty": "Nicio activitate",
   "activitiesImportTooltip": "Importă fișier GPX",
   "importStarted": "Se importă…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Redenumește",
   "dlgDeleteTitle": "Șterge",
   "dlgDeleteConfirm": "Sigur vrei să ștergi această activitate?",
-
   "gpxExportSuccess": "GPX exportat cu succes",
   "gpxExportFailed": "Eșec la export: {error}",
-
   "logsTitle": "Jurnale",
   "logsEmpty": "Niciun jurnal",
   "logsTooltipClear": "Șterge jurnalele",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} jurnale copiate în clipboard",
   "dlgDeleteLogsTitle": "Șterge jurnalele",
   "dlgDeleteLogsConfirm": "Sigur vrei să ștergi toate jurnalele? Această acțiune nu poate fi anulată.",
-
   "newVersionAvailable": "Descarcă cea mai nouă versiune {version}",
   "btnDownload": "Descarcă",
-
   "supportTitle": "Susține dezvoltarea",
   "supportDescription": "Această aplicație este construită și întreținută în timpul meu liber. Sprijinul tău o ajută să rămână vie și să crească.",
-
+  "notifTrackingTitle": "Urmărire activă",
+  "notifTrackingBodyAlways": "Nu uita să închizi aplicația când ai terminat pentru a opri urmărirea.",
+  "notifTrackingBodyForeground": "Urmărirea în fundal poate fi întreruptă când aplicația nu este vizibilă. Activează locația „Întotdeauna\" în setările sistemului pentru activități lungi.",
   "changelogTitle": "Noutăți",
   "changelogGotIt": "Am înțeles",
-  "changelogV120I18n": "Multilingv: aplicația, etichetele hărții și formatele de dată urmează localizarea ta. Suprascrie în Setări sau wizard.",
+  "changelogV120I18n": "Multilingv: interfața aplicației în 26 de limbi, etichete hartă în 41, formate de dată după localizare. Modificabil în Setări sau wizard.",
   "changelogV120Wizard": "Wizard la prima lansare: alege setările implicite (temă, limbă) și acordă permisiunile de locație într-un singur flux.",
   "changelogV120Recording": "Înregistrarea activității: marcaj de poziție animat cu puls și cerc de precizie, marcaje kilometrice pe hartă, ține apăsat Stop 3 secunde pentru a încheia (fără atingeri accidentale), redirecționare automată către statistici.",
   "changelogV120Stats": "Statistici: grafic al intervalelor pe kilometri cu comutator ritm ⇄ viteză, diferență de nivel D+ (convenție Strava/Garmin).",
   "changelogV120Share": "Partajează o activitate ca un card cu hartă și statistici prin meniul de partajare al sistemului.",
   "changelogV120GpxImport": "Importă fișiere GPX din alte aplicații (Garmin, Strava etc.) — sunt acceptate atât punctele de tip track, cât și cele de tip route.",
+  "changelogV120MapThemes": "Cinci teme hartă: Deschis, Întunecat, Alb, Tonuri de gri, Negru — alege ce ți se potrivește în Setări.",
+  "changelogV120Notification": "Notificarea de activitate reflectă permisiunea ta de locație — te avertizează când urmărirea în fundal poate fi întreruptă și recomandă „Întotdeauna\" pentru activități lungi.",
+  "changelogV120Reproducible": "Build-uri reproductibile: oricine poate recompila din sursă și verifica că APK-ul publicat este octet cu octet identic — fără cod ascuns, fără manipulare.",
   "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, watchdog de oprire automată în fundal, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP."
 }

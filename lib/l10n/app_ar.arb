@@ -1,7 +1,6 @@
 {
   "@@locale": "ar",
   "appTitle": "Furtive",
-
   "btnNext": "التالي",
   "btnFinish": "إنهاء",
   "btnGrant": "السماح",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "نجمة على GitHub",
   "btnSponsor": "ادعم",
   "linkOpenFailed": "تعذر فتح {url}",
-
   "shareSummary": "{distance} كم خلال {duration} مع Furtive",
   "shareFailed": "تعذرت مشاركة النشاط: {error}",
   "shareTooltip": "مشاركة النشاط",
-
   "navMap": "الخريطة",
   "navActivities": "الأنشطة",
   "navSettings": "الإعدادات",
-
   "menuPermissions": "الأذونات",
   "menuPreferences": "التفضيلات",
   "menuLogs": "السجلات",
-
   "onboardWelcomeTitle": "مرحبًا بك في Furtive",
   "onboardWelcomeSubtitle": "تتبع النشاط مع الحرص على الخصوصية. بدون حسابات، بدون قياس عن بُعد، بدون خدمات Google. هيا نختار بعض الإعدادات الافتراضية.",
   "onboardSettingsTitle": "إعدادات الخريطة",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "الأذونات",
   "onboardPermissionsSubtitle": "امنح الوصول إلى الموقع لتتبع جولاتك. الإشعارات والوصول في الخلفية اختياريان.",
   "onboardSaveError": "تعذر حفظ اختياراتك: {error}",
-
   "settingsThemeLabel": "السمة",
   "settingsUiLanguageLabel": "لغة التطبيق",
   "settingsUiLanguageSystem": "افتراضي النظام",
-
   "preferencesTitle": "التفضيلات",
   "prefMapTheme": "سمة الخريطة",
   "prefAppLanguage": "لغة التطبيق",
-
   "permissionsTitle": "الأذونات",
   "permissionsInstructions": "يحتاج هذا التطبيق إلى الأذونات التالية ليعمل بشكل صحيح",
   "permOptional": "اختياري",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "مطلوب لتتبع موقعك وعرضه على الخريطة.",
   "permLocationAlwaysName": "الموقع دائمًا",
   "permLocationAlwaysDesc": "اختياري: يحافظ على دقة التتبع أثناء الأنشطة الطويلة، حتى إذا أوقف النظام التطبيق.",
-
   "mapActivityStartedMsg": "بدأ النشاط",
   "mapStopHint": "اضغط مع الاستمرار على إيقاف لمدة 3 ثوانٍ لإنهاء النشاط",
   "mapLoadFailed": "فشل تحميل الخريطة",
-
   "statsRecordingTitle": "تسجيل النشاط",
   "statDistance": "المسافة",
   "statDuration": "المدة",
   "statPace": "وتيرة",
   "statSpeed": "السرعة",
   "statElevation": "الارتفاع",
-
   "splitsTitle": "المراحل",
   "splitsNotEnoughData": "لا توجد بيانات كافية للمراحل بعد.",
   "metricPace": "وتيرة",
   "metricSpeed": "السرعة",
-
   "activitiesEmpty": "لا توجد أنشطة",
   "activitiesImportTooltip": "استيراد ملف GPX",
   "importStarted": "جارٍ الاستيراد…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "إعادة تسمية",
   "dlgDeleteTitle": "حذف",
   "dlgDeleteConfirm": "هل أنت متأكد أنك تريد حذف هذا النشاط؟",
-
   "gpxExportSuccess": "تم تصدير GPX بنجاح",
   "gpxExportFailed": "فشل التصدير: {error}",
-
   "logsTitle": "السجلات",
   "logsEmpty": "لا توجد سجلات",
   "logsTooltipClear": "مسح السجلات",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "تم نسخ {count} سجلات إلى الحافظة",
   "dlgDeleteLogsTitle": "حذف السجلات",
   "dlgDeleteLogsConfirm": "هل أنت متأكد أنك تريد حذف جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.",
-
   "newVersionAvailable": "نزّل أحدث إصدار {version}",
   "btnDownload": "تنزيل",
-
   "supportTitle": "ادعم التطوير",
   "supportDescription": "هذا التطبيق مبني وتتم صيانته في وقتي الحر. دعمك يساعد في إبقائه حيًا ونموه.",
-
+  "notifTrackingTitle": "التتبع نشط",
+  "notifTrackingBodyAlways": "لا تنسَ إغلاق التطبيق عند الانتهاء لإيقاف التتبع.",
+  "notifTrackingBodyForeground": "قد يتوقف التتبع في الخلفية مؤقتًا عندما لا يكون التطبيق مرئيًا. فعّل موقع 'دائمًا' في إعدادات النظام للأنشطة الطويلة.",
   "changelogTitle": "ما الجديد",
   "changelogGotIt": "حسنًا",
-  "changelogV120I18n": "متعدد اللغات: التطبيق وتسميات الخريطة وتنسيقات التاريخ تتبع لغتك. قابل للتجاوز من الإعدادات أو المعالج.",
+  "changelogV120I18n": "متعدد اللغات: واجهة التطبيق بـ 26 لغة، تسميات الخريطة بـ 41، تنسيقات التاريخ تتبع منطقتك. قابل للتجاوز من الإعدادات أو المعالج.",
   "changelogV120Wizard": "معالج التشغيل الأول: اختر إعداداتك الافتراضية (السمة، اللغة) وامنح أذونات الموقع في تدفق واحد.",
   "changelogV120Recording": "تسجيل النشاط: علامة موقع متحركة بنبض ودائرة دقة، علامات كيلومترية على الخريطة، اضغط مع الاستمرار على إيقاف لمدة 3 ثوانٍ للإنهاء (بدون نقرات عرضية)، إعادة توجيه تلقائية إلى الإحصاءات.",
   "changelogV120Stats": "إحصاءات النشاط: رسم بياني لمراحل كل كيلومتر مع مفتاح وتيرة ⇄ سرعة، الارتفاع D+ (وفقًا لتقليد Strava/Garmin).",
   "changelogV120Share": "شارك نشاطًا كبطاقة مع خريطة وإحصاءات عبر قائمة المشاركة بالنظام.",
   "changelogV120GpxImport": "استيراد ملفات GPX من تطبيقات أخرى (Garmin، Strava، إلخ.) — نقاط المسار والطريق مدعومة.",
+  "changelogV120MapThemes": "خمسة سمات للخريطة: فاتح، داكن، أبيض، تدرج رمادي، أسود — اختر ما يناسبك من الإعدادات.",
+  "changelogV120Notification": "إشعار النشاط يعكس إذن الموقع لديك — يحذرك عندما قد يتوقف التتبع في الخلفية، ويوصي بـ 'دائمًا' للأنشطة الطويلة.",
+  "changelogV120Reproducible": "بناءات قابلة للتكرار: يمكن لأي شخص إعادة البناء من الكود المصدري والتحقق من أن APK المنشور متطابق بايت ببايت — لا كود مخفي، لا تلاعب.",
   "changelogV120Stability": "الاستقرار: مقاومة لقراءات GPS الخاطئة، مراقب إيقاف تلقائي في الخلفية، تدوير تلقائي للسجلات، تحقق GPX أكثر صرامة، مهل HTTP."
 }

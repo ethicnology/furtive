@@ -17,13 +17,19 @@ class LocationRepository {
         ));
   }
 
-  Stream<PositionEntity> getPositionStream() {
+  Stream<PositionEntity> getPositionStream({
+    String? notificationTitle,
+    String? notificationBody,
+  }) {
     // Drop any frames with non-finite lat/lon — they crash flutter_map's
     // LatLng constructor ("LatLng is not finite") and corrupt downstream
     // distance / interpolation maths (NaN poisons cumulativeMeters and
     // every km-milestone derived from it).
     return remoteDataSource
-        .getPositionStream()
+        .getPositionStream(
+          notificationTitle: notificationTitle,
+          notificationBody: notificationBody,
+        )
         .map(_toEntity)
         .where((p) => p != null)
         .cast<PositionEntity>();

@@ -20,7 +20,7 @@ class Preferences extends Table {
   TextColumn get lastShownChangelogVersion => text().nullable()();
 }
 
-enum MapThemeColumn { light, dark }
+enum MapThemeColumn { light, dark, white, grayscale, black }
 
 /// Legacy column: map-label language is now derived from the UI locale at
 /// fetch time (see `resolveMapLabelLanguage` in `map_remote_data_source`).

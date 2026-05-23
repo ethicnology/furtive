@@ -1,7 +1,6 @@
 {
   "@@locale": "id",
   "appTitle": "Furtive",
-
   "btnNext": "Lanjut",
   "btnFinish": "Selesai",
   "btnGrant": "Izinkan",
@@ -22,19 +21,15 @@
   "btnStarGitHub": "Bintangi di GitHub",
   "btnSponsor": "Dukung",
   "linkOpenFailed": "Tidak dapat membuka {url}",
-
   "shareSummary": "{distance} km dalam {duration} dengan Furtive",
   "shareFailed": "Tidak dapat membagikan aktivitas: {error}",
   "shareTooltip": "Bagikan aktivitas",
-
   "navMap": "Peta",
   "navActivities": "Aktivitas",
   "navSettings": "Pengaturan",
-
   "menuPermissions": "Izin",
   "menuPreferences": "Preferensi",
   "menuLogs": "Log",
-
   "onboardWelcomeTitle": "Selamat datang di Furtive",
   "onboardWelcomeSubtitle": "Pelacakan aktivitas yang mengutamakan privasi. Tanpa akun, tanpa telemetri, tanpa layanan Google. Mari pilih beberapa preferensi.",
   "onboardSettingsTitle": "Pengaturan peta",
@@ -42,15 +37,12 @@
   "onboardPermissionsTitle": "Izin",
   "onboardPermissionsSubtitle": "Beri akses lokasi untuk melacak larianmu. Notifikasi dan akses latar belakang opsional.",
   "onboardSaveError": "Tidak dapat menyimpan pilihanmu: {error}",
-
   "settingsThemeLabel": "Tema",
   "settingsUiLanguageLabel": "Bahasa aplikasi",
   "settingsUiLanguageSystem": "Standar sistem",
-
   "preferencesTitle": "Preferensi",
   "prefMapTheme": "Tema peta",
   "prefAppLanguage": "Bahasa aplikasi",
-
   "permissionsTitle": "Izin",
   "permissionsInstructions": "Aplikasi ini membutuhkan izin berikut agar berfungsi dengan baik",
   "permOptional": "Opsional",
@@ -60,23 +52,19 @@
   "permLocationWhileUsingDesc": "Diperlukan untuk melacak posisimu dan menampilkannya di peta.",
   "permLocationAlwaysName": "Lokasi selalu",
   "permLocationAlwaysDesc": "Opsional: menjaga pelacakan akurat selama aktivitas panjang, bahkan jika OS menangguhkan aplikasi.",
-
   "mapActivityStartedMsg": "Aktivitas dimulai",
   "mapStopHint": "Tahan Berhenti selama 3 detik untuk mengakhiri aktivitas",
   "mapLoadFailed": "Gagal memuat peta",
-
   "statsRecordingTitle": "Merekam aktivitas",
   "statDistance": "Jarak",
   "statDuration": "Durasi",
   "statPace": "Pace",
   "statSpeed": "Kecepatan",
   "statElevation": "Elevasi",
-
   "splitsTitle": "Split",
   "splitsNotEnoughData": "Data belum cukup untuk split.",
   "metricPace": "Pace",
   "metricSpeed": "Kecepatan",
-
   "activitiesEmpty": "Tidak ada aktivitas",
   "activitiesImportTooltip": "Impor file GPX",
   "importStarted": "Mengimpor…",
@@ -86,10 +74,8 @@
   "dlgRenameTitle": "Ganti nama",
   "dlgDeleteTitle": "Hapus",
   "dlgDeleteConfirm": "Yakin ingin menghapus aktivitas ini?",
-
   "gpxExportSuccess": "GPX berhasil diekspor",
   "gpxExportFailed": "Ekspor gagal: {error}",
-
   "logsTitle": "Log",
   "logsEmpty": "Tidak ada log",
   "logsTooltipClear": "Bersihkan log",
@@ -104,20 +90,23 @@
   "logsCopiedMsg": "{count} log disalin ke clipboard",
   "dlgDeleteLogsTitle": "Hapus log",
   "dlgDeleteLogsConfirm": "Yakin ingin menghapus semua log? Tindakan ini tidak dapat dibatalkan.",
-
   "newVersionAvailable": "Unduh versi terbaru {version}",
   "btnDownload": "Unduh",
-
   "supportTitle": "Dukung pengembangan",
   "supportDescription": "Aplikasi ini dibangun dan dipelihara di waktu luang saya. Dukunganmu membantu menjaganya tetap hidup dan berkembang.",
-
+  "notifTrackingTitle": "Pelacakan aktif",
+  "notifTrackingBodyAlways": "Jangan lupa tutup aplikasi setelah selesai untuk menghentikan pelacakan.",
+  "notifTrackingBodyForeground": "Pelacakan latar belakang dapat berhenti saat aplikasi tidak terlihat. Aktifkan lokasi 'Selalu' di pengaturan sistem untuk aktivitas panjang.",
   "changelogTitle": "Apa yang baru",
   "changelogGotIt": "Mengerti",
-  "changelogV120I18n": "Multibahasa: aplikasi, label peta, dan format tanggal mengikuti locale-mu. Ubah di Pengaturan atau wizard.",
+  "changelogV120I18n": "Multibahasa: antarmuka aplikasi dalam 26 bahasa, label peta dalam 41, format tanggal mengikuti locale-mu. Ubah di Pengaturan atau wizard.",
   "changelogV120Wizard": "Wizard pertama kali: pilih defaultmu (tema, bahasa) dan beri izin lokasi dalam satu alur.",
   "changelogV120Recording": "Rekaman aktivitas: penanda posisi beranimasi dengan denyut dan lingkaran akurasi, penanda kilometer di peta, tahan Berhenti 3 detik untuk mengakhiri (tanpa ketukan tak sengaja), pengalihan otomatis ke statistik.",
   "changelogV120Stats": "Statistik aktivitas: grafik split per kilometer dengan tombol pace ⇄ kecepatan, kenaikan elevasi D+ (konvensi Strava/Garmin).",
   "changelogV120Share": "Bagikan aktivitas sebagai kartu dengan peta dan statistik melalui menu berbagi sistem.",
   "changelogV120GpxImport": "Impor file GPX dari aplikasi lain (Garmin, Strava, dll.) — titik track dan route didukung.",
+  "changelogV120MapThemes": "Lima tema peta: Terang, Gelap, Putih, Skala abu-abu, Hitam — pilih yang paling sesuai di Pengaturan.",
+  "changelogV120Notification": "Notifikasi aktivitas mencerminkan izin lokasimu — memperingatkan saat pelacakan latar belakang mungkin berhenti dan merekomendasikan 'Selalu' untuk aktivitas panjang.",
+  "changelogV120Reproducible": "Build reproduktif: siapa pun dapat membangun ulang dari sumber dan memverifikasi bahwa APK yang diterbitkan identik byte demi byte — tanpa kode tersembunyi, tanpa manipulasi.",
   "changelogV120Stability": "Stabilitas: tahan terhadap data GPS yang buruk, watchdog penghentian otomatis di latar belakang, rotasi log otomatis, validasi GPX lebih ketat, batas waktu HTTP."
 }
