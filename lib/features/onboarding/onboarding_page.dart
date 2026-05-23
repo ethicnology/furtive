@@ -86,14 +86,6 @@ class _OnboardingPageState extends State<OnboardingPage>
       await _updatePreferences(
         PreferencesEntity(
           mapTheme: _theme,
-          // mapLanguage is legacy: the column still exists on disk but is
-          // no longer user-editable. Map labels follow uiLocale at fetch
-          // time. Default to English here for new installs.
-          mapLanguage: MapLanguageEntity.en,
-          // accuracyInMeters is legacy: the column still exists on disk
-          // but is no longer user-editable. The location data source uses
-          // distanceFilter=0 (every fix) directly. Stored as 0 here.
-          accuracyInMeters: 0,
           hasCompletedOnboarding: true,
           uiLocale: _uiLocale,
           // Stamp the current version so the post-upgrade changelog doesn't
