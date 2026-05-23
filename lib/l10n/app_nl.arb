@@ -94,9 +94,6 @@
   "btnDownload": "Downloaden",
   "supportTitle": "Steun de ontwikkeling",
   "supportDescription": "Deze app wordt in mijn vrije tijd gebouwd en onderhouden. Jouw steun helpt om hem in leven te houden en te laten groeien.",
-  "notifTrackingTitle": "Tracking actief",
-  "notifTrackingBodyAlways": "Vergeet niet de app te sluiten als je klaar bent om de tracking te stoppen.",
-  "notifTrackingBodyForeground": "Achtergrond-tracking kan pauzeren wanneer de app niet zichtbaar is. Schakel locatie 'Altijd' in de systeeminstellingen in voor lange activiteiten.",
   "changelogTitle": "Wat is er nieuw",
   "changelogGotIt": "Begrepen",
   "changelogV120I18n": "Meertalig: app-interface in 26 talen, kaartlabels in 41, datumnotaties volgen je locale. Aanpasbaar in Instellingen of de wizard.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Deel een activiteit als kaart met kaart en statistieken via het systeemdeelmenu.",
   "changelogV120GpxImport": "Importeer GPX-bestanden uit andere apps (Garmin, Strava enz.) — zowel track- als routepunten worden ondersteund.",
   "changelogV120MapThemes": "Vijf kaartthema's: Licht, Donker, Wit, Grijswaarden, Zwart — kies wat je het beste vindt in Instellingen.",
-  "changelogV120Notification": "De activiteitsmelding past zich aan je locatietoestemming aan — waarschuwt wanneer achtergrond-tracking kan pauzeren en raadt 'Altijd' aan voor lange activiteiten.",
   "changelogV120Reproducible": "Reproduceerbare builds: iedereen kan herbouwen vanaf de broncode en verifiëren dat de gepubliceerde APK byte-voor-byte identiek is — geen verborgen code, geen sabotage.",
   "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, achtergrond-watchdog voor automatische stop, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts."
 }

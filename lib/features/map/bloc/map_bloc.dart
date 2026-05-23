@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
-import 'package:furtive/core/locale_cubit.dart';
-import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/usecases/get_user_location_use_case.dart';
 import 'package:furtive/core/usecases/start_track_position_use_case.dart';
@@ -17,8 +14,6 @@ import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
 import 'package:furtive/core/usecases/get_traces_use_case.dart';
 import 'package:furtive/features/map/error.dart';
-import 'package:furtive/l10n/app_localizations.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 const double kSearchHalfSideDegrees = 0.01425;
 
@@ -113,27 +108,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     return super.close();
   }
 
-  /// Build the (title, body) shown in the geolocator foreground-service
-  /// notification. The body tells the user something useful and accurate:
-  ///   • Always granted → reminder to close the app when truly done
-  ///   • whileInUse only → warn that background tracking may pause
-  /// Falls back to English when AppLocalizations can't resolve.
-  Future<({String title, String body})>
-  _resolveTrackingNotificationText() async {
-    final locale =
-        getIt<LocaleCubit>().state ??
-        PlatformDispatcher.instance.locale;
-    final l10n = await AppLocalizations.delegate.load(locale);
-    final hasAlways = await Permission.locationAlways.isGranted;
-    return (
-      title: l10n.notifTrackingTitle,
-      body:
-          hasAlways
-              ? l10n.notifTrackingBodyAlways
-              : l10n.notifTrackingBodyForeground,
-    );
-  }
-
   Future<void> _onInitMap(InitMap event, Emitter<MapState> emit) async {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
@@ -143,14 +117,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // subscription before opening a new one so we don't leak listeners
       // that keep dispatching UpdateUserLocation events.
       await _positionStream?.cancel();
-      // Resolve the localised foreground-notification text now (locale +
-      // current locationAlways grant). Set once when the stream opens;
-      // does not live-update if the user toggles the permission later.
-      final notification = await _resolveTrackingNotificationText();
-      final userPositionStream = await _startTrackPositionUsecase(
-        notificationTitle: notification.title,
-        notificationBody: notification.body,
-      );
+      final userPositionStream = await _startTrackPositionUsecase();
       _positionStream = userPositionStream
           .handleError((error) => logs.severe('error: $error'))
           .listen(

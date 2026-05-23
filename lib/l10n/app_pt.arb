@@ -94,9 +94,6 @@
   "btnDownload": "Baixar",
   "supportTitle": "Apoiar o desenvolvimento",
   "supportDescription": "Este app é construído e mantido no meu tempo livre. Seu apoio ajuda a mantê-lo vivo e crescendo.",
-  "notifTrackingTitle": "Rastreamento ativo",
-  "notifTrackingBodyAlways": "Não esqueça de fechar o app ao terminar para parar o rastreamento.",
-  "notifTrackingBodyForeground": "O rastreamento em segundo plano pode pausar quando o app não estiver visível. Ative a localização 'Sempre' nas configurações do sistema para atividades longas.",
   "changelogTitle": "Novidades",
   "changelogGotIt": "Entendi",
   "changelogV120I18n": "Multilíngue: app em 26 idiomas, rótulos do mapa em 41, formatos de data seguem sua localidade. Substitua nas configurações ou no assistente.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Compartilhe uma atividade como cartão com mapa e estatísticas através do menu de compartilhamento do sistema.",
   "changelogV120GpxImport": "Importe arquivos GPX de outros apps (Garmin, Strava, etc.) — pontos de trilha e de rota suportados.",
   "changelogV120MapThemes": "Cinco temas de mapa: Claro, Escuro, Branco, Tons de cinza, Preto — escolha o que combina com você nas configurações.",
-  "changelogV120Notification": "A notificação de atividade reflete sua permissão de localização — avisa quando o rastreamento em segundo plano pode pausar e recomenda ativar 'Sempre' para atividades longas.",
   "changelogV120Reproducible": "Builds reproduzíveis: qualquer um pode reconstruir a partir do código-fonte e verificar que o APK publicado é byte por byte idêntico — sem código oculto, sem adulteração.",
   "changelogV120Stability": "Estabilidade: protegido contra leituras de GPS ruins, watchdog de auto-parada em segundo plano, rotação automática de registros, validação de GPX mais rigorosa, tempos limite de HTTP."
 }

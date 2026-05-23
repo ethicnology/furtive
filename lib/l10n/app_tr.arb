@@ -94,9 +94,6 @@
   "btnDownload": "İndir",
   "supportTitle": "Geliştirmeyi destekle",
   "supportDescription": "Bu uygulama boş zamanlarımda yapılıp sürdürülüyor. Desteğin onu yaşatmaya ve büyütmeye yardım ediyor.",
-  "notifTrackingTitle": "Takip aktif",
-  "notifTrackingBodyAlways": "Takibi durdurmak için bittiğinde uygulamayı kapatmayı unutma.",
-  "notifTrackingBodyForeground": "Uygulama görünmez olduğunda arka plan takibi duraklayabilir. Uzun aktiviteler için sistem ayarlarından 'Her zaman' konumunu etkinleştir.",
   "changelogTitle": "Yenilikler",
   "changelogGotIt": "Anladım",
   "changelogV120I18n": "Çok dilli: uygulama arayüzü 26 dilde, harita etiketleri 41 dilde, tarih biçimleri yerel ayarına uyar. Ayarlardan veya sihirbazdan değiştirilebilir.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Bir etkinliği sistem paylaşım menüsü üzerinden harita ve istatistiklerle kart olarak paylaş.",
   "changelogV120GpxImport": "Diğer uygulamalardan (Garmin, Strava vb.) GPX dosyalarını içe aktar — hem track hem route noktaları desteklenir.",
   "changelogV120MapThemes": "Beş harita teması: Açık, Koyu, Beyaz, Gri tonlamalı, Siyah — sana uyanını ayarlardan seç.",
-  "changelogV120Notification": "Aktivite bildirimi konum izninizi yansıtır — arka plan takibinin duraklayabileceği durumlarda uyarır ve uzun aktiviteler için 'Her zaman' önerir.",
   "changelogV120Reproducible": "Tekrarlanabilir derlemeler: herkes kaynak koddan yeniden derleyebilir ve yayınlanan APK'nın bayt bayt aynı olduğunu doğrulayabilir — gizli kod yok, müdahale yok.",
   "changelogV120Stability": "Kararlılık: hatalı GPS okumalarına karşı güçlendirildi, arka planda otomatik durdurma watchdog'u, otomatik günlük döndürme, daha katı GPX doğrulaması, HTTP zaman aşımları."
 }

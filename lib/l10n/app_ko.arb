@@ -94,9 +94,6 @@
   "btnDownload": "다운로드",
   "supportTitle": "개발 지원",
   "supportDescription": "이 앱은 제가 여가 시간에 만들고 유지 관리합니다. 여러분의 지원이 앱을 살아 숨 쉬게 합니다.",
-  "notifTrackingTitle": "추적 활성",
-  "notifTrackingBodyAlways": "추적을 중지하려면 활동을 마친 후 앱 닫는 것을 잊지 마세요.",
-  "notifTrackingBodyForeground": "앱이 보이지 않을 때 백그라운드 추적이 일시 중지될 수 있습니다. 긴 활동에는 시스템 설정에서 '항상' 위치 권한을 활성화하세요.",
   "changelogTitle": "새로운 기능",
   "changelogGotIt": "확인",
   "changelogV120I18n": "다국어 지원: 앱 인터페이스 26개 언어, 지도 라벨 41개 언어, 날짜 형식이 로케일을 따릅니다. 설정 또는 마법사에서 재정의 가능.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "시스템 공유 시트를 통해 지도와 통계가 포함된 카드 형태로 활동 공유.",
   "changelogV120GpxImport": "다른 앱(Garmin, Strava 등)에서 GPX 파일을 가져오세요 — 트랙과 루트 포인트 모두 지원합니다.",
   "changelogV120MapThemes": "5가지 지도 테마: 라이트, 다크, 화이트, 그레이스케일, 블랙 — 설정에서 마음에 드는 것을 선택하세요.",
-  "changelogV120Notification": "활동 알림이 위치 권한을 반영합니다 — 백그라운드 추적이 일시 중지될 수 있을 때 경고하며 긴 활동에는 '항상'을 권장합니다.",
   "changelogV120Reproducible": "재현 가능한 빌드: 누구나 소스에서 다시 빌드하여 게시된 APK가 바이트 단위로 동일함을 확인할 수 있습니다 — 숨겨진 코드 없음, 변조 없음.",
   "changelogV120Stability": "안정성: 잘못된 GPS 값에 대한 강화, 백그라운드 자동 정지 워치독, 자동 로그 회전, 더 엄격한 GPX 검증, HTTP 타임아웃."
 }

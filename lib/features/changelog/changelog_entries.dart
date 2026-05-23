@@ -21,7 +21,6 @@ List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
       l10n.changelogV120Share,
       l10n.changelogV120GpxImport,
       l10n.changelogV120MapThemes,
-      l10n.changelogV120Notification,
       l10n.changelogV120Reproducible,
       l10n.changelogV120Stability,
     ],

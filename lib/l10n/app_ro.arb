@@ -94,9 +94,6 @@
   "btnDownload": "Descarcă",
   "supportTitle": "Susține dezvoltarea",
   "supportDescription": "Această aplicație este construită și întreținută în timpul meu liber. Sprijinul tău o ajută să rămână vie și să crească.",
-  "notifTrackingTitle": "Urmărire activă",
-  "notifTrackingBodyAlways": "Nu uita să închizi aplicația când ai terminat pentru a opri urmărirea.",
-  "notifTrackingBodyForeground": "Urmărirea în fundal poate fi întreruptă când aplicația nu este vizibilă. Activează locația „Întotdeauna\" în setările sistemului pentru activități lungi.",
   "changelogTitle": "Noutăți",
   "changelogGotIt": "Am înțeles",
   "changelogV120I18n": "Multilingv: interfața aplicației în 26 de limbi, etichete hartă în 41, formate de dată după localizare. Modificabil în Setări sau wizard.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Partajează o activitate ca un card cu hartă și statistici prin meniul de partajare al sistemului.",
   "changelogV120GpxImport": "Importă fișiere GPX din alte aplicații (Garmin, Strava etc.) — sunt acceptate atât punctele de tip track, cât și cele de tip route.",
   "changelogV120MapThemes": "Cinci teme hartă: Deschis, Întunecat, Alb, Tonuri de gri, Negru — alege ce ți se potrivește în Setări.",
-  "changelogV120Notification": "Notificarea de activitate reflectă permisiunea ta de locație — te avertizează când urmărirea în fundal poate fi întreruptă și recomandă „Întotdeauna\" pentru activități lungi.",
   "changelogV120Reproducible": "Build-uri reproductibile: oricine poate recompila din sursă și verifica că APK-ul publicat este octet cu octet identic — fără cod ascuns, fără manipulare.",
   "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, watchdog de oprire automată în fundal, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP."
 }

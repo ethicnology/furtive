@@ -22,9 +22,8 @@ import 'package:furtive/l10n/app_localizations.dart';
 /// First-launch wizard:
 /// 1. Welcome
 /// 2. Settings (theme + UI language)
-/// 3. Permissions (locationWhenInUse required; locationAlways and
-///    notification optional). Finish is disabled until locationWhenInUse
-///    is granted.
+/// 3. Permissions (locationWhenInUse required; locationAlways optional).
+///    Finish is disabled until locationWhenInUse is granted.
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 

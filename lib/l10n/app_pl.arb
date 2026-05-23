@@ -94,9 +94,6 @@
   "btnDownload": "Pobierz",
   "supportTitle": "Wesprzyj rozwój",
   "supportDescription": "Ta aplikacja jest tworzona i utrzymywana w moim wolnym czasie. Twoje wsparcie pomaga utrzymać ją przy życiu i rozwijać.",
-  "notifTrackingTitle": "Śledzenie aktywne",
-  "notifTrackingBodyAlways": "Nie zapomnij zamknąć aplikacji po zakończeniu, aby zatrzymać śledzenie.",
-  "notifTrackingBodyForeground": "Śledzenie w tle może zostać wstrzymane, gdy aplikacja nie jest widoczna. Włącz lokalizację „Zawsze\" w ustawieniach systemowych dla długich aktywności.",
   "changelogTitle": "Nowości",
   "changelogGotIt": "Rozumiem",
   "changelogV120I18n": "Wielojęzyczność: interfejs aplikacji w 26 językach, etykiety mapy w 41, formaty dat zgodnie z twoją lokalizacją. Zmiana w Ustawieniach lub kreatorze.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Udostępniaj aktywność jako kartę z mapą i statystykami przez systemowe menu udostępniania.",
   "changelogV120GpxImport": "Importuj pliki GPX z innych aplikacji (Garmin, Strava itp.) — obsługa zarówno punktów trasy, jak i punktów drogowych.",
   "changelogV120MapThemes": "Pięć motywów mapy: Jasny, Ciemny, Biały, Skala szarości, Czarny — wybierz w Ustawieniach ten, który Ci pasuje.",
-  "changelogV120Notification": "Powiadomienie o aktywności odzwierciedla twoje uprawnienie lokalizacji — ostrzega, gdy śledzenie w tle może zostać wstrzymane, i zaleca włączenie „Zawsze\" dla długich aktywności.",
   "changelogV120Reproducible": "Powtarzalne kompilacje: każdy może odbudować ze źródła i zweryfikować, że opublikowany APK jest identyczny bajt po bajcie — bez ukrytego kodu, bez manipulacji.",
   "changelogV120Stability": "Stabilność: ochrona przed błędnymi odczytami GPS, watchdog automatycznego zatrzymania w tle, automatyczna rotacja logów, ściślejsza walidacja GPX, limity czasu HTTP."
 }

@@ -20,16 +20,8 @@ class LocationGpsDataSource {
     return position;
   }
 
-  Stream<Position> getPositionStream({
-    String? notificationTitle,
-    String? notificationBody,
-  }) {
-    return Geolocator.getPositionStream(
-      locationSettings: getLocationSettings(
-        notificationTitle: notificationTitle,
-        notificationBody: notificationBody,
-      ),
-    );
+  Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(locationSettings: getLocationSettings());
   }
 
   Stream<ServiceStatus> getServiceStatusStream() {
@@ -52,10 +44,7 @@ class LocationGpsDataSource {
     return await Geolocator.isLocationServiceEnabled();
   }
 
-  LocationSettings getLocationSettings({
-    String? notificationTitle,
-    String? notificationBody,
-  }) {
+  LocationSettings getLocationSettings() {
     late LocationSettings locationSettings;
 
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -65,15 +54,13 @@ class LocationGpsDataSource {
         forceLocationManager: true,
         intervalDuration: const Duration(milliseconds: 5000),
         useMSLAltitude: true,
-        // Foreground-service notification text is localised at the call
-        // site (MapBloc) so it can reflect the user's locale and current
-        // permission level (whileInUse vs always). Falls back to English
-        // when callers don't supply strings (e.g. very early in startup
-        // before locale resolution).
-        foregroundNotificationConfig: ForegroundNotificationConfig(
-          notificationTitle: notificationTitle ?? 'Tracking active',
-          notificationText:
-              notificationBody ?? 'Swipe to stop background tracking.',
+        // Foreground-service notification — required by Android FGS rules.
+        // Shown silently in the "1 app active" row; most users won't read
+        // it, which is why we keep the text generic in English rather than
+        // localising it.
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Tracking active',
+          notificationText: 'Swipe to stop background tracking.',
           enableWakeLock: false,
           // setOngoing: false — user can swipe the notification away to
           // stop the foreground service. MapBloc listens for the resulting
@@ -81,7 +68,7 @@ class LocationGpsDataSource {
           setOngoing: false,
           // defType is the Android resource folder name, NOT the package id.
           // flutter_launcher_icons emits `launcher_icon.png` under mipmap-*.
-          notificationIcon: const AndroidResource(
+          notificationIcon: AndroidResource(
             name: 'launcher_icon',
             defType: 'mipmap',
           ),

@@ -94,9 +94,6 @@
   "btnDownload": "Ladda ner",
   "supportTitle": "Stötta utvecklingen",
   "supportDescription": "Den här appen byggs och underhålls på min fritid. Ditt stöd hjälper till att hålla den levande och växande.",
-  "notifTrackingTitle": "Spårning aktiv",
-  "notifTrackingBodyAlways": "Glöm inte att stänga appen när du är klar för att stoppa spårningen.",
-  "notifTrackingBodyForeground": "Bakgrundsspårning kan pausa när appen inte är synlig. Aktivera plats 'Alltid' i systeminställningarna för långa aktiviteter.",
   "changelogTitle": "Nyheter",
   "changelogGotIt": "Uppfattat",
   "changelogV120I18n": "Flerspråkigt: appgränssnitt på 26 språk, kartetiketter på 41, datumformat följer din lokal. Ändra i Inställningar eller guiden.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Dela en aktivitet som ett kort med karta och statistik via systemets delningsmeny.",
   "changelogV120GpxImport": "Importera GPX-filer från andra appar (Garmin, Strava etc.) — både spår- och ruttpunkter stöds.",
   "changelogV120MapThemes": "Fem kartteman: Ljus, Mörk, Vit, Gråskala, Svart — välj det som passar dig i Inställningar.",
-  "changelogV120Notification": "Aktivitetsaviseringen återspeglar din platsbehörighet — varnar när bakgrundsspårning kan pausa och rekommenderar 'Alltid' för långa aktiviteter.",
   "changelogV120Reproducible": "Reproducerbara byggen: vem som helst kan bygga om från källkoden och verifiera att den publicerade APK:n är byte-för-byte identisk — ingen dold kod, ingen manipulering.",
   "changelogV120Stability": "Stabilitet: skyddad mot felaktiga GPS-värden, bakgrundsvakt för automatisk stopp, automatisk loggrotation, striktare GPX-validering, HTTP-timeouts."
 }

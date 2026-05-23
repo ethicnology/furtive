@@ -94,9 +94,6 @@
   "btnDownload": "Stáhnout",
   "supportTitle": "Podpoř vývoj",
   "supportDescription": "Tato aplikace je vytvářena a udržována v mém volném čase. Tvoje podpora pomáhá udržet ji při životě a růst.",
-  "notifTrackingTitle": "Sledování aktivní",
-  "notifTrackingBodyAlways": "Nezapomeň zavřít aplikaci, až budeš hotov, abys zastavil sledování.",
-  "notifTrackingBodyForeground": "Sledování na pozadí se může pozastavit, když aplikace není viditelná. Aktivuj polohu „Vždy\" v systémových nastaveních pro dlouhé aktivity.",
   "changelogTitle": "Novinky",
   "changelogGotIt": "Rozumím",
   "changelogV120I18n": "Vícejazyčnost: rozhraní aplikace v 26 jazycích, štítky mapy v 41, formáty data dle vaší lokalizace. Nastavitelné v Nastavení nebo průvodci.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Sdílej aktivitu jako kartu s mapou a statistikami přes systémové menu sdílení.",
   "changelogV120GpxImport": "Importuj GPX soubory z jiných aplikací (Garmin, Strava atd.) — podporovány body tras i tras (track + route).",
   "changelogV120MapThemes": "Pět motivů mapy: Světlý, Tmavý, Bílý, Stupně šedi, Černý — vyber v Nastavení ten, který ti vyhovuje.",
-  "changelogV120Notification": "Oznámení o aktivitě odráží tvé oprávnění k poloze — varuje, když se sledování na pozadí může pozastavit, a doporučuje „Vždy\" pro dlouhé aktivity.",
   "changelogV120Reproducible": "Reprodukovatelné sestavení: kdokoli může znovu sestavit ze zdrojového kódu a ověřit, že zveřejněný APK je bajt po bajtu identický — žádný skrytý kód, žádná manipulace.",
   "changelogV120Stability": "Stabilita: ochrana před chybnými GPS údaji, watchdog pro automatické zastavení na pozadí, automatická rotace záznamů, přísnější validace GPX, časové limity HTTP."
 }

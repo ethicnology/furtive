@@ -94,9 +94,6 @@
   "btnDownload": "Lataa",
   "supportTitle": "Tue kehitystä",
   "supportDescription": "Tämä sovellus on rakennettu ja ylläpidetty vapaa-ajallani. Tukesi auttaa pitämään sen elossa ja kasvamassa.",
-  "notifTrackingTitle": "Seuranta käynnissä",
-  "notifTrackingBodyAlways": "Muista sulkea sovellus lopetettuasi, jotta seuranta päättyy.",
-  "notifTrackingBodyForeground": "Taustaseuranta voi keskeytyä, kun sovellus ei ole näkyvissä. Ota sijainti 'Aina' käyttöön järjestelmäasetuksissa pitkiä aktiviteetteja varten.",
   "changelogTitle": "Uutta",
   "changelogGotIt": "Selvä",
   "changelogV120I18n": "Monikielisyys: sovelluksen käyttöliittymä 26 kielellä, kartan tekstit 41 kielellä, päivämäärämuodot seuraavat aluetietoasi. Muutettavissa asetuksista tai ohjatusta toiminnosta.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Jaa aktiviteetti korttina kartalla ja tilastoilla järjestelmän jakovalikon kautta.",
   "changelogV120GpxImport": "Tuo GPX-tiedostoja muista sovelluksista (Garmin, Strava jne.) — sekä reitti- että rata-pisteet tuetaan.",
   "changelogV120MapThemes": "Viisi karttateemaa: Vaalea, Tumma, Valkoinen, Harmaasävy, Musta — valitse sinulle sopiva asetuksista.",
-  "changelogV120Notification": "Aktiviteetti-ilmoitus heijastaa sijaintilupasi — varoittaa, kun taustaseuranta voi keskeytyä, ja suosittelee 'Aina'-vaihtoehtoa pitkille aktiviteeteille.",
   "changelogV120Reproducible": "Toistettavat koonnit: kuka tahansa voi rakentaa uudelleen lähdekoodista ja varmistaa, että julkaistu APK on tavu tavulta identtinen — ei piilotettua koodia, ei peukalointia.",
   "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, taustakäynnin automaattinen pysäytys-vahti, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut."
 }

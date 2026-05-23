@@ -94,9 +94,6 @@
   "btnDownload": "Télécharger",
   "supportTitle": "Soutenir le développement",
   "supportDescription": "Cette app est construite et maintenue sur mon temps libre. Ton soutien aide à la garder vivante.",
-  "notifTrackingTitle": "Suivi actif",
-  "notifTrackingBodyAlways": "N'oublie pas de fermer l'application une fois terminé pour arrêter le suivi.",
-  "notifTrackingBodyForeground": "Le suivi en arrière-plan peut s'interrompre quand l'app n'est pas visible. Active la localisation « Toujours » dans les paramètres système pour les longues activités.",
   "changelogTitle": "Nouveautés",
   "changelogGotIt": "Compris",
   "changelogV120I18n": "Multilingue : interface en 26 langues, libellés de carte en 41, formats de date selon ta locale. Modifiable dans les paramètres ou l'assistant.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Partage une activité sous forme de carte avec carte et statistiques via le menu de partage système.",
   "changelogV120GpxImport": "Importe des fichiers GPX depuis d'autres apps (Garmin, Strava, etc.) — points de trace et de route supportés.",
   "changelogV120MapThemes": "Cinq thèmes de carte : Clair, Sombre, Blanc, Niveaux de gris, Noir — choisis celui qui te convient dans les paramètres.",
-  "changelogV120Notification": "La notification d'activité reflète ta permission de localisation — t'avertit quand le suivi en arrière-plan risque de s'arrêter et recommande d'activer « Toujours » pour les longues activités.",
   "changelogV120Reproducible": "Builds reproductibles : n'importe qui peut reconstruire depuis les sources et vérifier que l'APK publié est identique octet pour octet — aucun code caché, aucune altération.",
   "changelogV120Stability": "Stabilité : protection contre les relevés GPS aberrants, watchdog d'arrêt automatique en arrière-plan, rotation automatique des journaux, validation GPX plus stricte, timeouts HTTP."
 }

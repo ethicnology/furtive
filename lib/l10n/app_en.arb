@@ -1,7 +1,6 @@
 {
   "@@locale": "en",
   "appTitle": "Furtive",
-
   "btnNext": "Next",
   "btnFinish": "Finish",
   "btnGrant": "Grant",
@@ -24,33 +23,37 @@
   "linkOpenFailed": "Couldn't open {url}",
   "@linkOpenFailed": {
     "placeholders": {
-      "url": { "type": "String" }
+      "url": {
+        "type": "String"
+      }
     }
   },
-
   "shareSummary": "{distance} km in {duration} with Furtive",
   "@shareSummary": {
     "placeholders": {
-      "distance": { "type": "String" },
-      "duration": { "type": "String" }
+      "distance": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
     }
   },
   "shareFailed": "Couldn't share activity: {error}",
   "@shareFailed": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "shareTooltip": "Share activity",
-
   "navMap": "Map",
   "navActivities": "Activities",
   "navSettings": "Settings",
-
   "menuPermissions": "Permissions",
   "menuPreferences": "Preferences",
   "menuLogs": "Logs",
-
   "onboardWelcomeTitle": "Welcome to Furtive",
   "onboardWelcomeSubtitle": "Privacy-first activity tracking. No accounts, no telemetry, no Google services. Let's pick a few defaults.",
   "onboardSettingsTitle": "Map settings",
@@ -60,18 +63,17 @@
   "onboardSaveError": "Could not save your choices: {error}",
   "@onboardSaveError": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
-
   "settingsThemeLabel": "Theme",
   "settingsUiLanguageLabel": "App language",
   "settingsUiLanguageSystem": "System default",
-
   "preferencesTitle": "Preferences",
   "prefMapTheme": "Map Theme",
   "prefAppLanguage": "App Language",
-
   "permissionsTitle": "Permissions",
   "permissionsInstructions": "This app needs the following permissions to work properly",
   "permOptional": "Optional",
@@ -81,23 +83,19 @@
   "permLocationWhileUsingDesc": "Required to track your position and display it on the map.",
   "permLocationAlwaysName": "Location Always",
   "permLocationAlwaysDesc": "Optional: keeps tracking accurate during long activities, even if the OS suspends the app.",
-
   "mapActivityStartedMsg": "Activity started",
   "mapStopHint": "Hold Stop for 3 seconds to end activity",
   "mapLoadFailed": "Failed to load map",
-
   "statsRecordingTitle": "Recording Activity",
   "statDistance": "Distance",
   "statDuration": "Duration",
   "statPace": "Pace",
   "statSpeed": "Speed",
   "statElevation": "Elevation",
-
   "splitsTitle": "Splits",
   "splitsNotEnoughData": "Not enough data for splits yet.",
   "metricPace": "Pace",
   "metricSpeed": "Speed",
-
   "activitiesEmpty": "No activities found",
   "activitiesImportTooltip": "Import a GPX file",
   "importStarted": "Importing…",
@@ -107,15 +105,15 @@
   "dlgRenameTitle": "Rename",
   "dlgDeleteTitle": "Delete",
   "dlgDeleteConfirm": "Are you sure you want to delete this activity?",
-
   "gpxExportSuccess": "GPX exported successfully",
   "gpxExportFailed": "Export failed: {error}",
   "@gpxExportFailed": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
-
   "logsTitle": "Logs",
   "logsEmpty": "No logs found",
   "logsTooltipClear": "Clear log",
@@ -125,49 +123,56 @@
   "logsFiltered": "Filtered: {start} - {end}",
   "@logsFiltered": {
     "placeholders": {
-      "start": { "type": "String" },
-      "end": { "type": "String" }
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "logsShowingCount": "Showing {shown} of {total}",
   "@logsShowingCount": {
     "placeholders": {
-      "shown": { "type": "int" },
-      "total": { "type": "int" }
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "activityDefaultName": "Track",
   "logsLoadError": "Failed to load logs: {error}",
   "@logsLoadError": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "logCopiedMsg": "Log copied to clipboard",
   "logsCopiedMsg": "{count} logs copied to clipboard",
   "@logsCopiedMsg": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "dlgDeleteLogsTitle": "Delete logs",
   "dlgDeleteLogsConfirm": "Are you sure you want to delete all logs? This action cannot be undone.",
-
   "newVersionAvailable": "Download the latest version {version}",
   "@newVersionAvailable": {
     "placeholders": {
-      "version": { "type": "String" }
+      "version": {
+        "type": "String"
+      }
     }
   },
   "btnDownload": "Download",
-
   "supportTitle": "Support Development",
   "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
-
-  "notifTrackingTitle": "Tracking active",
-  "notifTrackingBodyAlways": "Don't forget to close the app once you're done to stop tracking.",
-  "notifTrackingBodyForeground": "Background tracking may pause when the app is hidden. Enable 'Always' location in system settings for reliable long activities.",
-
   "changelogTitle": "What's new",
   "changelogGotIt": "Got it",
   "changelogV120I18n": "Multi-language: app interface in 26 languages, map labels in 41, date formats follow your locale. Override in Settings or the wizard.",
@@ -177,7 +182,6 @@
   "changelogV120Share": "Share an activity as a card with map and stats via the system share sheet.",
   "changelogV120GpxImport": "Import GPX files from other apps (Garmin, Strava, etc.) — both track and route points supported.",
   "changelogV120MapThemes": "Five map themes: Light, Dark, White, Grayscale, Black — pick the one that fits your eye in Settings.",
-  "changelogV120Notification": "Activity notification reflects your location permission — warns you when background tracking may pause and recommends enabling 'Always' for long activities.",
   "changelogV120Reproducible": "Reproducible builds: anyone can rebuild from source and verify the published APK is byte-for-byte identical — no hidden code, no tampering.",
   "changelogV120Stability": "Stability: hardened against junk GPS fixes, background auto-cease watchdog, automatic log rotation, stricter GPX validation, HTTP timeouts."
 }

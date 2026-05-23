@@ -94,9 +94,6 @@
   "btnDownload": "Pakua",
   "supportTitle": "Saidia maendeleo",
   "supportDescription": "Programu hii inajengwa na kudumishwa katika muda wangu wa ziada. Msaada wako unasaidia kuiweka hai na kukua.",
-  "notifTrackingTitle": "Ufuatiliaji unaendelea",
-  "notifTrackingBodyAlways": "Usisahau kufunga programu ukimaliza ili kusimamisha ufuatiliaji.",
-  "notifTrackingBodyForeground": "Ufuatiliaji nyuma ya pazia unaweza kusimama wakati programu haionekani. Wezesha eneo 'Daima' kwenye mipangilio ya mfumo kwa shughuli ndefu.",
   "changelogTitle": "Mpya",
   "changelogGotIt": "Sawa",
   "changelogV120I18n": "Lugha nyingi: kiolesura cha programu katika lugha 26, lebo za ramani 41, muundo wa tarehe hufuata eneo lako. Badilisha kwenye Mipangilio au msaidizi.",
@@ -106,7 +103,6 @@
   "changelogV120Share": "Shiriki shughuli kama kadi yenye ramani na takwimu kupitia menyu ya kushiriki ya mfumo.",
   "changelogV120GpxImport": "Ingiza faili za GPX kutoka programu zingine (Garmin, Strava, n.k.) — pointi za track na route zinatumika.",
   "changelogV120MapThemes": "Mada tano za ramani: Mwanga, Giza, Nyeupe, Kijivu, Nyeusi — chagua inayokufaa kwenye Mipangilio.",
-  "changelogV120Notification": "Arifa ya shughuli inaonyesha idhini ya eneo lako — inakuonya wakati ufuatiliaji nyuma ya pazia unaweza kusimama na inapendekeza 'Daima' kwa shughuli ndefu.",
   "changelogV120Reproducible": "Ujenzi unaoweza kurudiwa: mtu yeyote anaweza kujenga upya kutoka kwa msimbo wa chanzo na kuthibitisha kuwa APK iliyochapishwa ni ya sawa baiti kwa baiti — hakuna msimbo wa siri, hakuna uharibifu.",
   "changelogV120Stability": "Uthabiti: ulinzi dhidi ya usomaji mbaya wa GPS, mlinzi wa kusimama kiotomatiki nyuma ya pazia, mzunguko wa kumbukumbu kiotomatiki, uthibitishaji mkali wa GPX, muda wa HTTP."
 }
