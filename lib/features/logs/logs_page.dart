@@ -32,6 +32,12 @@ class _LogsPageState extends State<LogsPage> {
       final loadedLogs = await logs.readLogs();
       // Compute size once on load, not on every rebuild
       final sizeKb = utf8.encode(loadedLogs.join('\n')).length ~/ 1000;
+      // Sort newest-first once here, not on every rebuild in _filteredLogs.
+      loadedLogs.sort((a, b) {
+        final tsA = a.split('\t').first;
+        final tsB = b.split('\t').first;
+        return tsB.compareTo(tsA);
+      });
       setState(() {
         _logs = loadedLogs;
         _logsSizeKb = sizeKb;
@@ -52,16 +58,10 @@ class _LogsPageState extends State<LogsPage> {
   }
 
   List<String> get _filteredLogs {
-    final result = _logs.toList();
-    result.sort((a, b) {
-      final partsA = a.split('\t');
-      final partsB = b.split('\t');
-      return partsB[0].compareTo(partsA[0]);
-    });
+    // _logs is already sorted newest-first in _loadLogs.
+    if (_startDate == null && _endDate == null) return _logs;
 
-    if (_startDate == null && _endDate == null) return result;
-
-    return result.where((log) {
+    return _logs.where((log) {
       final parts = log.split('\t');
       if (parts.isEmpty) return false;
 
