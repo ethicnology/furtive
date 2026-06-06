@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>furtive uses your location to record your activity and show it on the map.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>furtive uses your location to record your activity and show it on the map.</string>
 </dict>
 </plist>
