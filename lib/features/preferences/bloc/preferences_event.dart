@@ -26,3 +26,9 @@ class ChangeUiLocale extends PreferencesEvent {
 
   const ChangeUiLocale(this.languageCode);
 }
+
+class ChangeCheckUpdates extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeCheckUpdates(this.enabled);
+}

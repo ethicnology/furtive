@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "선택 사항: OS가 앱을 일시 중단하더라도 장시간 활동 중에 정확한 추적을 유지합니다.",
   "mapActivityStartedMsg": "활동이 시작되었습니다",
   "mapStopHint": "활동을 종료하려면 정지를 3초간 길게 누르세요",
-  "mapLoadFailed": "지도를 불러올 수 없습니다",
   "statsRecordingTitle": "활동 기록 중",
   "statDistance": "거리",
   "statDuration": "시간",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "다른 앱(Garmin, Strava 등)에서 GPX 파일을 가져오세요 — 트랙과 루트 포인트 모두 지원합니다.",
   "changelogV120MapThemes": "5가지 지도 테마: 라이트, 다크, 화이트, 그레이스케일, 블랙 — 설정에서 마음에 드는 것을 선택하세요.",
   "changelogV120Reproducible": "재현 가능한 빌드: 누구나 소스에서 다시 빌드하여 게시된 APK가 바이트 단위로 동일함을 확인할 수 있습니다 — 숨겨진 코드 없음, 변조 없음.",
-  "changelogV120Stability": "안정성: 잘못된 GPS 값에 대한 강화, 백그라운드 자동 정지 워치독, 자동 로그 회전, 더 엄격한 GPX 검증, HTTP 타임아웃."
+  "changelogV120Stability": "안정성: 잘못된 GPS 값에 대한 강화, 백그라운드 자동 정지 워치독, 자동 로그 회전, 더 엄격한 GPX 검증, HTTP 타임아웃.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

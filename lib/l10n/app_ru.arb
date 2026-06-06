@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Необязательно: точное отслеживание во время длинных тренировок, даже когда система приостанавливает приложение.",
   "mapActivityStartedMsg": "Тренировка запущена",
   "mapStopHint": "Удерживай Стоп 3 секунды, чтобы завершить тренировку",
-  "mapLoadFailed": "Не удалось загрузить карту",
   "statsRecordingTitle": "Запись",
   "statDistance": "Расстояние",
   "statDuration": "Время",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Импорт GPX-файлов из других приложений (Garmin, Strava и т. п.) — поддерживаются и треки, и маршруты.",
   "changelogV120MapThemes": "Пять тем карты: Светлая, Тёмная, Белая, Оттенки серого, Чёрная — выбери в настройках ту, что тебе по душе.",
   "changelogV120Reproducible": "Воспроизводимые сборки: любой может пересобрать из исходников и убедиться, что опубликованный APK байт в байт идентичен — никакого скрытого кода, никаких подделок.",
-  "changelogV120Stability": "Стабильность: защита от мусорных GPS-координат, фоновый сторожевой таймер автоостановки, автоматическая ротация журналов, более строгая проверка GPX, тайм-ауты HTTP."
+  "changelogV120Stability": "Стабильность: защита от мусорных GPS-координат, фоновый сторожевой таймер автоостановки, автоматическая ротация журналов, более строгая проверка GPX, тайм-ауты HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

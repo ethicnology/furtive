@@ -5,18 +5,20 @@ import 'package:furtive/features/changelog/changelog_entries.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 
 /// Full-screen "What's New" shown after an app upgrade. Pushed by
-/// CheckPermissionPage between the permission check and the bottom-nav,
-/// only when the stored last-shown version is non-null and differs from
-/// the current package_info_plus version. The Got It button pops the
-/// route — the caller is responsible for persisting the new version once
-/// the future resolves.
+/// CheckPermissionPage between the permission check and the bottom-nav with
+/// the set of releases newer than the version the user last saw. The Got It
+/// button pops the route — the caller persists the new version once the
+/// future resolves.
 class ChangelogPage extends StatelessWidget {
-  const ChangelogPage({super.key});
+  /// Releases to display, already filtered to those newer than the user's
+  /// last-seen version (newest first).
+  final List<ChangelogRelease> releases;
+
+  const ChangelogPage({super.key, required this.releases});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final releases = changelogReleases(l10n);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.changelogTitle)),

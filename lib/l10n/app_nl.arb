@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Optioneel: houdt de tracking nauwkeurig tijdens lange activiteiten, ook als het systeem de app onderbreekt.",
   "mapActivityStartedMsg": "Activiteit gestart",
   "mapStopHint": "Houd Stop 3 seconden vast om de activiteit te beëindigen",
-  "mapLoadFailed": "Kaart kon niet worden geladen",
   "statsRecordingTitle": "Activiteit opnemen",
   "statDistance": "Afstand",
   "statDuration": "Duur",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Importeer GPX-bestanden uit andere apps (Garmin, Strava enz.) — zowel track- als routepunten worden ondersteund.",
   "changelogV120MapThemes": "Vijf kaartthema's: Licht, Donker, Wit, Grijswaarden, Zwart — kies wat je het beste vindt in Instellingen.",
   "changelogV120Reproducible": "Reproduceerbare builds: iedereen kan herbouwen vanaf de broncode en verifiëren dat de gepubliceerde APK byte-voor-byte identiek is — geen verborgen code, geen sabotage.",
-  "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, achtergrond-watchdog voor automatische stop, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts."
+  "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, achtergrond-watchdog voor automatische stop, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

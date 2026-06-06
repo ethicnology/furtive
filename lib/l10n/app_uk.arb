@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Необов'язково: тримає точне відстеження під час довгих тренувань, навіть коли система призупиняє застосунок.",
   "mapActivityStartedMsg": "Тренування розпочато",
   "mapStopHint": "Утримуй Стоп 3 секунди, щоб завершити тренування",
-  "mapLoadFailed": "Не вдалося завантажити мапу",
   "statsRecordingTitle": "Запис",
   "statDistance": "Відстань",
   "statDuration": "Час",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Імпорт GPX-файлів з інших застосунків (Garmin, Strava тощо) — підтримуються і треки, і маршрути.",
   "changelogV120MapThemes": "П'ять тем мапи: Світла, Темна, Біла, Відтінки сірого, Чорна — обери в налаштуваннях ту, що тобі підходить.",
   "changelogV120Reproducible": "Відтворювані збірки: будь-хто може перебудувати з вихідного коду та перевірити, що опублікований APK ідентичний байт у байт — без прихованого коду, без втручання.",
-  "changelogV120Stability": "Стабільність: захист від сміттєвих GPS-координат, фоновий сторожовий таймер автозупинки, автоматична ротація журналів, суворіша валідація GPX, тайм-аути HTTP."
+  "changelogV120Stability": "Стабільність: захист від сміттєвих GPS-координат, фоновий сторожовий таймер автозупинки, автоматична ротація журналів, суворіша валідація GPX, тайм-аути HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

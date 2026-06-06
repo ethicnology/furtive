@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Optionnel : maintient le suivi précis pendant les longues activités, même si le système suspend l'app.",
   "mapActivityStartedMsg": "Activité lancée",
   "mapStopHint": "Maintiens Stop 3 secondes pour terminer l'activité",
-  "mapLoadFailed": "Impossible de charger la carte",
   "statsRecordingTitle": "Enregistrement",
   "statDistance": "Distance",
   "statDuration": "Durée",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Importe des fichiers GPX depuis d'autres apps (Garmin, Strava, etc.) — points de trace et de route supportés.",
   "changelogV120MapThemes": "Cinq thèmes de carte : Clair, Sombre, Blanc, Niveaux de gris, Noir — choisis celui qui te convient dans les paramètres.",
   "changelogV120Reproducible": "Builds reproductibles : n'importe qui peut reconstruire depuis les sources et vérifier que l'APK publié est identique octet pour octet — aucun code caché, aucune altération.",
-  "changelogV120Stability": "Stabilité : protection contre les relevés GPS aberrants, watchdog d'arrêt automatique en arrière-plan, rotation automatique des journaux, validation GPX plus stricte, timeouts HTTP."
+  "changelogV120Stability": "Stabilité : protection contre les relevés GPS aberrants, watchdog d'arrêt automatique en arrière-plan, rotation automatique des journaux, validation GPX plus stricte, timeouts HTTP.",
+  "prefThemeLight": "Clair",
+  "prefThemeDark": "Sombre",
+  "prefThemeWhite": "Blanc",
+  "prefThemeGrayscale": "Niveaux de gris",
+  "prefThemeBlack": "Noir",
+  "prefCheckUpdates": "Vérifier les mises à jour",
+  "prefCheckUpdatesSubtitle": "Une fois par jour, demande à GitHub la dernière version. Rien d'autre n'est envoyé.",
+  "mapLoadingLocalizing": "Initialisation du GPS…",
+  "mapLoadingMap": "Chargement de la carte…",
+  "mapLoadingTraces": "Chargement des traces…",
+  "mapStartingActivity": "Démarrage de l'activité…",
+  "activitiesLoadError": "Impossible d'ouvrir cette activité"
 }

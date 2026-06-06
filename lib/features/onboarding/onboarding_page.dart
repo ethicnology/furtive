@@ -12,6 +12,7 @@ import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
+import 'package:furtive/features/preferences/page.dart' show mapThemeName;
 import 'package:furtive/features/permissions/domain/entities/permission_entity.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
@@ -312,7 +313,7 @@ class _SettingsStep extends StatelessWidget {
             LabeledDropdown<MapThemeEntity>(
               value: theme,
               items: MapThemeEntity.values,
-              labelFor: (t) => t.name.toUpperCase(),
+              labelFor: (t) => mapThemeName(AppLocalizations.of(context), t),
               onChanged: onThemeChanged,
             ),
             const SizedBox(height: 24),

@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Valinnainen: pitää seurannan tarkkana pitkien aktiviteettien aikana, vaikka käyttöjärjestelmä keskeyttäisi sovelluksen.",
   "mapActivityStartedMsg": "Aktiviteetti aloitettu",
   "mapStopHint": "Pidä Pysäytä-painiketta 3 sekuntia lopettaaksesi aktiviteetin",
-  "mapLoadFailed": "Kartan lataus epäonnistui",
   "statsRecordingTitle": "Tallentaa aktiviteettia",
   "statDistance": "Matka",
   "statDuration": "Kesto",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Tuo GPX-tiedostoja muista sovelluksista (Garmin, Strava jne.) — sekä reitti- että rata-pisteet tuetaan.",
   "changelogV120MapThemes": "Viisi karttateemaa: Vaalea, Tumma, Valkoinen, Harmaasävy, Musta — valitse sinulle sopiva asetuksista.",
   "changelogV120Reproducible": "Toistettavat koonnit: kuka tahansa voi rakentaa uudelleen lähdekoodista ja varmistaa, että julkaistu APK on tavu tavulta identtinen — ei piilotettua koodia, ei peukalointia.",
-  "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, taustakäynnin automaattinen pysäytys-vahti, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut."
+  "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, taustakäynnin automaattinen pysäytys-vahti, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

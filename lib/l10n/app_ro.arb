@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Opțional: menține urmărirea precisă pe parcursul activităților lungi, chiar dacă sistemul suspendă aplicația.",
   "mapActivityStartedMsg": "Activitate începută",
   "mapStopHint": "Ține apăsat Stop 3 secunde pentru a termina activitatea",
-  "mapLoadFailed": "Harta nu a putut fi încărcată",
   "statsRecordingTitle": "Înregistrează activitatea",
   "statDistance": "Distanță",
   "statDuration": "Durată",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Importă fișiere GPX din alte aplicații (Garmin, Strava etc.) — sunt acceptate atât punctele de tip track, cât și cele de tip route.",
   "changelogV120MapThemes": "Cinci teme hartă: Deschis, Întunecat, Alb, Tonuri de gri, Negru — alege ce ți se potrivește în Setări.",
   "changelogV120Reproducible": "Build-uri reproductibile: oricine poate recompila din sursă și verifica că APK-ul publicat este octet cu octet identic — fără cod ascuns, fără manipulare.",
-  "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, watchdog de oprire automată în fundal, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP."
+  "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, watchdog de oprire automată în fundal, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

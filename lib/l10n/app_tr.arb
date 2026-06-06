@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "İsteğe bağlı: uzun etkinlikler sırasında, sistem uygulamayı askıya alsa bile takibi doğru tutar.",
   "mapActivityStartedMsg": "Etkinlik başladı",
   "mapStopHint": "Etkinliği bitirmek için Durdur'a 3 saniye basılı tut",
-  "mapLoadFailed": "Harita yüklenemedi",
   "statsRecordingTitle": "Etkinlik kaydı",
   "statDistance": "Mesafe",
   "statDuration": "Süre",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Diğer uygulamalardan (Garmin, Strava vb.) GPX dosyalarını içe aktar — hem track hem route noktaları desteklenir.",
   "changelogV120MapThemes": "Beş harita teması: Açık, Koyu, Beyaz, Gri tonlamalı, Siyah — sana uyanını ayarlardan seç.",
   "changelogV120Reproducible": "Tekrarlanabilir derlemeler: herkes kaynak koddan yeniden derleyebilir ve yayınlanan APK'nın bayt bayt aynı olduğunu doğrulayabilir — gizli kod yok, müdahale yok.",
-  "changelogV120Stability": "Kararlılık: hatalı GPS okumalarına karşı güçlendirildi, arka planda otomatik durdurma watchdog'u, otomatik günlük döndürme, daha katı GPX doğrulaması, HTTP zaman aşımları."
+  "changelogV120Stability": "Kararlılık: hatalı GPS okumalarına karşı güçlendirildi, arka planda otomatik durdurma watchdog'u, otomatik günlük döndürme, daha katı GPX doğrulaması, HTTP zaman aşımları.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

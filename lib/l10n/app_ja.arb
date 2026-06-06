@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "任意: 長時間のアクティビティ中、OS がアプリを一時停止しても追跡を正確に保ちます。",
   "mapActivityStartedMsg": "アクティビティを開始しました",
   "mapStopHint": "停止を 3 秒長押ししてアクティビティを終了",
-  "mapLoadFailed": "マップの読み込みに失敗しました",
   "statsRecordingTitle": "アクティビティを記録中",
   "statDistance": "距離",
   "statDuration": "時間",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "他のアプリ(Garmin、Strava など)から GPX ファイルをインポート — トラックとルートの両ポイントに対応。",
   "changelogV120MapThemes": "マップテーマ 5 種類: ライト、ダーク、ホワイト、グレースケール、ブラック — 設定でお好みを選べます。",
   "changelogV120Reproducible": "再現可能なビルド: 誰でもソースから再ビルドして、公開された APK がバイト単位で同一であることを検証可能 — 隠しコードなし、改ざんなし。",
-  "changelogV120Stability": "安定性: GPS のジャンクデータに強化、バックグラウンド自動停止ウォッチドッグ、ログの自動ローテーション、より厳格な GPX 検証、HTTP タイムアウト。"
+  "changelogV120Stability": "安定性: GPS のジャンクデータに強化、バックグラウンド自動停止ウォッチドッグ、ログの自動ローテーション、より厳格な GPX 検証、HTTP タイムアウト。",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

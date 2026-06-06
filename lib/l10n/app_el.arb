@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Προαιρετικό: διατηρεί ακριβή καταγραφή κατά τη διάρκεια μεγάλων δραστηριοτήτων, ακόμη και αν το σύστημα αναστείλει την εφαρμογή.",
   "mapActivityStartedMsg": "Η δραστηριότητα ξεκίνησε",
   "mapStopHint": "Κράτα πατημένο το Διακοπή για 3 δευτερόλεπτα για να τερματίσεις τη δραστηριότητα",
-  "mapLoadFailed": "Αδυναμία φόρτωσης χάρτη",
   "statsRecordingTitle": "Καταγραφή δραστηριότητας",
   "statDistance": "Απόσταση",
   "statDuration": "Διάρκεια",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Εισαγωγή αρχείων GPX από άλλες εφαρμογές (Garmin, Strava κ.λπ.) — υποστηρίζονται και σημεία track και route.",
   "changelogV120MapThemes": "Πέντε θέματα χάρτη: Ανοιχτό, Σκούρο, Λευκό, Διαβαθμίσεις του γκρι, Μαύρο — διάλεξε αυτό που σου ταιριάζει στις Ρυθμίσεις.",
   "changelogV120Reproducible": "Αναπαραγώγιμες εκδόσεις: ο καθένας μπορεί να ξαναχτίσει από τον πηγαίο κώδικα και να επαληθεύσει ότι το δημοσιευμένο APK είναι byte-for-byte ίδιο — χωρίς κρυφό κώδικα, χωρίς παραποίηση.",
-  "changelogV120Stability": "Σταθερότητα: ενίσχυση έναντι λανθασμένων μετρήσεων GPS, watchdog αυτόματης διακοπής στο παρασκήνιο, αυτόματη εναλλαγή αρχείων καταγραφής, αυστηρότερη επικύρωση GPX, χρονικά όρια HTTP."
+  "changelogV120Stability": "Σταθερότητα: ενίσχυση έναντι λανθασμένων μετρήσεων GPS, watchdog αυτόματης διακοπής στο παρασκήνιο, αυτόματη εναλλαγή αρχείων καταγραφής, αυστηρότερη επικύρωση GPX, χρονικά όρια HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

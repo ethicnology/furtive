@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Opsional: menjaga pelacakan akurat selama aktivitas panjang, bahkan jika OS menangguhkan aplikasi.",
   "mapActivityStartedMsg": "Aktivitas dimulai",
   "mapStopHint": "Tahan Berhenti selama 3 detik untuk mengakhiri aktivitas",
-  "mapLoadFailed": "Gagal memuat peta",
   "statsRecordingTitle": "Merekam aktivitas",
   "statDistance": "Jarak",
   "statDuration": "Durasi",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Impor file GPX dari aplikasi lain (Garmin, Strava, dll.) — titik track dan route didukung.",
   "changelogV120MapThemes": "Lima tema peta: Terang, Gelap, Putih, Skala abu-abu, Hitam — pilih yang paling sesuai di Pengaturan.",
   "changelogV120Reproducible": "Build reproduktif: siapa pun dapat membangun ulang dari sumber dan memverifikasi bahwa APK yang diterbitkan identik byte demi byte — tanpa kode tersembunyi, tanpa manipulasi.",
-  "changelogV120Stability": "Stabilitas: tahan terhadap data GPS yang buruk, watchdog penghentian otomatis di latar belakang, rotasi log otomatis, validasi GPX lebih ketat, batas waktu HTTP."
+  "changelogV120Stability": "Stabilitas: tahan terhadap data GPS yang buruk, watchdog penghentian otomatis di latar belakang, rotasi log otomatis, validasi GPX lebih ketat, batas waktu HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

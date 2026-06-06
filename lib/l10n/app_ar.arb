@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "اختياري: يحافظ على دقة التتبع أثناء الأنشطة الطويلة، حتى إذا أوقف النظام التطبيق.",
   "mapActivityStartedMsg": "بدأ النشاط",
   "mapStopHint": "اضغط مع الاستمرار على إيقاف لمدة 3 ثوانٍ لإنهاء النشاط",
-  "mapLoadFailed": "فشل تحميل الخريطة",
   "statsRecordingTitle": "تسجيل النشاط",
   "statDistance": "المسافة",
   "statDuration": "المدة",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "استيراد ملفات GPX من تطبيقات أخرى (Garmin، Strava، إلخ.) — نقاط المسار والطريق مدعومة.",
   "changelogV120MapThemes": "خمسة سمات للخريطة: فاتح، داكن، أبيض، تدرج رمادي، أسود — اختر ما يناسبك من الإعدادات.",
   "changelogV120Reproducible": "بناءات قابلة للتكرار: يمكن لأي شخص إعادة البناء من الكود المصدري والتحقق من أن APK المنشور متطابق بايت ببايت — لا كود مخفي، لا تلاعب.",
-  "changelogV120Stability": "الاستقرار: مقاومة لقراءات GPS الخاطئة، مراقب إيقاف تلقائي في الخلفية، تدوير تلقائي للسجلات، تحقق GPX أكثر صرامة، مهل HTTP."
+  "changelogV120Stability": "الاستقرار: مقاومة لقراءات GPS الخاطئة، مراقب إيقاف تلقائي في الخلفية، تدوير تلقائي للسجلات، تحقق GPX أكثر صرامة، مهل HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

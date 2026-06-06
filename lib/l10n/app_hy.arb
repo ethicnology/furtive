@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Ընտրովի՝ պահպանում է ճշգրիտ հետևումը երկար գործունեությունների ընթացքում, նույնիսկ եթե համակարգը կասեցնում է հավելվածը։",
   "mapActivityStartedMsg": "Գործունեությունը սկսվեց",
   "mapStopHint": "Պահիր Կանգ 3 վայրկյան՝ գործունեությունն ավարտելու համար",
-  "mapLoadFailed": "Չհաջողվեց բեռնել քարտեզը",
   "statsRecordingTitle": "Գործունեության գրանցում",
   "statDistance": "Հեռավորություն",
   "statDuration": "Տևողություն",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Ներմուծիր GPX ֆայլեր այլ հավելվածներից (Garmin, Strava և այլն) — և track, և route կետերը աջակցվում են։",
   "changelogV120MapThemes": "Քարտեզի հինգ թեմա՝ Բաց, Մուգ, Սպիտակ, Մոխրագույն երանգներ, Սև — ընտրիր կարգավորումներից այն, որը քեզ դուր է գալիս։",
   "changelogV120Reproducible": "Վերարտադրելի կառուցումներ՝ ցանկացած ոք կարող է վերակառուցել աղբյուրից և ստուգել, որ հրապարակված APK-ն բայթ առ բայթ նույնական է՝ առանց թաքնված կոդի, առանց միջամտության։",
-  "changelogV120Stability": "Կայունություն՝ պաշտպանված սխալ GPS տվյալներից, ֆոնային ավտոմատ-կանգի վերահսկիչ, մատյանների ինքնաշխատ պտույտ, GPX-ի ավելի խիստ վավերացում, HTTP-ի ժամկետներ։"
+  "changelogV120Stability": "Կայունություն՝ պաշտպանված սխալ GPS տվյալներից, ֆոնային ավտոմատ-կանգի վերահսկիչ, մատյանների ինքնաշխատ պտույտ, GPX-ի ավելի խիստ վավերացում, HTTP-ի ժամկետներ։",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

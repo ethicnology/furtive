@@ -19,6 +19,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<UpdatePreferences>(_onUpdatePreferences);
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeUiLocale>(_onChangeUiLocale);
+    on<ChangeCheckUpdates>(_onChangeCheckUpdates);
   }
 
   static Future<PreferencesBloc> create() async {
@@ -52,6 +53,16 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
   ) {
     final newPreferences = state.preferences.copyWith(
       uiLocale: event.languageCode,
+    );
+    emit(state.copyWith(preferences: newPreferences));
+  }
+
+  void _onChangeCheckUpdates(
+    ChangeCheckUpdates event,
+    Emitter<PreferencesState> emit,
+  ) {
+    final newPreferences = state.preferences.copyWith(
+      checkUpdates: event.enabled,
     );
     emit(state.copyWith(preferences: newPreferences));
   }

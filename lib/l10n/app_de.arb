@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Optional: hält die Aufzeichnung während langer Aktivitäten genau, auch wenn das System die App pausiert.",
   "mapActivityStartedMsg": "Aktivität gestartet",
   "mapStopHint": "Halte Stopp 3 Sekunden gedrückt, um die Aktivität zu beenden",
-  "mapLoadFailed": "Karte konnte nicht geladen werden",
   "statsRecordingTitle": "Aktivität wird aufgezeichnet",
   "statDistance": "Distanz",
   "statDuration": "Dauer",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Importiere GPX-Dateien aus anderen Apps (Garmin, Strava usw.) — sowohl Track- als auch Route-Punkte werden unterstützt.",
   "changelogV120MapThemes": "Fünf Kartendesigns: Hell, Dunkel, Weiß, Graustufen, Schwarz — wähle in den Einstellungen das passende.",
   "changelogV120Reproducible": "Reproduzierbare Builds: jeder kann aus dem Quellcode neu bauen und prüfen, dass die veröffentlichte APK Byte-für-Byte identisch ist — kein versteckter Code, keine Manipulation.",
-  "changelogV120Stability": "Stabilität: gehärtet gegen fehlerhafte GPS-Werte, Hintergrund-Auto-Stop-Watchdog, automatische Protokollrotation, strengere GPX-Validierung, HTTP-Timeouts."
+  "changelogV120Stability": "Stabilität: gehärtet gegen fehlerhafte GPS-Werte, Hintergrund-Auto-Stop-Watchdog, automatische Protokollrotation, strengere GPX-Validierung, HTTP-Timeouts.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

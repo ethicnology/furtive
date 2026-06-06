@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "Volitelné: zachovává přesné sledování během dlouhých aktivit, i když systém aplikaci pozastaví.",
   "mapActivityStartedMsg": "Aktivita zahájena",
   "mapStopHint": "Pro ukončení aktivity podrž Stop 3 sekundy",
-  "mapLoadFailed": "Mapu se nepodařilo načíst",
   "statsRecordingTitle": "Záznam aktivity",
   "statDistance": "Vzdálenost",
   "statDuration": "Čas",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "Importuj GPX soubory z jiných aplikací (Garmin, Strava atd.) — podporovány body tras i tras (track + route).",
   "changelogV120MapThemes": "Pět motivů mapy: Světlý, Tmavý, Bílý, Stupně šedi, Černý — vyber v Nastavení ten, který ti vyhovuje.",
   "changelogV120Reproducible": "Reprodukovatelné sestavení: kdokoli může znovu sestavit ze zdrojového kódu a ověřit, že zveřejněný APK je bajt po bajtu identický — žádný skrytý kód, žádná manipulace.",
-  "changelogV120Stability": "Stabilita: ochrana před chybnými GPS údaji, watchdog pro automatické zastavení na pozadí, automatická rotace záznamů, přísnější validace GPX, časové limity HTTP."
+  "changelogV120Stability": "Stabilita: ochrana před chybnými GPS údaji, watchdog pro automatické zastavení na pozadí, automatická rotace záznamů, přísnější validace GPX, časové limity HTTP.",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }

@@ -54,7 +54,6 @@
   "permLocationAlwaysDesc": "वैकल्पिक: लंबी गतिविधियों के दौरान ट्रैकिंग सटीक रखता है, भले ही OS ऐप को निलंबित कर दे।",
   "mapActivityStartedMsg": "गतिविधि शुरू हुई",
   "mapStopHint": "गतिविधि समाप्त करने के लिए रोकें को 3 सेकंड तक दबाए रखें",
-  "mapLoadFailed": "मानचित्र लोड नहीं हो सका",
   "statsRecordingTitle": "गतिविधि रिकॉर्ड हो रही है",
   "statDistance": "दूरी",
   "statDuration": "अवधि",
@@ -104,5 +103,17 @@
   "changelogV120GpxImport": "अन्य ऐप्स (Garmin, Strava, आदि) से GPX फ़ाइलें आयात करें — ट्रैक और रूट दोनों बिंदु समर्थित।",
   "changelogV120MapThemes": "पाँच मानचित्र थीम: हल्का, गहरा, श्वेत, ग्रेस्केल, काला — सेटिंग्स में अपनी पसंद चुनें।",
   "changelogV120Reproducible": "पुनरुत्पादनीय बिल्ड्स: कोई भी स्रोत से पुनः बना सकता है और सत्यापित कर सकता है कि प्रकाशित APK बाइट-दर-बाइट समान है — कोई छिपा कोड नहीं, कोई छेड़छाड़ नहीं।",
-  "changelogV120Stability": "स्थिरता: ख़राब GPS रीडिंग के विरुद्ध मज़बूत, बैकग्राउंड ऑटो-स्टॉप वॉचडॉग, स्वचालित लॉग रोटेशन, सख्त GPX सत्यापन, HTTP टाइमआउट।"
+  "changelogV120Stability": "स्थिरता: ख़राब GPS रीडिंग के विरुद्ध मज़बूत, बैकग्राउंड ऑटो-स्टॉप वॉचडॉग, स्वचालित लॉग रोटेशन, सख्त GPX सत्यापन, HTTP टाइमआउट।",
+  "prefThemeLight": "Light",
+  "prefThemeDark": "Dark",
+  "prefThemeWhite": "White",
+  "prefThemeGrayscale": "Grayscale",
+  "prefThemeBlack": "Black",
+  "prefCheckUpdates": "Check for updates",
+  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
+  "mapLoadingLocalizing": "Initializing GPS…",
+  "mapLoadingMap": "Loading map…",
+  "mapLoadingTraces": "Loading traces…",
+  "mapStartingActivity": "Starting activity…",
+  "activitiesLoadError": "Could not open this activity"
 }
