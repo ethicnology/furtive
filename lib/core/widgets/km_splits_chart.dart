@@ -133,9 +133,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
   String _format(KmSplit s) {
     if (_metric == _Metric.pace) {
       if (s.paceMinPerKm == 0) return '--';
-      final mins = s.paceMinPerKm.floor();
-      final secs = ((s.paceMinPerKm - mins) * 60).round();
-      return '$mins:${secs.toString().padLeft(2, '0')} /km';
+      return '${formatPace(s.paceMinPerKm)} /km';
     }
     if (s.speedKmh == 0) return '--';
     return '${s.speedKmh.toStringAsFixed(1)} km/h';
