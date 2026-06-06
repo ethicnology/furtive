@@ -24,10 +24,6 @@ class LocationGpsDataSource {
     return Geolocator.getPositionStream(locationSettings: getLocationSettings());
   }
 
-  Stream<ServiceStatus> getServiceStatusStream() {
-    return Geolocator.getServiceStatusStream();
-  }
-
   Future<bool> requestLocationPermission() async {
     final permission = await Geolocator.requestPermission();
     return permission == LocationPermission.whileInUse ||
@@ -38,10 +34,6 @@ class LocationGpsDataSource {
     final permission = await Geolocator.checkPermission();
     return permission == LocationPermission.whileInUse ||
         permission == LocationPermission.always;
-  }
-
-  Future<bool> isLocationServiceEnabled() async {
-    return await Geolocator.isLocationServiceEnabled();
   }
 
   LocationSettings getLocationSettings() {
@@ -80,7 +72,12 @@ class LocationGpsDataSource {
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.fitness,
         distanceFilter: _kDistanceFilterMeters,
-        pauseLocationUpdatesAutomatically: true,
+        // false — we run our own pause/resume. With true, iOS Core Location
+        // auto-pauses updates when it thinks the user stopped (red light, rest
+        // stop); the stream then goes silent with no onDone, and MapBloc's 90s
+        // watchdog ceases the activity mid-run. Auto-pause is wrong for a
+        // tracker that wants a continuous trace.
+        pauseLocationUpdatesAutomatically: false,
         // Only set to true if our app will be started up in the background.
         showBackgroundLocationIndicator: true,
         allowBackgroundLocationUpdates: true,

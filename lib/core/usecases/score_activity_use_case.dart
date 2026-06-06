@@ -17,9 +17,16 @@ class ScoreActivityUseCase {
     final newPoint = ActivityPointEntity(
       position: position,
       status: status,
-      time: DateTime.now().toUtc(),
+      // Prefer the GPS fix time; fall back to now() for synthesised positions
+      // or platforms that don't report a fix timestamp.
+      time: position.time ?? DateTime.now().toUtc(),
     );
 
+    // Persist every fix immediately rather than buffering and batching. The
+    // GPS cadence is ~0.2 fixes/sec (Android intervalDuration 5s), so there is
+    // no write amplification to optimise away, and writing each fix as it
+    // arrives means a crash / FGS kill never loses buffered points — the right
+    // durability tradeoff for a tracker.
     await activityRepository.score(activityId, [newPoint]);
 
     return newPoint;

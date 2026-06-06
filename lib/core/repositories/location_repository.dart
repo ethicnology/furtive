@@ -38,15 +38,19 @@ class LocationRepository {
     // Altitude can legitimately be NaN on devices that don't report it;
     // coerce to 0 so the elevation maths don't propagate NaN.
     final elevation = position.altitude.isFinite ? position.altitude : 0.0;
+    // Carry the platform fix time so recorded points are stamped when the fix
+    // was taken, not when the bloc happens to process it. Matters when the OS
+    // delivers a backlog of buffered fixes after the app resumes — stamping
+    // them all with now() would collapse real elapsed time and corrupt
+    // pace/splits. Guard against bogus epoch-0 timestamps some platforms emit.
+    final ts = position.timestamp;
+    final time = ts.isAfter(DateTime.utc(2000)) ? ts.toUtc() : null;
     return PositionEntity(
       latitude: position.latitude,
       longitude: position.longitude,
       elevation: elevation,
+      time: time,
     );
-  }
-
-  Stream<ServiceStatus> getServiceStatusStream() {
-    return remoteDataSource.getServiceStatusStream();
   }
 
   Future<bool> requestLocationPermission() async {
@@ -55,9 +59,5 @@ class LocationRepository {
 
   Future<bool> checkLocationPermission() async {
     return await remoteDataSource.checkLocationPermission();
-  }
-
-  Future<bool> isLocationServiceEnabled() async {
-    return await remoteDataSource.isLocationServiceEnabled();
   }
 }
