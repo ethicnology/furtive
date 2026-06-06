@@ -8,7 +8,7 @@ class MapRepository {
 
   MapRepository();
 
-  Future<Style> getMapConfig(PreferencesEntity preferences) async {
+  Future<Style?> getMapConfig(PreferencesEntity preferences) async {
     final model = PreferencesModel.fromEntity(preferences);
     // Map label language is derived from the UI locale (or device locale
     // when there's no override). The dedicated "Map Language" picker is

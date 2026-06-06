@@ -77,15 +77,14 @@ String resolveMapLabelLanguage(String? userLocaleTag) {
 }
 
 class MapRemoteDataSource {
-  Future<Style> getMapConfig({
+  Future<Style?> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
     String? userLocaleTag,
   }) async {
-    if (_protomapsKey.isEmpty) {
-      throw Exception(
-        'Missing PROTOMAPS_KEY. Build with --dart-define=PROTOMAPS_KEY=...',
-      );
-    }
+    // No key → the FOSS / reproducible build. Return null instead of throwing
+    // so the app degrades to a functional, tileless map (record activities,
+    // see your track on a blank canvas) rather than getting stuck on a spinner.
+    if (_protomapsKey.isEmpty) return null;
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl =

@@ -8,7 +8,7 @@ class GetMapConfigUseCase {
 
   GetMapConfigUseCase();
 
-  Future<Style> call() async {
+  Future<Style?> call() async {
     final preferences = await preferencesRepository.fetch();
     return await mapRepository.getMapConfig(preferences);
   }

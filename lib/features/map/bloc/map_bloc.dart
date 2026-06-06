@@ -17,19 +17,9 @@ import 'package:furtive/features/map/error.dart';
 
 const double kSearchHalfSideDegrees = 0.01425;
 
-enum LoadingStatus {
-  localizing,
-  loadingMap,
-  loadingTraces,
-  startingActivity;
-
-  String get message => switch (this) {
-    LoadingStatus.localizing => 'Initializing GPS…',
-    LoadingStatus.loadingMap => 'Loading map…',
-    LoadingStatus.loadingTraces => 'Loading traces…',
-    LoadingStatus.startingActivity => 'Starting activity…',
-  };
-}
+// Localised display strings live in MapPage (_loadingMessage); this enum is
+// just the state tag.
+enum LoadingStatus { localizing, loadingMap, loadingTraces, startingActivity }
 
 class MapBloc extends Bloc<MapEvent, MapState> {
   final _getMapConfigUseCase = GetMapConfigUseCase();
@@ -112,23 +102,28 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
 
-      // B38: InitMap can fire more than once (from the onboarding finish and
-      // from PreferencesBloc.UpdatePreferences). Cancel the previous
-      // subscription before opening a new one so we don't leak listeners
-      // that keep dispatching UpdateUserLocation events.
-      await _positionStream?.cancel();
-      final userPositionStream = await _startTrackPositionUsecase();
-      _positionStream = userPositionStream
-          .handleError((error) => logs.severe('error: $error'))
-          .listen(
-            (position) => add(UpdateUserLocation(position: position)),
-            // When the user swipes the geolocator foreground-service
-            // notification away, the position stream closes. Treat that as
-            // an explicit "stop tracking" gesture and end any active activity.
-            onDone: () {
-              if (state.activity != null) add(const CeaseActivity());
-            },
-          );
+      // B38/H1: InitMap can re-fire — from the onboarding finish and from
+      // PreferencesBloc on every theme/locale apply. Open the position stream
+      // only once: if it's already running, leave it untouched so a preference
+      // change mid-activity doesn't tear down live tracking (dropping fixes and
+      // disarming the watchdog) or leak a second listener. A re-init then just
+      // refreshes the user location and map style below. A failed first
+      // subscription leaves _positionStream null, so a later InitMap retries.
+      if (_positionStream == null) {
+        final userPositionStream = await _startTrackPositionUsecase();
+        _positionStream = userPositionStream
+            .handleError((error) => logs.severe('error: $error'))
+            .listen(
+              (position) => add(UpdateUserLocation(position: position)),
+              // When the user swipes the geolocator foreground-service
+              // notification away, the position stream closes. Treat that as
+              // an explicit "stop tracking" gesture and end any active
+              // activity.
+              onDone: () {
+                if (state.activity != null) add(const CeaseActivity());
+              },
+            );
+      }
 
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
@@ -182,9 +177,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ScoreActivity event,
     Emitter<MapState> emit,
   ) async {
-    if (state.activity == null) throw ActivityNotStartedError();
-
-    final activity = state.activity!;
+    // A CeaseActivity (manual stop / notification swipe / watchdog) can be
+    // processed between _onUpdateUserLocation dispatching this event and the
+    // handler running, nulling state.activity. Return rather than throwing —
+    // the old `throw ActivityNotStartedError()` was outside the try/catch and
+    // leaked an unhandled error into the bloc zone.
+    final activity = state.activity;
+    if (activity == null) return;
     final position = event.position;
     final status =
         state.isPaused
@@ -197,13 +196,17 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         position: position,
         status: status,
       );
-      // Use the locally-captured `activity` (line above the await), not
-      // state.activity — a concurrent CeaseActivity between the await and
-      // here would null state.activity and crash the null-bang.
-      final newPoints = [...activity.points, newPoint];
-      final updatedActivity = activity.copyWith(points: newPoints);
-
-      emit(state.copyWith(activity: updatedActivity));
+      // Append to the LATEST in-memory activity, not the pre-await capture:
+      // concurrent ScoreActivity handlers would otherwise each append to the
+      // same stale points list and clobber one another (a point vanishes from
+      // the live polyline). If a cease landed during the await, skip the emit.
+      final current = state.activity;
+      if (current == null || current.id != activity.id) return;
+      emit(
+        state.copyWith(
+          activity: current.copyWith(points: [...current.points, newPoint]),
+        ),
+      );
     } catch (e) {
       logs.severe('$ScoreActivity: $e');
       emit(state.copyWith(error: AppError('ScoreActivity: $e')));
@@ -243,8 +246,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     CeaseActivity event,
     Emitter<MapState> emit,
   ) async {
+    // Watchdog, notification-swipe onDone and the manual Stop button can each
+    // dispatch CeaseActivity; back-to-back events would hit a null
+    // state.activity. Treat a second cease as a no-op instead of logging a
+    // spurious severe from the null-check crash.
+    final activity = state.activity;
+    if (activity == null) return;
     try {
-      await _ceaseActivityUsecase(state.activity!.id);
+      await _ceaseActivityUsecase(activity.id);
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
       _positionWatchdog?.cancel();

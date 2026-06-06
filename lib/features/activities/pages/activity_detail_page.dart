@@ -14,6 +14,7 @@ import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
 import 'package:furtive/core/usecases/share_activity_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 class ActivityDetailPage extends StatefulWidget {
@@ -139,35 +140,57 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                 children: [
                   Container(
                     color: AppColors.tertiary.background,
-                    child:
-                        _mapStyle != null
-                            ? FlutterMap(
-                              mapController: _mapController,
-                              options: MapOptions(
-                                // Use the first point that has finite lat/lon
-                                // — `points.first` can be NaN if the GPS
-                                // emitted a junk fix and we'd crash
-                                // FlutterMap's LatLng constructor.
-                                initialCenter: _initialCenter(widget.activity),
-                                initialZoom: Global.maxZoom,
-                                maxZoom: Global.maxZoom,
-                              ),
-                              children: [
-                                VectorTileLayer(
-                                  maximumZoom: Global.maxZoom,
-                                  theme: _mapStyle!.theme,
-                                  tileProviders: _mapStyle!.providers,
-                                  sprites: _mapStyle!.sprites,
+                    // Always render the map so the recorded track is visible.
+                    // The tile layer is shown only when a style is available
+                    // (keyed build, online); on the keyless FOSS build or an
+                    // offline style fetch the polyline draws on a blank canvas
+                    // instead of an error.
+                    child: FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        // Use the first point that has finite lat/lon —
+                        // `points.first` can be NaN if the GPS emitted a junk
+                        // fix and we'd crash FlutterMap's LatLng constructor.
+                        initialCenter: _initialCenter(widget.activity),
+                        initialZoom: Global.maxZoom,
+                        maxZoom: Global.maxZoom,
+                      ),
+                      children: [
+                        if (_mapStyle != null)
+                          VectorTileLayer(
+                            maximumZoom: Global.maxZoom,
+                            theme: _mapStyle!.theme,
+                            tileProviders: _mapStyle!.providers,
+                            sprites: _mapStyle!.sprites,
+                          ),
+                        widget.activity.toPolylineLayer(),
+                        KmMilestonesLayer(activity: widget.activity),
+                        // Attribution is required whenever OSM/Protomaps tiles
+                        // are shown.
+                        if (_mapStyle != null)
+                          RichAttributionWidget(
+                            alignment: AttributionAlignment.bottomLeft,
+                            attributions: [
+                              TextSourceAttribution(
+                                'OpenStreetMap',
+                                onTap: () => launchUrl(
+                                  Uri.parse(
+                                    'https://www.openstreetmap.org/copyright',
+                                  ),
+                                  mode: LaunchMode.externalApplication,
                                 ),
-                                widget.activity.toPolylineLayer(),
-                                KmMilestonesLayer(activity: widget.activity),
-                              ],
-                            )
-                            : Center(
-                              child: Text(
-                                AppLocalizations.of(context).mapLoadFailed,
                               ),
-                            ),
+                              TextSourceAttribution(
+                                'Protomaps',
+                                onTap: () => launchUrl(
+                                  Uri.parse('https://protomaps.com'),
+                                  mode: LaunchMode.externalApplication,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                   Positioned(
                     bottom: context.screenPadding,

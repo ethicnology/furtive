@@ -18,7 +18,16 @@ import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/core/entities/trace_entity.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
+
+String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
+    switch (status) {
+      LoadingStatus.localizing => l10n.mapLoadingLocalizing,
+      LoadingStatus.loadingMap => l10n.mapLoadingMap,
+      LoadingStatus.loadingTraces => l10n.mapLoadingTraces,
+      LoadingStatus.startingActivity => l10n.mapStartingActivity,
+    };
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -178,7 +187,12 @@ class _MapPageState extends State<MapPage>
           final loc = state.userLocation;
           final hasFiniteLocation =
               loc != null && loc.latitude.isFinite && loc.longitude.isFinite;
-          if (state.style == null || !hasFiniteLocation) {
+          // Wait for a location to centre on. A null style only blocks while
+          // the tile config is still loading; once init has finished with no
+          // style (keyless FOSS build) we render a functional tileless map.
+          final stillLoadingStyle =
+              state.style == null && state.loadingStatus != null;
+          if (!hasFiniteLocation || stillLoadingStyle) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -187,7 +201,10 @@ class _MapPageState extends State<MapPage>
                   if (state.loadingStatus != null) ...[
                     const SizedBox(height: 16),
                     Text(
-                      state.loadingStatus!.message,
+                      _loadingMessage(
+                        AppLocalizations.of(context),
+                        state.loadingStatus!,
+                      ),
                       style: const TextStyle(fontSize: 16),
                     ),
                   ],
@@ -214,12 +231,13 @@ class _MapPageState extends State<MapPage>
                       },
                     ),
                     children: [
-                      VectorTileLayer(
-                        maximumZoom: Global.maxZoom,
-                        theme: state.style!.theme,
-                        tileProviders: state.style!.providers,
-                        sprites: state.style!.sprites,
-                      ),
+                      if (state.style != null)
+                        VectorTileLayer(
+                          maximumZoom: Global.maxZoom,
+                          theme: state.style!.theme,
+                          tileProviders: state.style!.providers,
+                          sprites: state.style!.sprites,
+                        ),
                       if (state.traces.isNotEmpty)
                         _buildTracesLayer(state.traces),
                       if (state.activity != null &&
@@ -254,6 +272,32 @@ class _MapPageState extends State<MapPage>
                       if (state.searchCenter != null &&
                           state.loadingStatus == LoadingStatus.loadingTraces)
                         _buildSquareOverlay(),
+                      // Tile attribution is legally required when tiles are
+                      // shown: the basemap is Protomaps rendering OpenStreetMap
+                      // data (ODbL §4.3 and Protomaps' ToS both require visible
+                      // credit). Omitted on the keyless tileless map.
+                      if (state.style != null)
+                        RichAttributionWidget(
+                          alignment: AttributionAlignment.bottomLeft,
+                          attributions: [
+                          TextSourceAttribution(
+                            'OpenStreetMap',
+                            onTap: () => launchUrl(
+                              Uri.parse(
+                                'https://www.openstreetmap.org/copyright',
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          ),
+                          TextSourceAttribution(
+                            'Protomaps',
+                            onTap: () => launchUrl(
+                              Uri.parse('https://protomaps.com'),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
