@@ -30,6 +30,18 @@ class ActivityEntity with ActivityEntityMappable {
 
 enum ActivityPointStatusEntity { active, paused }
 
+/// Format a pace in minutes-per-km as `m:ss`. Carries 60 rounded seconds into
+/// the minute so a value like 5.999 min/km renders `6:00`, never `5:60`.
+String formatPace(double paceMinutes) {
+  var minutes = paceMinutes.floor();
+  var seconds = ((paceMinutes - minutes) * 60).round();
+  if (seconds >= 60) {
+    minutes += 1;
+    seconds = 0;
+  }
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
 /// Sentinel stored in `ActivityEntity.name` when the user hasn't picked a
 /// custom name yet. Compared by reference in the activities list to decide
 /// whether to fall back to the start timestamp. Localised display copy
@@ -78,21 +90,11 @@ extension ActivityStatisticsExtension on ActivityEntity {
 
   double get pausedSpeedKmh => pausedSpeedMps * 3.6;
 
-  String get activePaceMinPerKm {
-    if (activeSpeedKmh == 0) return '--:--';
-    final paceMinutes = 60 / activeSpeedKmh;
-    final minutes = paceMinutes.floor();
-    final seconds = ((paceMinutes - minutes) * 60).round();
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
+  String get activePaceMinPerKm =>
+      activeSpeedKmh == 0 ? '--:--' : formatPace(60 / activeSpeedKmh);
 
-  String get pausedPaceMinPerKm {
-    if (pausedSpeedKmh == 0) return '--:--';
-    final paceMinutes = 60 / pausedSpeedKmh;
-    final minutes = paceMinutes.floor();
-    final seconds = ((paceMinutes - minutes) * 60).round();
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
+  String get pausedPaceMinPerKm =>
+      pausedSpeedKmh == 0 ? '--:--' : formatPace(60 / pausedSpeedKmh);
 
   List<ActivitySegment> get segments => _segmentPoints(points);
 
@@ -342,32 +344,37 @@ extension ActivityKmExtension on ActivityEntity {
           b.position.latitude,
           b.position.longitude,
         );
-        if (segMeters == 0) continue;
         final segActiveMs =
             b.time.millisecondsSinceEpoch - a.time.millisecondsSinceEpoch;
         // Guard against GPS clock skew / out-of-order points — a negative
         // delta would produce negative split durations and a negative bar.
         if (segActiveMs < 0) continue;
 
-        while (cumulativeMeters + segMeters >= nextKm * 1000) {
-          final overshoot = nextKm * 1000 - cumulativeMeters;
-          final t = overshoot / segMeters;
-          final activeAtCrossing =
-              cumulativeActive +
-              Duration(milliseconds: (segActiveMs * t).round());
-          splits.add(
-            KmSplit(
-              index: nextKm,
-              distanceMeters: 1000,
-              duration: activeAtCrossing - prevSplitActive,
-              isPartial: false,
-            ),
-          );
-          prevSplitActive = activeAtCrossing;
-          nextKm++;
+        // Only walk km thresholds for legs that actually cover ground, but
+        // always accrue the elapsed time below — a stationary stretch (two
+        // fixes at the same spot, common at distanceFilter=0) still consumes
+        // active time the next split's pace must include. Skipping the time
+        // here made the splits sum to less than activeDuration.
+        if (segMeters.isFinite && segMeters > 0) {
+          while (cumulativeMeters + segMeters >= nextKm * 1000) {
+            final overshoot = nextKm * 1000 - cumulativeMeters;
+            final t = overshoot / segMeters;
+            final activeAtCrossing =
+                cumulativeActive +
+                Duration(milliseconds: (segActiveMs * t).round());
+            splits.add(
+              KmSplit(
+                index: nextKm,
+                distanceMeters: 1000,
+                duration: activeAtCrossing - prevSplitActive,
+                isPartial: false,
+              ),
+            );
+            prevSplitActive = activeAtCrossing;
+            nextKm++;
+          }
+          cumulativeMeters += segMeters;
         }
-
-        cumulativeMeters += segMeters;
         cumulativeActive += Duration(milliseconds: segActiveMs);
       }
     }

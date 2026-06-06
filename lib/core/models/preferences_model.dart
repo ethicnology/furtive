@@ -8,6 +8,7 @@ class PreferencesModel {
   final bool hasCompletedOnboarding;
   final String? uiLocale;
   final String? lastShownChangelogVersion;
+  final bool checkUpdates;
 
   PreferencesModel({
     required this.mapTheme,
@@ -16,6 +17,7 @@ class PreferencesModel {
     required this.hasCompletedOnboarding,
     this.uiLocale,
     this.lastShownChangelogVersion,
+    this.checkUpdates = true,
   });
 
   static PreferencesModel fromEntity(PreferencesEntity preferences) {
@@ -26,6 +28,7 @@ class PreferencesModel {
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,
       lastShownChangelogVersion: preferences.lastShownChangelogVersion,
+      checkUpdates: preferences.checkUpdates,
     );
   }
 
@@ -37,6 +40,7 @@ class PreferencesModel {
       hasCompletedOnboarding: model.hasCompletedOnboarding,
       uiLocale: model.uiLocale,
       lastShownChangelogVersion: model.lastShownChangelogVersion,
+      checkUpdates: model.checkUpdates,
     );
   }
 }

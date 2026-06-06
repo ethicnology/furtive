@@ -20,9 +20,13 @@ class PreferencesEntity with PreferencesEntityMappable {
   final bool hasCompletedOnboarding;
   // null = follow device locale; BCP-47 code overrides the system locale.
   final String? uiLocale;
-  // Last app version the user has dismissed the changelog for. null marker
-  // means "not initialised yet" — main.dart back-fills it on startup.
+  // Last app version the user dismissed the changelog for. null = fresh
+  // install (the onboarding wizard stamps the current version on finish);
+  // the schema-v2 migration back-fills upgrading users with the '0.0.0'
+  // sentinel so the post-upgrade changelog shows once.
   final String? lastShownChangelogVersion;
+  // Whether the daily GitHub release check may run. Defaults to true.
+  final bool checkUpdates;
 
   PreferencesEntity({
     required this.mapTheme,
@@ -34,5 +38,6 @@ class PreferencesEntity with PreferencesEntityMappable {
     required this.hasCompletedOnboarding,
     this.uiLocale,
     this.lastShownChangelogVersion,
+    this.checkUpdates = true,
   });
 }

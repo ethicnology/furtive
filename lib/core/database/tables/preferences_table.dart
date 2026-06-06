@@ -18,6 +18,9 @@ class Preferences extends Table {
   // pubspec's version WITHOUT the trailing "+buildNumber" — so changing
   // only the build number won't re-trigger the changelog.
   TextColumn get lastShownChangelogVersion => text().nullable()();
+  // Opt-out for the once-a-day GitHub release check. Defaults to true; users
+  // who want zero network calls can turn it off in Preferences.
+  BoolColumn get checkUpdates => boolean().withDefault(const Constant(true))();
 }
 
 enum MapThemeColumn { light, dark, white, grayscale, black }

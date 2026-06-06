@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/usecases/get_activities_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
@@ -24,6 +27,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // other isLoading=true→false transition (e.g. FetchActivities). Cleared
   // when the listener fires.
   bool _importPending = false;
+  final _getActivity = GetActivityUseCase();
 
   @override
   void initState() {
@@ -175,16 +179,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                       color: AppColors.tertiary.foreground,
                       size: 16,
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  ActivityDetailPage(activity: activity),
-                        ),
-                      );
-                    },
+                    onTap: () => unawaited(_openActivity(activity.id)),
                   ),
                 );
               },
@@ -193,6 +188,34 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
         ),
       ),
     );
+  }
+
+  // The list holds lightweight summaries (no GPS points); load the full
+  // activity with its points before opening the detail page.
+  Future<void> _openActivity(String id) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final activity = await _getActivity(id);
+      if (!mounted) return;
+      unawaited(
+        navigator.push(
+          MaterialPageRoute(
+            builder: (context) => ActivityDetailPage(activity: activity),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.activitiesLoadError),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   Widget _buildStatChip(String text) {

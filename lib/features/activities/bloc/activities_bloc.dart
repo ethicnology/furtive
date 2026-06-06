@@ -18,7 +18,6 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
 
   ActivitiesBloc() : super(const ActivitiesState()) {
     on<FetchActivities>(_onFetchActivities);
-    on<SelectActivity>(_onSelectActivity);
     on<UpdateActivityName>(_onUpdateActivityName);
     on<DeleteActivity>(_onDeleteActivity);
     on<ImportActivityFromGpx>(_onImportActivityFromGpx);
@@ -40,10 +39,6 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
         state.copyWith(error: AppError(e.toString()), isLoading: false),
       );
     }
-  }
-
-  void _onSelectActivity(SelectActivity event, Emitter<ActivitiesState> emit) {
-    emit(state.copyWith(selectedActivity: event.activity));
   }
 
   Future<void> _onUpdateActivityName(
