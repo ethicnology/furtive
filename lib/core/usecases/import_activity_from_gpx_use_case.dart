@@ -7,16 +7,19 @@ import 'package:furtive/core/repositories/activity_repository.dart';
 import 'package:furtive/core/utils/gpx.dart';
 import 'package:xml/xml.dart';
 
-/// Round-trip-compatible with ExportActivityToGpxUseCase: the GPX we emit
-/// (`<trk>/<trkseg>/<trkpt lat lon><ele><time>`) parses back into an
-/// equivalent activity. Accepts the common variations: multiple `<trk>`
-/// blocks (concatenated into one activity), missing `<ele>` (default 0),
-/// missing `<time>` (synthesised from `now()` for the first point + 1s
-/// increments — keeps duration math from blowing up but loses real
-/// timestamps). Rejects points with non-finite or out-of-range coords via
+/// Parses GPX into an activity. Imports what ExportActivityToGpxUseCase emits
+/// (`<trk>/<trkseg>/<trkpt lat lon><ele><time>`) plus the common variations:
+/// multiple `<trk>`/`<trkseg>` blocks, `<rte>/<rtept>` route points, missing
+/// `<ele>` (default 0), and missing `<time>` (synthesised from `now()` for the
+/// first point + 1s increments — keeps duration math from blowing up but loses
+/// real timestamps). Rejects points with non-finite or out-of-range coords via
 /// the shared parseTrkpt validator.
 ///
-/// GPX has no pause semantics so every imported point is marked active.
+/// Not a lossless round-trip: the exporter writes only the active segments of
+/// an activity (pauses are deliberately excluded from the file), so a paused
+/// stretch does not survive export→import. Each track segment is treated as a
+/// discontinuity — the gap between segments is marked paused on import so it is
+/// not counted as travelled distance (per GPX `<trkseg>` semantics).
 class ImportActivityFromGpxUseCase {
   final activityRepository = ActivityRepository();
 
@@ -51,41 +54,58 @@ class ImportActivityFromGpxUseCase {
       throw GpxParseError('Root element is <${root.localName}>, expected <gpx>');
     }
 
+    // Collect points grouped by track segment. In GPX a new <trkseg> (or a
+    // separate <trk>/<rte>) marks a discontinuity — the straight line between
+    // the end of one segment and the start of the next must NOT be counted as
+    // travelled distance. parseGpxSegments keeps the groups separate; we
+    // stitch them with a paused boundary below so the stats math doesn't
+    // bridge the gap.
+    final groups = parseGpxSegments(root);
+
     final points = <ActivityPointEntity>[];
     // Track the last timestamp (real or synthesised) so points without a
     // `<time>` element get a +1s offset from whatever came before — keeps
-    // ordering correct in mixed files (some trkpts have <time>, some
-    // don't) and gives sane timestamps for GPX exports that strip time
-    // entirely (lastTime stays null on entry → falls back to now()).
+    // ordering correct in mixed files (some trkpts have <time>, some don't)
+    // and gives sane timestamps for GPX exports that strip time entirely
+    // (lastTime stays null on entry → falls back to now()).
     DateTime? lastTime;
-    // Walk both <trkpt> (track points — the standard form) and <rtept>
-    // (route points — Garmin Connect exports planned/imported workouts
-    // this way). Both elements share the lat/lon/<ele>/<time> shape so
-    // parseTrkpt handles either. If a file ships only <wpt> waypoints
-    // with no track or route we fall through to GpxNoPointsError below.
-    final pointElements = [
-      ...root.findAllElements('trkpt'),
-      ...root.findAllElements('rtept'),
-    ];
-    for (final element in pointElements) {
-      final parsed = parseTrkpt(element);
-      if (parsed == null) continue;
-      final time =
-          parsed.time ??
-          (lastTime?.add(const Duration(seconds: 1)) ??
-              DateTime.now().toUtc());
-      lastTime = time;
-      points.add(
-        ActivityPointEntity(
-          position: PositionEntity(
-            latitude: parsed.latitude,
-            longitude: parsed.longitude,
-            elevation: parsed.elevation,
+    for (var g = 0; g < groups.length; g++) {
+      final group = groups[g];
+      // Between segments, insert a single paused boundary point duplicating
+      // the previous segment's last point (1µs later so it sorts right after
+      // it). Both legs touching the boundary cross an active↔paused status
+      // change, so neither the straight-line gap NOR any real leg of the next
+      // segment is counted as active distance. (Marking the next segment's
+      // first real point paused instead would silently drop that segment's
+      // first leg.)
+      if (g > 0 && points.isNotEmpty) {
+        final prev = points.last;
+        points.add(
+          ActivityPointEntity(
+            position: prev.position,
+            time: prev.time.add(const Duration(microseconds: 1)),
+            status: ActivityPointStatusEntity.paused,
           ),
-          time: time,
-          status: ActivityPointStatusEntity.active,
-        ),
-      );
+        );
+      }
+      for (final parsed in group) {
+        final time =
+            parsed.time ??
+            (lastTime?.add(const Duration(seconds: 1)) ??
+                DateTime.now().toUtc());
+        lastTime = time;
+        points.add(
+          ActivityPointEntity(
+            position: PositionEntity(
+              latitude: parsed.latitude,
+              longitude: parsed.longitude,
+              elevation: parsed.elevation,
+            ),
+            time: time,
+            status: ActivityPointStatusEntity.active,
+          ),
+        );
+      }
     }
 
     if (points.isEmpty) throw const GpxNoPointsError();

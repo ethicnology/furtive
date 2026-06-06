@@ -33,12 +33,21 @@ class TraceModel {
     );
   }
 
-  static TraceModel fromGpx(XmlElement track) {
+  static TraceModel fromGpx(XmlElement track) =>
+      _build(track, track.findAllElements('trkpt'));
+
+  /// Build a trace from a single `<trkseg>`, reading metadata from its parent
+  /// `<trk>`. Callers iterate segments so a track's discontinuities aren't
+  /// joined into one bridged polyline on the map.
+  static TraceModel fromGpxSegment(XmlElement track, XmlElement segment) =>
+      _build(track, segment.findAllElements('trkpt'));
+
+  static TraceModel _build(XmlElement track, Iterable<XmlElement> trkpts) {
     final name = track.findElements('name').firstOrNull?.innerText ?? 'Unknown';
     final description = track.findElements('desc').firstOrNull?.innerText ?? '';
     final url = track.findElements('url').firstOrNull?.innerText ?? '';
     final points = <TracePointModel>[];
-    for (final point in track.findAllElements('trkpt')) {
+    for (final point in trkpts) {
       final parsed = parseTrkpt(point);
       if (parsed == null) continue;
       points.add(

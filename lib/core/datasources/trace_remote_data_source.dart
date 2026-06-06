@@ -35,7 +35,20 @@ class TraceRemoteDataSource {
       );
     }
     final document = XmlDocument.parse(response.body);
-    final tracks = document.findAllElements('trk');
-    return tracks.map(TraceModel.fromGpx).toList();
+    final traces = <TraceModel>[];
+    for (final trk in document.findAllElements('trk')) {
+      final segments = trk.findAllElements('trkseg').toList();
+      if (segments.isEmpty) {
+        // No segment wrapper — treat the whole track as one trace.
+        traces.add(TraceModel.fromGpx(trk));
+      } else {
+        // One trace per <trkseg>: each segment is a continuous span, so the
+        // map doesn't draw a straight line across reception gaps.
+        for (final seg in segments) {
+          traces.add(TraceModel.fromGpxSegment(trk, seg));
+        }
+      }
+    }
+    return traces;
   }
 }

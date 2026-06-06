@@ -41,3 +41,34 @@ GpxPoint? parseTrkpt(XmlElement point) {
     time: time,
   );
 }
+
+/// Group a GPX document's points by track segment. Each `<trkseg>` (and each
+/// separate `<trk>` / `<rte>`) becomes its own group, because in GPX a new
+/// segment marks a discontinuity — GPS reception lost or the receiver turned
+/// off — so callers must not connect the last point of one group to the first
+/// of the next. Empty groups (no valid points) are dropped. Falls back to a
+/// single group of any stray `<trkpt>`/`<rtept>` for malformed files that
+/// don't wrap points in a segment/route.
+List<List<GpxPoint>> parseGpxSegments(XmlElement root) {
+  final groups = <List<GpxPoint>>[];
+  void collect(Iterable<XmlElement> elements) {
+    final parsed = elements.map(parseTrkpt).whereType<GpxPoint>().toList();
+    if (parsed.isNotEmpty) groups.add(parsed);
+  }
+
+  for (final trk in root.findAllElements('trk')) {
+    for (final seg in trk.findAllElements('trkseg')) {
+      collect(seg.findAllElements('trkpt'));
+    }
+  }
+  for (final rte in root.findAllElements('rte')) {
+    collect(rte.findAllElements('rtept'));
+  }
+  if (groups.isEmpty) {
+    collect([
+      ...root.findAllElements('trkpt'),
+      ...root.findAllElements('rtept'),
+    ]);
+  }
+  return groups;
+}
