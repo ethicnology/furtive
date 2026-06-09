@@ -51,13 +51,21 @@ class LocationGpsDataSource {
         // it, which is why we keep the text generic in English rather than
         // localising it.
         foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationTitle: 'Tracking active',
-          notificationText: 'Swipe to stop background tracking.',
-          enableWakeLock: false,
-          // setOngoing: false — user can swipe the notification away to
-          // stop the foreground service. MapBloc listens for the resulting
-          // stream-end and ceases the activity (see _onInitMap).
-          setOngoing: false,
+          notificationTitle: 'Recording activity',
+          notificationText: 'Furtive is tracking your route.',
+          // true — hold a partial wake lock so the CPU keeps delivering GPS
+          // fixes once the screen is off and the device enters Doze. With it
+          // false the OS suspends the process between Doze maintenance
+          // windows, the position stream goes silent for minutes, and a
+          // locked phone effectively stops recording. A continuous tracker
+          // needs the wake lock for the foreground-service window.
+          enableWakeLock: true,
+          // true — make the notification non-dismissable. An ongoing FGS
+          // notification is a far stronger signal to Android's task killer
+          // (and aggressive OEM battery managers) to keep the process alive,
+          // and it removes the accidental swipe-to-kill that silently ended
+          // runs. Stopping is done in-app (pause → hold Stop), not by swipe.
+          setOngoing: true,
           // defType is the Android resource folder name, NOT the package id.
           // flutter_launcher_icons emits `launcher_icon.png` under mipmap-*.
           notificationIcon: AndroidResource(
@@ -74,9 +82,9 @@ class LocationGpsDataSource {
         distanceFilter: _kDistanceFilterMeters,
         // false — we run our own pause/resume. With true, iOS Core Location
         // auto-pauses updates when it thinks the user stopped (red light, rest
-        // stop); the stream then goes silent with no onDone, and MapBloc's 90s
-        // watchdog ceases the activity mid-run. Auto-pause is wrong for a
-        // tracker that wants a continuous trace.
+        // stop); the stream then goes silent and the trace gets a long
+        // unintended gap. Auto-pause is wrong for a tracker that wants a
+        // continuous trace.
         pauseLocationUpdatesAutomatically: false,
         // Only set to true if our app will be started up in the background.
         showBackgroundLocationIndicator: true,

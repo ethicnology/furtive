@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Tuo GPX-tiedostoja muista sovelluksista (Garmin, Strava jne.) — sekä reitti- että rata-pisteet tuetaan.",
   "changelogV120MapThemes": "Viisi karttateemaa: Vaalea, Tumma, Valkoinen, Harmaasävy, Musta — valitse sinulle sopiva asetuksista.",
   "changelogV120Reproducible": "Toistettavat koonnit: kuka tahansa voi rakentaa uudelleen lähdekoodista ja varmistaa, että julkaistu APK on tavu tavulta identtinen — ei piilotettua koodia, ei peukalointia.",
-  "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, taustakäynnin automaattinen pysäytys-vahti, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut.",
+  "changelogV120Stability": "Vakaus: suojattu virheellisiltä GPS-lukemilta, luotettava taustatallennus, joka jatkuu sen jälkeen, kun järjestelmä sulkee sovelluksen, automaattinen lokien kierto, tiukempi GPX-validointi, HTTP-aikakatkaisut.",
   "prefThemeLight": "Vaalea",
   "prefThemeDark": "Tumma",
   "prefThemeWhite": "Valkoinen",

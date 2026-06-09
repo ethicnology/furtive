@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Importe arquivos GPX de outros apps (Garmin, Strava, etc.) — pontos de trilha e de rota suportados.",
   "changelogV120MapThemes": "Cinco temas de mapa: Claro, Escuro, Branco, Tons de cinza, Preto — escolha o que combina com você nas configurações.",
   "changelogV120Reproducible": "Builds reproduzíveis: qualquer um pode reconstruir a partir do código-fonte e verificar que o APK publicado é byte por byte idêntico — sem código oculto, sem adulteração.",
-  "changelogV120Stability": "Estabilidade: protegido contra leituras de GPS ruins, watchdog de auto-parada em segundo plano, rotação automática de registros, validação de GPX mais rigorosa, tempos limite de HTTP.",
+  "changelogV120Stability": "Estabilidade: protegido contra leituras de GPS ruins, gravação em segundo plano confiável que retoma após o sistema encerrar o app, rotação automática de registros, validação de GPX mais rigorosa, tempos limite de HTTP.",
   "prefThemeLight": "Claro",
   "prefThemeDark": "Escuro",
   "prefThemeWhite": "Branco",

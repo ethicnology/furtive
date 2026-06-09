@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Importeer GPX-bestanden uit andere apps (Garmin, Strava enz.) — zowel track- als routepunten worden ondersteund.",
   "changelogV120MapThemes": "Vijf kaartthema's: Licht, Donker, Wit, Grijswaarden, Zwart — kies wat je het beste vindt in Instellingen.",
   "changelogV120Reproducible": "Reproduceerbare builds: iedereen kan herbouwen vanaf de broncode en verifiëren dat de gepubliceerde APK byte-voor-byte identiek is — geen verborgen code, geen sabotage.",
-  "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, achtergrond-watchdog voor automatische stop, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts.",
+  "changelogV120Stability": "Stabiliteit: gehard tegen foutieve GPS-metingen, betrouwbare achtergrondopname die wordt hervat nadat het systeem de app heeft afgesloten, automatische logrotatie, strengere GPX-validatie, HTTP-timeouts.",
   "prefThemeLight": "Licht",
   "prefThemeDark": "Donker",
   "prefThemeWhite": "Wit",

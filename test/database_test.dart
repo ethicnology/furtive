@@ -283,6 +283,77 @@ void main() {
       expect(row.activeDurationMs, const Duration(seconds: 10).inMilliseconds);
     });
 
+    test('fetchOngoing returns the newest un-ceased activity with its points',
+        () async {
+      final ds = ActivityLocalDataSource();
+      final t = DateTime.utc(2026, 1, 1, 12);
+
+      // An older ceased run — must be ignored.
+      await ds.store(
+        ActivityModel(
+          id: 'ceased',
+          name: 'Track',
+          description: '',
+          createdAt: t,
+          startedAt: t,
+          stoppedAt: t.add(const Duration(minutes: 30)),
+          points: const [],
+        ),
+      );
+      // The run the user is mid-recording when the OS kills the app.
+      await ds.store(
+        ActivityModel(
+          id: 'live',
+          name: 'Track',
+          description: '',
+          createdAt: t.add(const Duration(hours: 1)),
+          startedAt: t.add(const Duration(hours: 1)),
+          stoppedAt: null,
+          points: [
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0,
+              elevation: 0,
+              time: t.add(const Duration(hours: 1)),
+              status: ActivityPointsStatusColumn.active,
+            ),
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0.001,
+              elevation: 0,
+              time: t.add(const Duration(hours: 1, seconds: 10)),
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+
+      final ongoing = await ds.fetchOngoing();
+      expect(ongoing, isNotNull);
+      expect(ongoing!.id, 'live');
+      expect(ongoing.stoppedAt, isNull);
+      // Points written before the kill are restored for the resumed run.
+      expect(ongoing.points.length, 2);
+    });
+
+    test('fetchOngoing returns null when every activity is ceased', () async {
+      final ds = ActivityLocalDataSource();
+      final t = DateTime.utc(2026, 1, 1, 12);
+      await ds.store(
+        ActivityModel(
+          id: 'done',
+          name: 'Track',
+          description: '',
+          createdAt: t,
+          startedAt: t,
+          stoppedAt: t.add(const Duration(minutes: 5)),
+          points: const [],
+        ),
+      );
+
+      expect(await ds.fetchOngoing(), isNull);
+    });
+
     test('preferences round-trip preserves all fields incl. checkUpdates',
         () async {
       final ds = PreferencesLocalDataSource();

@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Impor file GPX dari aplikasi lain (Garmin, Strava, dll.) — titik track dan route didukung.",
   "changelogV120MapThemes": "Lima tema peta: Terang, Gelap, Putih, Skala abu-abu, Hitam — pilih yang paling sesuai di Pengaturan.",
   "changelogV120Reproducible": "Build reproduktif: siapa pun dapat membangun ulang dari sumber dan memverifikasi bahwa APK yang diterbitkan identik byte demi byte — tanpa kode tersembunyi, tanpa manipulasi.",
-  "changelogV120Stability": "Stabilitas: tahan terhadap data GPS yang buruk, watchdog penghentian otomatis di latar belakang, rotasi log otomatis, validasi GPX lebih ketat, batas waktu HTTP.",
+  "changelogV120Stability": "Stabilitas: tahan terhadap data GPS yang buruk, perekaman latar belakang yang andal yang dilanjutkan setelah sistem menutup aplikasi, rotasi log otomatis, validasi GPX lebih ketat, batas waktu HTTP.",
   "prefThemeLight": "Terang",
   "prefThemeDark": "Gelap",
   "prefThemeWhite": "Putih",

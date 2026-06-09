@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Importă fișiere GPX din alte aplicații (Garmin, Strava etc.) — sunt acceptate atât punctele de tip track, cât și cele de tip route.",
   "changelogV120MapThemes": "Cinci teme hartă: Deschis, Întunecat, Alb, Tonuri de gri, Negru — alege ce ți se potrivește în Setări.",
   "changelogV120Reproducible": "Build-uri reproductibile: oricine poate recompila din sursă și verifica că APK-ul publicat este octet cu octet identic — fără cod ascuns, fără manipulare.",
-  "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, watchdog de oprire automată în fundal, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP.",
+  "changelogV120Stability": "Stabilitate: rezistență la citiri GPS greșite, înregistrare fiabilă în fundal care se reia după ce sistemul închide aplicația, rotația automată a jurnalelor, validare GPX mai strictă, timeout-uri HTTP.",
   "prefThemeLight": "Luminos",
   "prefThemeDark": "Întunecat",
   "prefThemeWhite": "Alb",

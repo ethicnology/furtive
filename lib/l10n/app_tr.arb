@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Diğer uygulamalardan (Garmin, Strava vb.) GPX dosyalarını içe aktar — hem track hem route noktaları desteklenir.",
   "changelogV120MapThemes": "Beş harita teması: Açık, Koyu, Beyaz, Gri tonlamalı, Siyah — sana uyanını ayarlardan seç.",
   "changelogV120Reproducible": "Tekrarlanabilir derlemeler: herkes kaynak koddan yeniden derleyebilir ve yayınlanan APK'nın bayt bayt aynı olduğunu doğrulayabilir — gizli kod yok, müdahale yok.",
-  "changelogV120Stability": "Kararlılık: hatalı GPS okumalarına karşı güçlendirildi, arka planda otomatik durdurma watchdog'u, otomatik günlük döndürme, daha katı GPX doğrulaması, HTTP zaman aşımları.",
+  "changelogV120Stability": "Kararlılık: hatalı GPS okumalarına karşı güçlendirildi, sistem uygulamayı kapattıktan sonra devam eden güvenilir arka plan kaydı, otomatik günlük döndürme, daha katı GPX doğrulaması, HTTP zaman aşımları.",
   "prefThemeLight": "Açık",
   "prefThemeDark": "Koyu",
   "prefThemeWhite": "Beyaz",

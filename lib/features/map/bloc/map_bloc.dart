@@ -9,6 +9,7 @@ import 'package:furtive/core/usecases/start_track_position_use_case.dart';
 import 'package:furtive/core/usecases/score_activity_use_case.dart';
 import 'package:furtive/core/usecases/start_activity_use_case.dart';
 import 'package:furtive/core/usecases/cease_activity_use_case.dart';
+import 'package:furtive/core/usecases/resume_ongoing_activity_use_case.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
@@ -29,20 +30,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final _ceaseActivityUsecase = CeaseActivityUseCase();
   final _startTrackPositionUsecase = StartTrackPositionUseCase();
   final _getUserLocationUseCase = GetUserLocationUseCase();
+  final _resumeOngoingActivityUseCase = ResumeOngoingActivityUseCase();
 
   StreamSubscription<PositionEntity>? _positionStream;
   Timer? _elapsedTimer;
-  Timer? _positionWatchdog;
   DateTime? _activityStartTime;
   DateTime? _pauseStartTime;
   Duration _totalPausedDuration = Duration.zero;
-
-  // If the geolocator position stream stays silent for this long while an
-  // activity is running and not paused, assume the foreground service was
-  // killed (e.g. user swiped the notification away on Android) and cease
-  // the activity. Stream.onDone is not reliable for this case — verified
-  // against Baseflow/flutter-geolocator issues #1023, #1395.
-  static const _positionWatchdogDuration = Duration(seconds: 90);
 
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
@@ -68,7 +62,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       if (state.activity != null) {
         add(ScoreActivity(position: event.position));
-        if (!state.isPaused) _armPositionWatchdog();
       }
       emit(state.copyWith(userLocation: event.position));
     } catch (e) {
@@ -77,24 +70,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  void _armPositionWatchdog() {
-    _positionWatchdog?.cancel();
-    _positionWatchdog = Timer(_positionWatchdogDuration, () {
-      if (state.activity != null && !state.isPaused) {
-        logs.severe(
-          'Position stream silent for $_positionWatchdogDuration; '
-          'ceasing activity (foreground service likely killed).',
-        );
-        add(const CeaseActivity());
-      }
-    });
-  }
-
   @override
   Future<void> close() async {
     await _positionStream?.cancel();
     _elapsedTimer?.cancel();
-    _positionWatchdog?.cancel();
     return super.close();
   }
 
@@ -105,28 +84,46 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // B38/H1: InitMap can re-fire — from the onboarding finish and from
       // PreferencesBloc on every theme/locale apply. Open the position stream
       // only once: if it's already running, leave it untouched so a preference
-      // change mid-activity doesn't tear down live tracking (dropping fixes and
-      // disarming the watchdog) or leak a second listener. A re-init then just
+      // change mid-activity doesn't tear down live tracking (dropping fixes) or
+      // leak a second listener. A re-init then just
       // refreshes the user location and map style below. A failed first
       // subscription leaves _positionStream null, so a later InitMap retries.
-      if (_positionStream == null) {
+      final isColdOpen = _positionStream == null;
+      if (isColdOpen) {
         final userPositionStream = await _startTrackPositionUsecase();
         _positionStream = userPositionStream
             .handleError((error) => logs.severe('error: $error'))
             .listen(
               (position) => add(UpdateUserLocation(position: position)),
-              // When the user swipes the geolocator foreground-service
-              // notification away, the position stream closes. Treat that as
-              // an explicit "stop tracking" gesture and end any active
-              // activity.
+              // The stream closing is NOT treated as "stop the activity" any
+              // more. The notification is now ongoing (non-swipeable) and the
+              // service holds a wake lock, so a close here means the
+              // foreground service actually died (rare) — not a user gesture.
+              // Ceasing on it would silently end a run the user still wants;
+              // instead drop the dead subscription and re-init to reopen the
+              // stream. The activity row stays open and keeps recording.
               onDone: () {
-                if (state.activity != null) add(const CeaseActivity());
+                logs.warning('Position stream closed; reopening.');
+                _positionStream = null;
+                add(const InitMap());
               },
             );
       }
 
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
+
+      // Cold start may follow an OS process kill that happened mid-recording
+      // (Doze / OEM battery killer while the phone was locked). The activity
+      // and its points are still in the DB; rehydrate the run so the user sees
+      // their ongoing activity instead of a blank map. Runs only on the first
+      // stream open, and only if no activity is already live in memory.
+      //
+      // MUST come AFTER the userLocation emit: emitting the resumed activity
+      // (which carries points) flips MapPage's recenter listener, and that
+      // listener calls MapController.move — which throws unless the FlutterMap
+      // is mounted, and the map only mounts once userLocation is finite.
+      if (isColdOpen) await _resumeOngoingActivity(emit);
 
       emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
       final style = await _getMapConfigUseCase();
@@ -136,6 +133,43 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(loadingStatus: null));
+    }
+  }
+
+  // Restore an in-progress recording from the DB after a cold start. No-op if
+  // an activity is already live (the bloc survived) or nothing is ongoing.
+  Future<void> _resumeOngoingActivity(Emitter<MapState> emit) async {
+    if (state.activity != null) return;
+    try {
+      final ongoing = await _resumeOngoingActivityUseCase();
+      if (ongoing == null) return;
+
+      // Rebuild the timing bookkeeping the in-memory bloc lost on the kill.
+      // startedAt is authoritative; paused time is recomputed from the
+      // persisted point statuses (same calc the stats use). We resume in the
+      // running (not paused) state — the user can pause again if they want.
+      _activityStartTime = ongoing.startedAt;
+      _totalPausedDuration = ongoing.pausedDuration;
+      _pauseStartTime = null;
+      _elapsedTimer?.cancel();
+      _elapsedTimer = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) => add(const UpdateElapsedTime()),
+      );
+
+      final elapsed =
+          DateTime.now().difference(_activityStartTime!) - _totalPausedDuration;
+      logs.info('Resumed ongoing activity ${ongoing.id} from storage.');
+      emit(
+        state.copyWith(
+          activity: ongoing,
+          isPaused: false,
+          elapsedTime: elapsed.isNegative ? Duration.zero : elapsed,
+        ),
+      );
+    } catch (e) {
+      // A failed resume must not block the map from loading.
+      logs.severe('resumeOngoingActivity: $e');
     }
   }
 
@@ -162,7 +196,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         const Duration(seconds: 1),
         (_) => add(const UpdateElapsedTime()),
       );
-      _armPositionWatchdog();
 
       emit(state.copyWith(activity: activity));
     } catch (e) {
@@ -177,9 +210,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ScoreActivity event,
     Emitter<MapState> emit,
   ) async {
-    // A CeaseActivity (manual stop / notification swipe / watchdog) can be
-    // processed between _onUpdateUserLocation dispatching this event and the
-    // handler running, nulling state.activity. Return rather than throwing —
+    // A CeaseActivity (manual stop) can be processed between
+    // _onUpdateUserLocation dispatching this event and the handler running,
+    // nulling state.activity. Return rather than throwing —
     // the old `throw ActivityNotStartedError()` was outside the try/catch and
     // leaked an unhandled error into the bloc zone.
     final activity = state.activity;
@@ -228,11 +261,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           const Duration(seconds: 1),
           (_) => add(const UpdateElapsedTime()),
         );
-        _armPositionWatchdog();
       } else {
         _pauseStartTime = DateTime.now();
         _elapsedTimer?.cancel();
-        _positionWatchdog?.cancel();
       }
 
       emit(state.copyWith(isPaused: !state.isPaused));
@@ -246,18 +277,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     CeaseActivity event,
     Emitter<MapState> emit,
   ) async {
-    // Watchdog, notification-swipe onDone and the manual Stop button can each
-    // dispatch CeaseActivity; back-to-back events would hit a null
-    // state.activity. Treat a second cease as a no-op instead of logging a
-    // spurious severe from the null-check crash.
+    // Back-to-back Stop taps would hit a null state.activity on the second
+    // pass. Treat a second cease as a no-op instead of logging a spurious
+    // severe from the null-check crash.
     final activity = state.activity;
     if (activity == null) return;
     try {
       await _ceaseActivityUsecase(activity.id);
       _elapsedTimer?.cancel();
       _elapsedTimer = null;
-      _positionWatchdog?.cancel();
-      _positionWatchdog = null;
       _activityStartTime = null;
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;

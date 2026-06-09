@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Activity recording: animated location marker with pulse and accuracy circle,
   kilometre markers on the map, hold-Stop-for-3-seconds to end (no accidental
   taps), and auto-redirect to the stats screen.
+- Background recording keeps running with the screen off (wake-locked
+  foreground service) and resumes your in-progress activity automatically if
+  the system stops the app to save battery — reopening shows the live run
+  instead of a blank map.
 - The keyless / FOSS build now shows a functional map (your track on a blank
   canvas) instead of failing to load when no map key is configured.
 - The activities list loads faster and uses less memory, and opening an

@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "他のアプリ(Garmin、Strava など)から GPX ファイルをインポート — トラックとルートの両ポイントに対応。",
   "changelogV120MapThemes": "マップテーマ 5 種類: ライト、ダーク、ホワイト、グレースケール、ブラック — 設定でお好みを選べます。",
   "changelogV120Reproducible": "再現可能なビルド: 誰でもソースから再ビルドして、公開された APK がバイト単位で同一であることを検証可能 — 隠しコードなし、改ざんなし。",
-  "changelogV120Stability": "安定性: GPS のジャンクデータに強化、バックグラウンド自動停止ウォッチドッグ、ログの自動ローテーション、より厳格な GPX 検証、HTTP タイムアウト。",
+  "changelogV120Stability": "安定性: GPS のジャンクデータに強化、システムがアプリを終了した後も再開する信頼性の高いバックグラウンド記録、ログの自動ローテーション、より厳格な GPX 検証、HTTP タイムアウト。",
   "prefThemeLight": "ライト",
   "prefThemeDark": "ダーク",
   "prefThemeWhite": "ホワイト",

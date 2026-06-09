@@ -103,7 +103,7 @@
   "changelogV120GpxImport": "Ingiza faili za GPX kutoka programu zingine (Garmin, Strava, n.k.) — pointi za track na route zinatumika.",
   "changelogV120MapThemes": "Mada tano za ramani: Mwanga, Giza, Nyeupe, Kijivu, Nyeusi — chagua inayokufaa kwenye Mipangilio.",
   "changelogV120Reproducible": "Ujenzi unaoweza kurudiwa: mtu yeyote anaweza kujenga upya kutoka kwa msimbo wa chanzo na kuthibitisha kuwa APK iliyochapishwa ni ya sawa baiti kwa baiti — hakuna msimbo wa siri, hakuna uharibifu.",
-  "changelogV120Stability": "Uthabiti: ulinzi dhidi ya usomaji mbaya wa GPS, mlinzi wa kusimama kiotomatiki nyuma ya pazia, mzunguko wa kumbukumbu kiotomatiki, uthibitishaji mkali wa GPX, muda wa HTTP.",
+  "changelogV120Stability": "Uthabiti: ulinzi dhidi ya usomaji mbaya wa GPS, kurekodi kwa uhakika chinichini kunakoendelea baada ya mfumo kufunga programu, mzunguko wa kumbukumbu kiotomatiki, uthibitishaji mkali wa GPX, muda wa HTTP.",
   "prefThemeLight": "Angavu",
   "prefThemeDark": "Giza",
   "prefThemeWhite": "Nyeupe",

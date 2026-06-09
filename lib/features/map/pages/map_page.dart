@@ -43,8 +43,7 @@ class _MapPageState extends State<MapPage>
 
   // Stay alive across BottomNavigation tab switches so the F6 cease →
   // stats listener keeps firing even when the user is on Activities or
-  // Settings. Otherwise PageView disposes us and a watchdog cease while
-  // off-tab would silently end the activity with no redirect.
+  // Settings.
   @override
   bool get wantKeepAlive => true;
   StreamSubscription<MapState>? _ceaseSub;
@@ -53,7 +52,7 @@ class _MapPageState extends State<MapPage>
   void initState() {
     super.initState();
     // F6: route to the activity stats page when the running activity ends
-    // (Stop tap, notification swipe, or watchdog cease). We track the
+    // (the user holds Stop). We track the
     // previous activity manually since BlocListener's listener can't see
     // the pre-transition state and side-effecting listenWhen is fragile.
     final bloc = context.read<MapBloc>();

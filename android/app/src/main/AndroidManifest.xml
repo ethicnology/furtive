@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Declared so geolocator's foreground service can hold a partial wake
+         lock (enableWakeLock: true) and keep delivering GPS fixes while the
+         screen is off and the device is in Doze. The geolocator_android
+         manifest also declares it; this makes the dependency explicit. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:label="furtive"
         android:name="${applicationName}"

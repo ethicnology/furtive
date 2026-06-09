@@ -22,6 +22,14 @@ class ActivityRepository {
     return ActivityModel.toEntity(model);
   }
 
+  /// The ongoing (never-ceased) activity with its points, or null. See
+  /// ActivityLocalDataSource.fetchOngoing.
+  Future<ActivityEntity?> fetchOngoing() async {
+    final model = await localActivities.fetchOngoing();
+    if (model == null) return null;
+    return ActivityModel.toEntity(model);
+  }
+
   Future<void> score(
     String activityId,
     List<ActivityPointEntity> points,

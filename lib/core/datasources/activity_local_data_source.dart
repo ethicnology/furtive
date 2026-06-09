@@ -138,6 +138,29 @@ class ActivityLocalDataSource {
         );
   }
 
+  /// The most recently started activity that was never ceased
+  /// (`stoppedAt == null`), with its points — or null if none. Used to resume
+  /// a recording the user started before the OS killed the app process (Doze /
+  /// aggressive OEM battery management) so reopening the app restores the
+  /// ongoing run instead of cold-starting to a blank map. Points are written
+  /// on every fix, so whatever survived the kill is here. Newest-first + limit
+  /// 1: if several runs were orphaned by repeated kills we resume the latest.
+  Future<ActivityModel?> fetchOngoing() async {
+    final activity =
+        await (db.select(db.activities)
+              ..where((t) => t.stoppedAt.isNull())
+              ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
+              ..limit(1))
+            .getSingleOrNull();
+    if (activity == null) return null;
+
+    final points =
+        await (db.select(db.activityPoints)
+          ..where((t) => t.activityId.equals(activity.id))).get();
+
+    return ActivityModel.fromDatabase(activity, points);
+  }
+
   Future<ActivityModel> fetchSingle(String activityId) async {
     final activity =
         await (db.select(db.activities)
