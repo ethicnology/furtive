@@ -140,10 +140,18 @@ class _MapPageState extends State<MapPage>
           },
         ),
         BlocListener<MapBloc, MapState>(
+          // Fire ONLY on a fresh start: an activity that already existed with
+          // no points just got its first one. Requiring previous.activity to be
+          // non-null deliberately excludes the cold-start resume path (where
+          // the activity appears already populated) — resuming must NOT call
+          // _mapController.move, because the resumed activity is emitted while
+          // the map is still loading/unmounted and move() throws on an
+          // unattached controller. On resume the camera stays on the user's
+          // current location instead of jumping to the old track start.
           listenWhen:
               (previous, current) =>
-                  (previous.activity == null ||
-                      previous.activity!.points.isEmpty) &&
+                  previous.activity != null &&
+                  previous.activity!.points.isEmpty &&
                   current.activity != null &&
                   current.activity!.points.isNotEmpty,
           listener: (context, state) {

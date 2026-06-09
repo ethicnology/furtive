@@ -71,6 +71,15 @@ class ActivitySegment {
   bool get isPaused => status == ActivityPointStatusEntity.paused;
 }
 
+// Per-instance cache of the segmented points. ActivityStatsWidget reads ~9
+// stat getters per build (each derived from `segments`), and the map rebuilds
+// it on every GPS fix and every 1s tick during a recording — without this,
+// each build re-sorts and re-segments the entire points list ~9×, which grows
+// to thousands of points on a long activity. Keyed on the entity instance:
+// copyWith makes a new instance per fix, so the cache is naturally invalidated
+// and the old entry is collected with its entity.
+final Expando<List<ActivitySegment>> _segmentsCache = Expando('segments');
+
 extension ActivityStatisticsExtension on ActivityEntity {
   double get activeDistanceInKm => activeDistanceMeters / 1000;
 
@@ -96,7 +105,8 @@ extension ActivityStatisticsExtension on ActivityEntity {
   String get pausedPaceMinPerKm =>
       pausedSpeedKmh == 0 ? '--:--' : formatPace(60 / pausedSpeedKmh);
 
-  List<ActivitySegment> get segments => _segmentPoints(points);
+  List<ActivitySegment> get segments =>
+      _segmentsCache[this] ??= _segmentPoints(points);
 
   List<ActivitySegment> get activeSegments =>
       segments.where((s) => s.isActive).toList();

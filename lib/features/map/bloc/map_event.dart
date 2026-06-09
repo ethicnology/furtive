@@ -9,6 +9,13 @@ class InitMap extends MapEvent {
   const InitMap();
 }
 
+/// Fired when the app returns to the foreground. Re-validates the position
+/// stream so a recording resumes immediately if the OS suspended the stream
+/// in deep background (Doze) without delivering onDone.
+class EnsureTracking extends MapEvent {
+  const EnsureTracking();
+}
+
 class StartActivity extends MapEvent {
   const StartActivity();
 }

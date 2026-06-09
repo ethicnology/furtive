@@ -112,30 +112,38 @@ class ActivityLocalDataSource {
   }
 
   Future<void> cease(String activityId) async {
-    // if stoppedAt is not null, throw an error
-    final activity =
-        await (db.select(db.activities)
-          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    // One transaction so the point-read, aggregate compute and the stoppedAt +
+    // aggregate write are atomic. Without it, a score() insert from a GPS fix
+    // still in flight when the user taps Stop can land between the read and the
+    // write, leaving the stored aggregate short of a point that IS in the DB —
+    // the exact stored-vs-live divergence the denormalisation tries to avoid.
+    await db.transaction(() async {
+      final activity =
+          await (db.select(db.activities)
+            ..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
-    if (activity == null) throw AppError('Activity not found');
-    if (activity.stoppedAt != null) throw AppError('Activity already stopped');
+      if (activity == null) throw AppError('Activity not found');
+      if (activity.stoppedAt != null) {
+        throw AppError('Activity already stopped');
+      }
 
-    // Stamp stoppedAt and the denormalised aggregates together so the list
-    // never sees a ceased activity with stale (-1) stats.
-    final pointRows =
-        await (db.select(db.activityPoints)
-          ..where((t) => t.activityId.equals(activityId))).get();
-    final agg = _aggregates(
-      pointRows.map(ActivityPointModel.fromDatabase).toList(),
-    );
-    await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
-        .write(
-          ActivitiesCompanion(
-            stoppedAt: Value(DateTime.now().toUtc()),
-            distanceMeters: Value(agg.distanceMeters),
-            activeDurationMs: Value(agg.durationMs),
-          ),
-        );
+      // Stamp stoppedAt and the denormalised aggregates together so the list
+      // never sees a ceased activity with stale (-1) stats.
+      final pointRows =
+          await (db.select(db.activityPoints)
+            ..where((t) => t.activityId.equals(activityId))).get();
+      final agg = _aggregates(
+        pointRows.map(ActivityPointModel.fromDatabase).toList(),
+      );
+      await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
+          .write(
+            ActivitiesCompanion(
+              stoppedAt: Value(DateTime.now().toUtc()),
+              distanceMeters: Value(agg.distanceMeters),
+              activeDurationMs: Value(agg.durationMs),
+            ),
+          );
+    });
   }
 
   /// The most recently started activity that was never ceased

@@ -203,8 +203,13 @@ class MapRemoteDataSource {
     return '$url${separator}key=$_protomapsKey';
   }
 
+  // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung
+  // Protomaps connection can't leave the map-setup future pending forever.
+  // Matches the trace source's timeout.
+  static const _httpTimeout = Duration(seconds: 30);
+
   Future<String> _httpGet(String url) async {
-    final res = await http.get(Uri.parse(url));
+    final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
     if (res.statusCode != 200) {
       throw 'HTTP ${res.statusCode} fetching $url';
     }
@@ -212,7 +217,7 @@ class MapRemoteDataSource {
   }
 
   Future<Uint8List> _httpGetBytes(String url) async {
-    final res = await http.get(Uri.parse(url));
+    final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
     if (res.statusCode != 200) {
       throw 'HTTP ${res.statusCode} fetching $url';
     }

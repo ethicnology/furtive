@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -22,7 +23,7 @@ const double kSearchHalfSideDegrees = 0.01425;
 // just the state tag.
 enum LoadingStatus { localizing, loadingMap, loadingTraces, startingActivity }
 
-class MapBloc extends Bloc<MapEvent, MapState> {
+class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   final _getMapConfigUseCase = GetMapConfigUseCase();
   final _getPublicGpsTracesUseCase = GetTracesUseCase();
   final _beginActivityUseCase = StartActivityUseCase();
@@ -38,8 +39,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   DateTime? _pauseStartTime;
   Duration _totalPausedDuration = Duration.zero;
 
+  // Wall-clock of the last GPS fix, used by EnsureTracking to detect a stream
+  // the OS silently suspended in the background (no onDone, no error — a known
+  // geolocator behaviour in deep Doze, see Baseflow/flutter-geolocator #1023).
+  DateTime? _lastFixAt;
+
+  // On foreground-resume, if a recording is running and no fix has arrived for
+  // longer than this, assume the stream stalled and reopen it. The Android
+  // intervalDuration is 5s, so 20s is ~4 missed fixes — comfortably past
+  // normal jitter while a stationary device still emits at distanceFilter 0.
+  static const _staleStreamThreshold = Duration(seconds: 20);
+
   MapBloc() : super(const MapState()) {
     on<InitMap>(_onInitMap);
+    on<EnsureTracking>(_onEnsureTracking);
     on<FetchTraces>(_onTracesSearchRequested);
     on<StartActivity>(_onStartActivity);
     on<CeaseActivity>(_onCeaseActivity);
@@ -51,6 +64,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ToggleFollowUser>(_onToggleFollowUser);
     on<StopFollowingUser>(_onStopFollowingUser);
 
+    // Observe app lifecycle so we can re-check the position stream when the
+    // user returns to the app (see _onEnsureTracking).
+    WidgetsBinding.instance.addObserver(this);
+
     // InitMap is NOT auto-fired here — it triggers the OS location-permission
     // dialog, and the bloc is instantiated at app start (via the BlocProvider
     // in MyApp) which happens before the onboarding wizard's permissions
@@ -58,8 +75,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     // once the user is ready to see the map.
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // `state` here is the lifecycle arg, not the bloc state (unused below).
+    if (state == AppLifecycleState.resumed) add(const EnsureTracking());
+  }
+
   void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit) {
     try {
+      _lastFixAt = DateTime.now();
       if (state.activity != null) {
         add(ScoreActivity(position: event.position));
       }
@@ -72,6 +96,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   @override
   Future<void> close() async {
+    WidgetsBinding.instance.removeObserver(this);
     await _positionStream?.cancel();
     _elapsedTimer?.cancel();
     return super.close();
@@ -89,26 +114,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // refreshes the user location and map style below. A failed first
       // subscription leaves _positionStream null, so a later InitMap retries.
       final isColdOpen = _positionStream == null;
-      if (isColdOpen) {
-        final userPositionStream = await _startTrackPositionUsecase();
-        _positionStream = userPositionStream
-            .handleError((error) => logs.severe('error: $error'))
-            .listen(
-              (position) => add(UpdateUserLocation(position: position)),
-              // The stream closing is NOT treated as "stop the activity" any
-              // more. The notification is now ongoing (non-swipeable) and the
-              // service holds a wake lock, so a close here means the
-              // foreground service actually died (rare) — not a user gesture.
-              // Ceasing on it would silently end a run the user still wants;
-              // instead drop the dead subscription and re-init to reopen the
-              // stream. The activity row stays open and keeps recording.
-              onDone: () {
-                logs.warning('Position stream closed; reopening.');
-                _positionStream = null;
-                add(const InitMap());
-              },
-            );
-      }
+      if (isColdOpen) await _openPositionStream();
 
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
@@ -117,12 +123,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // (Doze / OEM battery killer while the phone was locked). The activity
       // and its points are still in the DB; rehydrate the run so the user sees
       // their ongoing activity instead of a blank map. Runs only on the first
-      // stream open, and only if no activity is already live in memory.
-      //
-      // MUST come AFTER the userLocation emit: emitting the resumed activity
-      // (which carries points) flips MapPage's recenter listener, and that
-      // listener calls MapController.move — which throws unless the FlutterMap
-      // is mounted, and the map only mounts once userLocation is finite.
+      // stream open, and only if no activity is already live in memory. The
+      // map's recenter listener is gated to fire only on a fresh start (see
+      // MapPage), so resuming here does not move the camera before the map
+      // mounts.
       if (isColdOpen) await _resumeOngoingActivity(emit);
 
       emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
@@ -136,6 +140,51 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
+  // Opens the geolocator position stream and wires it into the bloc. Sets
+  // _positionStream; callers guard on it being null so we never double-listen.
+  Future<void> _openPositionStream() async {
+    final userPositionStream = await _startTrackPositionUsecase();
+    _positionStream = userPositionStream
+        .handleError((error) => logs.severe('error: $error'))
+        .listen(
+          (position) => add(UpdateUserLocation(position: position)),
+          // The stream closing is NOT treated as "stop the activity". The
+          // notification is ongoing (non-swipeable) and the service holds a
+          // wake lock, so a close means the foreground service actually died
+          // (rare) — not a user gesture. Ceasing would silently end a run the
+          // user still wants; instead drop the dead subscription and re-init to
+          // reopen it. The activity row stays open and keeps recording.
+          onDone: () {
+            logs.warning('Position stream closed; reopening.');
+            _positionStream = null;
+            add(const InitMap());
+          },
+        );
+  }
+
+  // App returned to the foreground. If a recording is running but the stream
+  // died or went silent in the background (geolocator can suspend it in deep
+  // Doze without emitting onDone), reopen it so tracking resumes at once.
+  Future<void> _onEnsureTracking(
+    EnsureTracking event,
+    Emitter<MapState> emit,
+  ) async {
+    if (state.activity == null) return;
+    final last = _lastFixAt;
+    final stale =
+        last == null || DateTime.now().difference(last) > _staleStreamThreshold;
+    if (_positionStream != null && !stale) return;
+
+    logs.warning('EnsureTracking: position stream stale/dead, reopening.');
+    await _positionStream?.cancel();
+    _positionStream = null;
+    try {
+      await _openPositionStream();
+    } catch (e) {
+      logs.severe('EnsureTracking reopen: $e');
+    }
+  }
+
   // Restore an in-progress recording from the DB after a cold start. No-op if
   // an activity is already live (the bloc survived) or nothing is ongoing.
   Future<void> _resumeOngoingActivity(Emitter<MapState> emit) async {
@@ -145,25 +194,56 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       if (ongoing == null) return;
 
       // Rebuild the timing bookkeeping the in-memory bloc lost on the kill.
-      // startedAt is authoritative; paused time is recomputed from the
-      // persisted point statuses (same calc the stats use). We resume in the
-      // running (not paused) state — the user can pause again if they want.
+      // startedAt is authoritative; completed-pause time comes from the
+      // persisted point statuses (same calc the stats use).
       _activityStartTime = ongoing.startedAt;
       _totalPausedDuration = ongoing.pausedDuration;
       _pauseStartTime = null;
-      _elapsedTimer?.cancel();
-      _elapsedTimer = Timer.periodic(
-        const Duration(seconds: 1),
-        (_) => add(const UpdateElapsedTime()),
-      );
 
-      final elapsed =
-          DateTime.now().difference(_activityStartTime!) - _totalPausedDuration;
-      logs.info('Resumed ongoing activity ${ongoing.id} from storage.');
+      // Resume in whatever state the activity was in when it died, read from
+      // the last recorded point. If it was paused, staying paused keeps the
+      // dead gap out of the active elapsed time; if it was active, the gap
+      // counts as elapsed (the run was notionally still going, just with no
+      // GPS) which is the honest representation.
+      final lastTime = ongoing.points.isEmpty
+          ? null
+          : ongoing.points
+                .map((p) => p.time)
+                .reduce((a, b) => a.isAfter(b) ? a : b);
+      final wasPaused =
+          lastTime != null &&
+          ongoing.points
+                  .firstWhere((p) => p.time == lastTime)
+                  .status ==
+              ActivityPointStatusEntity.paused;
+
+      final Duration elapsed;
+      if (wasPaused) {
+        // Continue the ongoing pause from the last fix. pausedDuration already
+        // covers up to that fix, so PauseActivity's resume adds (now - lastFix)
+        // without double counting. Freeze elapsed at the pause moment; no timer
+        // while paused.
+        _pauseStartTime = lastTime;
+        elapsed = lastTime.difference(_activityStartTime!) - _totalPausedDuration;
+      } else {
+        _elapsedTimer?.cancel();
+        _elapsedTimer = Timer.periodic(
+          const Duration(seconds: 1),
+          (_) => add(const UpdateElapsedTime()),
+        );
+        elapsed =
+            DateTime.now().difference(_activityStartTime!) -
+            _totalPausedDuration;
+      }
+
+      logs.info(
+        'Resumed ongoing activity ${ongoing.id} from storage '
+        '(paused: $wasPaused).',
+      );
       emit(
         state.copyWith(
           activity: ongoing,
-          isPaused: false,
+          isPaused: wasPaused,
           elapsedTime: elapsed.isNegative ? Duration.zero : elapsed,
         ),
       );
