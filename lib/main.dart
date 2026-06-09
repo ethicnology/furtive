@@ -58,7 +58,14 @@ void main() {
       runApp(const MyApp());
     },
     (error, stack) {
-      logs.severe(error.toString(), error: error, trace: stack);
+      // logs is assigned partway through startup; if something before that
+      // throws, calling logs here would raise LateInitializationError and mask
+      // the real error. Fall back to debugPrint.
+      try {
+        logs.severe(error.toString(), error: error, trace: stack);
+      } catch (_) {
+        debugPrint('Unhandled startup error: $error\n$stack');
+      }
     },
   );
 }

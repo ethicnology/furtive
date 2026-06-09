@@ -16,7 +16,15 @@ class LocationGpsDataSource {
       if (!granted) throw LocationPermissionError();
     }
 
-    final position = await Geolocator.getCurrentPosition();
+    // Pass the same settings as the stream — critically forceLocationManager
+    // on Android. Without it, getCurrentPosition defaults to the fused
+    // (Google Play Services) provider, which is ABSENT on this GMS-free FOSS
+    // build's target devices (F-Droid / de-Googled), so the one-shot "centre
+    // on me" fix would hang or fail. foregroundNotificationConfig is ignored
+    // for a one-shot request.
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: getLocationSettings(),
+    );
     return position;
   }
 
@@ -88,7 +96,12 @@ class LocationGpsDataSource {
         pauseLocationUpdatesAutomatically: false,
         // Only set to true if our app will be started up in the background.
         showBackgroundLocationIndicator: true,
-        allowBackgroundLocationUpdates: true,
+        // iOS only. On macOS the app has no background-location capability and
+        // no NSLocationAlwaysAndWhenInUseUsageDescription, so requesting
+        // background updates there makes Core Location refuse/log; macOS is
+        // foreground-only.
+        allowBackgroundLocationUpdates:
+            defaultTargetPlatform == TargetPlatform.iOS,
       );
     } else {
       locationSettings = LocationSettings(

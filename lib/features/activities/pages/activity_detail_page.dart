@@ -346,7 +346,8 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                 child: Text(l10n.btnCancel),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(context, textController.text),
+                onPressed: () =>
+                    Navigator.pop(context, textController.text.trim()),
                 child: Text(l10n.btnRename),
               ),
             ],

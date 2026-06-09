@@ -71,9 +71,23 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     UpdatePreferences event,
     Emitter<PreferencesState> emit,
   ) async {
+    final previous = state.preferences;
     await _updatePreferencesUseCase(event.preferences);
+    // The page pops (and closes this bloc) right after dispatching Apply; the
+    // await above can outlive it. Don't emit on a closed bloc.
+    if (isClosed) return;
     emit(state.copyWith(preferences: event.preferences));
-    getIt<MapBloc>().add(InitMap());
+
+    // Re-init the map only when something the map style actually depends on
+    // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for
+    // updates") needlessly re-localises, reloads the map config and flashes
+    // the loading UI. The position stream is preserved either way (InitMap is
+    // idempotent on it), so a live recording is never disturbed.
+    final mapChanged =
+        previous.mapTheme != event.preferences.mapTheme ||
+        previous.mapLanguage != event.preferences.mapLanguage;
+    if (mapChanged) getIt<MapBloc>().add(InitMap());
+
     // Apply the locale override immediately so the UI reflects the change
     // without requiring an app restart.
     final code = event.preferences.uiLocale;

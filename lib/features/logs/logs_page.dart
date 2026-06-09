@@ -38,12 +38,14 @@ class _LogsPageState extends State<LogsPage> {
         final tsB = b.split('\t').first;
         return tsB.compareTo(tsA);
       });
+      if (!mounted) return;
       setState(() {
         _logs = loadedLogs;
         _logsSizeKb = sizeKb;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

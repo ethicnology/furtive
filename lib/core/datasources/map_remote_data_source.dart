@@ -100,7 +100,7 @@ class MapRemoteDataSource {
     final styleText = await _httpGet(styleUrl);
     final styleJson = await compute(jsonDecode, styleText);
     if (styleJson is! Map<String, dynamic>) {
-      throw 'Protomaps style is not a JSON object: $styleUrl';
+      throw 'Protomaps style is not a JSON object: ${_redactKey(styleUrl)}';
     }
     _patchTextFields(styleJson, lang);
 
@@ -197,6 +197,10 @@ class MapRemoteDataSource {
 
   /// Protomaps gates every resource (tiles, sprites, TileJSON) on the
   /// same API key; URIs in the v5 style JSON are emitted without one.
+  // Strip the API key before a URL goes into a thrown/logged error string.
+  static String _redactKey(String url) =>
+      url.replaceAll(RegExp(r'key=[^&]*'), 'key=***');
+
   String _withKey(String url) {
     if (url.contains('key=')) return url;
     final separator = url.contains('?') ? '&' : '?';
@@ -211,7 +215,7 @@ class MapRemoteDataSource {
   Future<String> _httpGet(String url) async {
     final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
     if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching $url';
+      throw 'HTTP ${res.statusCode} fetching ${_redactKey(url)}';
     }
     return res.body;
   }
@@ -219,7 +223,7 @@ class MapRemoteDataSource {
   Future<Uint8List> _httpGetBytes(String url) async {
     final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
     if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching $url';
+      throw 'HTTP ${res.statusCode} fetching ${_redactKey(url)}';
     }
     return res.bodyBytes;
   }

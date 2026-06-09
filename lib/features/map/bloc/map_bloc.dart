@@ -147,7 +147,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     _positionStream = userPositionStream
         .handleError((error) => logs.severe('error: $error'))
         .listen(
-          (position) => add(UpdateUserLocation(position: position)),
+          (position) {
+            if (!isClosed) add(UpdateUserLocation(position: position));
+          },
           // The stream closing is NOT treated as "stop the activity". The
           // notification is ongoing (non-swipeable) and the service holds a
           // wake lock, so a close means the foreground service actually died
@@ -157,7 +159,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
           onDone: () {
             logs.warning('Position stream closed; reopening.');
             _positionStream = null;
-            add(const InitMap());
+            if (!isClosed) add(const InitMap());
           },
         );
   }
@@ -229,7 +231,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
         _elapsedTimer?.cancel();
         _elapsedTimer = Timer.periodic(
           const Duration(seconds: 1),
-          (_) => add(const UpdateElapsedTime()),
+          (_) {
+          if (!isClosed) add(const UpdateElapsedTime());
+        },
         );
         elapsed =
             DateTime.now().difference(_activityStartTime!) -
@@ -274,7 +278,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
 
       _elapsedTimer = Timer.periodic(
         const Duration(seconds: 1),
-        (_) => add(const UpdateElapsedTime()),
+        (_) {
+          if (!isClosed) add(const UpdateElapsedTime());
+        },
       );
 
       emit(state.copyWith(activity: activity));
@@ -339,7 +345,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
         }
         _elapsedTimer = Timer.periodic(
           const Duration(seconds: 1),
-          (_) => add(const UpdateElapsedTime()),
+          (_) {
+          if (!isClosed) add(const UpdateElapsedTime());
+        },
         );
       } else {
         _pauseStartTime = DateTime.now();

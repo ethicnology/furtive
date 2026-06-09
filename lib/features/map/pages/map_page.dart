@@ -65,9 +65,14 @@ class _MapPageState extends State<MapPage>
     if (bloc.state.style == null) bloc.add(const InitMap());
     ActivityEntity? prev = bloc.state.activity;
     _ceaseSub = bloc.stream.listen((state) {
-      if (prev != null && state.activity == null) {
+      if (prev != null && state.activity == null && mounted) {
         final ceased = prev!;
-        if (mounted) {
+        // Only push when this page's route is actually on top. The State is
+        // kept alive across tab switches, so `mounted` alone would let a cease
+        // push the detail page on top of whatever the user is currently
+        // looking at.
+        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        if (isCurrent) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ActivityDetailPage(activity: ceased),
