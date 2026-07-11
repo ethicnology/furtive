@@ -104,11 +104,8 @@ class _MapPageState extends State<MapPage>
             if (state.error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    state.error!.message,
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  backgroundColor: Colors.red,
+                  content: Text(state.error!.message),
+                  backgroundColor: kDestructive,
                   duration: const Duration(seconds: 3),
                 ),
               );
@@ -129,9 +126,9 @@ class _MapPageState extends State<MapPage>
                   AppLocalizations.of(
                     context,
                   ).mapTrackingGapMsg(gap.inSeconds),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(color: Colors.black, fontSize: 14),
                 ),
-                backgroundColor: Colors.orange.shade900,
+                backgroundColor: kWarning,
                 duration: const Duration(seconds: 6),
               ),
             );
@@ -289,7 +286,7 @@ class _MapPageState extends State<MapPage>
                           marker: DefaultLocationMarker(
                             color: AppColors.primary.background,
                             child: Icon(
-                              Icons.navigation,
+                              Icons.navigation_rounded,
                               color: AppColors.primary.foreground,
                               size: 18,
                             ),
@@ -368,7 +365,7 @@ class _MapPageState extends State<MapPage>
                   // ),
                   if (state.isPaused && state.activity != null) ...[
                     HoldToConfirmButton(
-                      icon: Icons.stop,
+                      icon: Icons.stop_rounded,
                       label: AppLocalizations.of(context).btnStop,
                       shortTapHint:
                           AppLocalizations.of(context).mapStopHint,
@@ -394,7 +391,7 @@ class _MapPageState extends State<MapPage>
                             : null,
                     label: Text(AppLocalizations.of(context).btnFollow),
                     icon: Icon(
-                      Icons.my_location,
+                      Icons.my_location_rounded,
                       color:
                           state.isFollowingUser
                               ? AppColors.secondary.foreground
@@ -414,8 +411,8 @@ class _MapPageState extends State<MapPage>
                               : Text(AppLocalizations.of(context).btnPause),
                       icon:
                           state.isPaused
-                              ? const Icon(Icons.play_arrow)
-                              : const Icon(Icons.pause),
+                              ? const Icon(Icons.play_arrow_rounded)
+                              : const Icon(Icons.pause_rounded),
                     ),
                   ],
 
@@ -442,7 +439,7 @@ class _MapPageState extends State<MapPage>
                                   // strokeWidth: 2,
                                 ),
                               )
-                              : const Icon(Icons.play_arrow),
+                              : const Icon(Icons.play_arrow_rounded),
                     ),
                   ],
                 ],

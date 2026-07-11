@@ -36,8 +36,8 @@ class SupportDeveloperWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
     return Card(
-      color: AppColors.primary.background,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -45,44 +45,24 @@ class SupportDeveloperWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.favorite, color: Colors.redAccent, size: 24),
+                const Icon(Icons.favorite_rounded, color: kMint, size: 22),
                 const SizedBox(width: 12),
-                Text(
-                  l10n.supportTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary.foreground,
-                  ),
-                ),
+                Text(l10n.supportTitle, style: textTheme.titleMedium),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.supportDescription,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.primary.foreground,
-              ),
-            ),
+            const SizedBox(height: 8),
+            Text(l10n.supportDescription, style: textTheme.bodyMedium),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: () => _launchUrl(
                       context,
                       'https://github.com/ethicnology/furtive',
                     ),
-                    icon: Icon(
-                      Icons.star_border,
-                      color: AppColors.quaternary.foreground,
-                    ),
-                    label: Text(
-                      l10n.btnStarGitHub,
-                      style: TextStyle(color: AppColors.quaternary.foreground),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.quaternary.background,
-                    ),
+                    icon: const Icon(Icons.star_outline_rounded, size: 18),
+                    label: Text(l10n.btnStarGitHub),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -92,17 +72,8 @@ class SupportDeveloperWidget extends StatelessWidget {
                       context,
                       'https://github.com/sponsors/ethicnology',
                     ),
-                    icon: Icon(
-                      Icons.volunteer_activism,
-                      color: AppColors.quaternary.foreground,
-                    ),
-                    label: Text(
-                      l10n.btnSponsor,
-                      style: TextStyle(color: AppColors.quaternary.foreground),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.quaternary.background,
-                    ),
+                    icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
+                    label: Text(l10n.btnSponsor),
                   ),
                 ),
               ],

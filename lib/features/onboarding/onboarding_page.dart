@@ -273,7 +273,7 @@ class _WelcomeStep extends StatelessWidget {
       subtitle: l10n.onboardWelcomeSubtitle,
       child: Center(
         child: Icon(
-          Icons.directions_run,
+          Icons.directions_run_rounded,
           size: 96,
           color: AppColors.primary.background,
         ),
@@ -403,8 +403,8 @@ class _PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Card(
-      color: AppColors.primary.background,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -413,49 +413,53 @@ class _PermissionCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  permission.isGranted ? Icons.check_circle : Icons.cancel,
-                  color: permission.isGranted ? Colors.green : Colors.red,
+                  permission.isGranted
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: permission.isGranted ? kMint : kTextMuted,
+                  size: 22,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _localizedName(context, permission),
-                    style: TextStyle(
-                      color: AppColors.primary.foreground,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: textTheme.titleMedium,
                   ),
                 ),
                 if (permission.isOptional)
                   Text(
                     AppLocalizations.of(context).permOptional,
-                    style: TextStyle(color: AppColors.primary.foreground),
+                    style: textTheme.labelSmall,
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              _localizedDescription(context, permission),
-              style: TextStyle(color: AppColors.primary.foreground),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed:
-                  permission.isGranted
-                      ? null
-                      : () => context.read<PermissionsBloc>().add(
-                        RequestPermission(permission.permission),
-                      ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.quaternary.background,
-                foregroundColor: AppColors.quaternary.foreground,
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 34),
+              child: Text(
+                _localizedDescription(context, permission),
+                style: textTheme.bodySmall,
               ),
-              child: Text(AppLocalizations.of(context).btnGrant),
             ),
+            if (!permission.isGranted) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 34),
+                child: OutlinedButton(
+                  onPressed: () => context.read<PermissionsBloc>().add(
+                    RequestPermission(permission.permission),
+                  ),
+                  child: Text(AppLocalizations.of(context).btnGrant),
+                ),
+              ),
+            ],
             if (permission.isPermanentlyDenied)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(AppLocalizations.of(context).permDeniedMsg),
+                padding: const EdgeInsets.only(left: 34, top: 8),
+                child: Text(
+                  AppLocalizations.of(context).permDeniedMsg,
+                  style: textTheme.bodySmall?.copyWith(color: kWarning),
+                ),
               ),
           ],
         ),

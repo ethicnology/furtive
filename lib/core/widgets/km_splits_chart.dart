@@ -220,11 +220,15 @@ class _SplitRow extends StatelessWidget {
               label,
               textAlign: TextAlign.right,
               style: TextStyle(
+                // kDestructive (not kDangerText) is tuned for white text ON
+                // a red fill; here the red itself IS the text colour on a
+                // dark background, which needs the brighter kDangerText —
+                // see theme.dart.
                 color:
                     isFastest
                         ? AppColors.primary.background
                         : isSlowest
-                            ? AppColors.destructive.background
+                            ? kDangerText
                             : AppColors.tertiary.foreground,
                 fontSize: 13,
                 fontWeight:

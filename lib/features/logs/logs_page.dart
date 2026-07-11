@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:furtive/core/logs.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
@@ -178,23 +179,23 @@ class _LogsPageState extends State<LogsPage> {
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
+            icon: const Icon(Icons.delete_outline_rounded, color: kDestructive),
             onPressed: _logs.isEmpty ? null : _deleteLogs,
             tooltip: l10n.logsTooltipClear,
           ),
           IconButton(
-            icon: const Icon(Icons.date_range, color: Colors.white),
+            icon: const Icon(Icons.date_range_rounded),
             onPressed: _selectDateRange,
             tooltip: l10n.logsTooltipFilterDate,
           ),
           if (_startDate != null || _endDate != null)
             IconButton(
-              icon: const Icon(Icons.clear),
+              icon: const Icon(Icons.clear_rounded),
               onPressed: _clearDateRange,
               tooltip: l10n.logsTooltipClearFilter,
             ),
           IconButton(
-            icon: const Icon(Icons.share),
+            icon: const Icon(Icons.share_rounded),
             onPressed: _logs.isEmpty ? null : _shareLogs,
             tooltip: l10n.logsTooltipShare,
           ),

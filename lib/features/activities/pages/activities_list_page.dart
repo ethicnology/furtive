@@ -7,6 +7,7 @@ import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/usecases/get_activities_use_case.dart';
+import 'package:furtive/core/widgets/stat_block.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
@@ -94,11 +95,9 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.navActivities),
-          backgroundColor: Colors.black87,
-          foregroundColor: Colors.white,
           actions: [
             IconButton(
-              icon: const Icon(Icons.file_upload),
+              icon: const Icon(Icons.file_upload_outlined),
               tooltip: l10n.activitiesImportTooltip,
               onPressed: _pickAndImportGpx,
             ),
@@ -144,40 +143,45 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  color: AppColors.quaternary.background,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     title: Text(
                       title,
-                      style: TextStyle(
-                        color: AppColors.tertiary.foreground,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 4,
+                        children: [
+                          // Distance is the one stat emphasized in mint —
+                          // the rest stay muted so the row reads as one
+                          // headline number plus supporting detail instead
+                          // of four equally-loud pills.
+                          StatBlock.compact(
+                            icon: Icons.straighten_rounded,
+                            value: '${activity.activeDistanceInKm.fmt2} km',
+                            emphasize: true,
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.timer_outlined,
+                            value: activity.activeDuration.toHHMMSS(),
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.speed_rounded,
+                            value: '${activity.activeSpeedKmh.fmt2} km/h',
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.timelapse_rounded,
+                            value: activity.activePaceMinPerKm,
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            _buildStatChip(activity.activeDuration.toHHMMSS()),
-                            _buildStatChip(
-                              '${activity.activeDistanceInKm.fmt2} km',
-                            ),
-                            _buildStatChip(
-                              '${activity.activeSpeedKmh.fmt2} km/h',
-                            ),
-                            _buildStatChip(activity.activePaceMinPerKm),
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      color: AppColors.tertiary.foreground,
-                      size: 16,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: kTextMuted,
                     ),
                     onTap: () => unawaited(_openActivity(activity.id)),
                   ),
@@ -216,23 +220,5 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
         ),
       );
     }
-  }
-
-  Widget _buildStatChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.primary.background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: AppColors.primary.foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
   }
 }

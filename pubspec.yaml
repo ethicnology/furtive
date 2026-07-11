@@ -134,3 +134,20 @@ flutter:
 
   assets:
     - assets/logo.png
+
+  # Space Grotesk (SIL OFL 1.1, assets/fonts/SpaceGrotesk-OFL.txt), bundled
+  # locally as a variable font — no runtime fetching, unlike the
+  # `google_fonts` package, which would download glyphs over the network on
+  # first use and conflicts with this app's "no network calls beyond what
+  # you can see in the source" stance. One variable-font file covers every
+  # weight the theme uses (400/500/700); Flutter/Skia selects the weight via
+  # the font's wght axis, so every `weight:` entry below points at the same
+  # file.
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 700

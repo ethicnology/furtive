@@ -100,11 +100,11 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
         title: Text(displayName),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
             onPressed: _showRenameDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete_outline_rounded),
             onPressed: _showDeleteDialog,
           ),
           IconButton(
@@ -119,7 +119,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                     height: 24,
                     child: CircularProgressIndicator(),
                   )
-                : const Icon(Icons.share),
+                : const Icon(Icons.share_rounded),
           ),
           IconButton(
             onPressed: (_isExporting || _isSharing) ? null : _exportToGpx,
@@ -129,7 +129,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                     height: 24,
                     child: CircularProgressIndicator(),
                   )
-                : const Icon(Icons.file_download),
+                : const Icon(Icons.file_download_outlined),
           ),
         ],
       ),
@@ -202,7 +202,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                             context,
                             widget.activity,
                           ),
-                      icon: const Icon(Icons.analytics),
+                      icon: const Icon(Icons.analytics_rounded),
                       label: Text(AppLocalizations.of(context).btnViewStats),
                     ),
                   ),

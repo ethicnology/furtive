@@ -7,21 +7,16 @@ class AppVersionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.quaternary.background,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SelectableText(
-              "version ${Global.app.version}+${Global.app.buildNumber}",
-              style: TextStyle(
-                color: AppColors.quaternary.foreground,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: SelectableText(
+          "version ${Global.app.version}+${Global.app.buildNumber}",
+          style: const TextStyle(
+            color: kTextMuted,
+            fontSize: 12,
+            fontFeatures: kTabularFigures,
+          ),
         ),
       ),
     );
