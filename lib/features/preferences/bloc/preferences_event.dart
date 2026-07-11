@@ -32,3 +32,15 @@ class ChangeCheckUpdates extends PreferencesEvent {
 
   const ChangeCheckUpdates(this.enabled);
 }
+
+class ChangeMapTilesEnabled extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeMapTilesEnabled(this.enabled);
+}
+
+class ChangeShowOnLockScreen extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeShowOnLockScreen(this.enabled);
+}

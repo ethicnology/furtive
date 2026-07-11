@@ -80,11 +80,20 @@ class MapRemoteDataSource {
   Future<Style?> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
     String? userLocaleTag,
+    bool tilesEnabled = true,
   }) async {
     // No key → the FOSS / reproducible build. Return null instead of throwing
     // so the app degrades to a functional, tileless map (record activities,
     // see your track on a blank canvas) rather than getting stuck on a spinner.
-    if (_protomapsKey.isEmpty) return null;
+    //
+    // tilesEnabled == false → the user opted out (Preferences) even though a
+    // key was compiled in. Every map-tile request reveals the current
+    // viewport — and therefore an approximation of the live position, and
+    // past activity locations via the detail page — to the tile host. This
+    // makes a keyed build behave exactly like the keyless one: same
+    // tileless map, zero network calls to Protomaps. See
+    // AUDIT-2026-07.md §5.
+    if (_protomapsKey.isEmpty || !tilesEnabled) return null;
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl =
@@ -201,10 +210,24 @@ class MapRemoteDataSource {
   static String _redactKey(String url) =>
       url.replaceAll(RegExp(r'key=[^&]*'), 'key=***');
 
+  /// Host the API key may be appended to. Only URLs on the configured
+  /// Protomaps host receive the key, so a compromised/MITM'd style JSON that
+  /// smuggles in a third-party `url`/`sprite`/`tiles` host can't exfiltrate
+  /// the key (or turn our tile requests, which leak the viewport, toward an
+  /// attacker). Parsed once from _protomapsUrl.
+  static final String _keyHost = Uri.parse(_protomapsUrl).host;
+
   String _withKey(String url) {
-    if (url.contains('key=')) return url;
-    final separator = url.contains('?') ? '&' : '?';
-    return '$url${separator}key=$_protomapsKey';
+    final uri = Uri.tryParse(url);
+    if (uri == null) return url;
+    // Exact query-parameter check (not a substring) and host allowlist.
+    if (uri.queryParameters.containsKey('key')) return url;
+    if (uri.host != _keyHost) return url;
+    return uri
+        .replace(
+          queryParameters: {...uri.queryParameters, 'key': _protomapsKey},
+        )
+        .toString();
   }
 
   // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung
@@ -212,19 +235,41 @@ class MapRemoteDataSource {
   // Matches the trace source's timeout.
   static const _httpTimeout = Duration(seconds: 30);
 
-  Future<String> _httpGet(String url) async {
-    final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
-    if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching ${_redactKey(url)}';
+  /// Metadata fetches (style JSON, TileJSON, sprite atlas) are small; bound
+  /// them so a hostile/misbehaving response can't exhaust memory. Tiles proper
+  /// go through NetworkVectorTileProvider and aren't covered here.
+  static const _maxResponseBytes = 16 * 1024 * 1024;
+
+  Future<Uint8List> _httpGetBytesCapped(String url) async {
+    final client = http.Client();
+    try {
+      final request = http.Request('GET', Uri.parse(url));
+      final response = await client.send(request).timeout(_httpTimeout);
+      if (response.statusCode != 200) {
+        throw 'HTTP ${response.statusCode} fetching ${_redactKey(url)}';
+      }
+      final declared = response.contentLength;
+      if (declared != null && declared > _maxResponseBytes) {
+        throw 'Response too large ($declared B) fetching ${_redactKey(url)}';
+      }
+      final chunks = <List<int>>[];
+      var total = 0;
+      await for (final chunk in response.stream.timeout(_httpTimeout)) {
+        total += chunk.length;
+        if (total > _maxResponseBytes) {
+          throw 'Response too large (> $_maxResponseBytes B) fetching '
+              '${_redactKey(url)}';
+        }
+        chunks.add(chunk);
+      }
+      return Uint8List.fromList(chunks.expand((c) => c).toList());
+    } finally {
+      client.close();
     }
-    return res.body;
   }
 
-  Future<Uint8List> _httpGetBytes(String url) async {
-    final res = await http.get(Uri.parse(url)).timeout(_httpTimeout);
-    if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching ${_redactKey(url)}';
-    }
-    return res.bodyBytes;
-  }
+  Future<String> _httpGet(String url) async =>
+      utf8.decode(await _httpGetBytesCapped(url));
+
+  Future<Uint8List> _httpGetBytes(String url) => _httpGetBytesCapped(url);
 }

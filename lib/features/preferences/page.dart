@@ -70,6 +70,10 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     _buildAppLanguageSection(context, state),
                     const SizedBox(height: 24),
                     _buildCheckUpdatesSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildMapTilesSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildLockScreenSection(context, state),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
@@ -144,6 +148,37 @@ Widget _buildCheckUpdatesSection(BuildContext context, PreferencesState state) {
     value: state.preferences.checkUpdates,
     onChanged:
         (v) => context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
+  );
+}
+
+Widget _buildMapTilesSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefMapTiles,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefMapTilesSubtitle),
+    value: state.preferences.mapTilesEnabled,
+    onChanged:
+        (v) => context.read<PreferencesBloc>().add(ChangeMapTilesEnabled(v)),
+  );
+}
+
+Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefShowOnLockScreen,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefShowOnLockScreenSubtitle),
+    value: state.preferences.showOnLockScreen,
+    onChanged:
+        (v) =>
+            context.read<PreferencesBloc>().add(ChangeShowOnLockScreen(v)),
   );
 }
 

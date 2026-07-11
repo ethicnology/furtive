@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
+import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/usecases/get_preferences_use_case.dart';
@@ -12,6 +13,7 @@ import 'package:furtive/features/preferences/bloc/preferences_state.dart';
 class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
   final _getPreferencesUseCase = GetPreferencesUseCase();
   final _updatePreferencesUseCase = UpdatePreferencesUseCase();
+  final _lockScreenFacade = LockScreenFacade();
 
   PreferencesBloc._({required PreferencesState initialState})
     : super(initialState) {
@@ -20,6 +22,8 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeUiLocale>(_onChangeUiLocale);
     on<ChangeCheckUpdates>(_onChangeCheckUpdates);
+    on<ChangeMapTilesEnabled>(_onChangeMapTilesEnabled);
+    on<ChangeShowOnLockScreen>(_onChangeShowOnLockScreen);
   }
 
   static Future<PreferencesBloc> create() async {
@@ -67,6 +71,26 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     emit(state.copyWith(preferences: newPreferences));
   }
 
+  void _onChangeMapTilesEnabled(
+    ChangeMapTilesEnabled event,
+    Emitter<PreferencesState> emit,
+  ) {
+    final newPreferences = state.preferences.copyWith(
+      mapTilesEnabled: event.enabled,
+    );
+    emit(state.copyWith(preferences: newPreferences));
+  }
+
+  void _onChangeShowOnLockScreen(
+    ChangeShowOnLockScreen event,
+    Emitter<PreferencesState> emit,
+  ) {
+    final newPreferences = state.preferences.copyWith(
+      showOnLockScreen: event.enabled,
+    );
+    emit(state.copyWith(preferences: newPreferences));
+  }
+
   Future<void> _onUpdatePreferences(
     UpdatePreferences event,
     Emitter<PreferencesState> emit,
@@ -85,12 +109,22 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // idempotent on it), so a live recording is never disturbed.
     final mapChanged =
         previous.mapTheme != event.preferences.mapTheme ||
-        previous.mapLanguage != event.preferences.mapLanguage;
+        previous.mapLanguage != event.preferences.mapLanguage ||
+        previous.mapTilesEnabled != event.preferences.mapTilesEnabled;
     if (mapChanged) getIt<MapBloc>().add(InitMap());
 
     // Apply the locale override immediately so the UI reflects the change
     // without requiring an app restart.
     final code = event.preferences.uiLocale;
     getIt<LocaleCubit>().setLocale(code);
+
+    // Apply the lock-screen visibility toggle immediately (Android only,
+    // no-op elsewhere) so the user doesn't need to restart the app to see
+    // the effect.
+    if (previous.showOnLockScreen != event.preferences.showOnLockScreen) {
+      await _lockScreenFacade.setShowWhenLocked(
+        event.preferences.showOnLockScreen,
+      );
+    }
   }
 }

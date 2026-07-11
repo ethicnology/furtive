@@ -16,6 +16,7 @@ class MapRepository {
     return await remoteDataSource.getMapConfig(
       theme: model.mapTheme,
       userLocaleTag: preferences.uiLocale,
+      tilesEnabled: preferences.mapTilesEnabled,
     );
   }
 }
