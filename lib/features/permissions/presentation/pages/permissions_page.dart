@@ -18,6 +18,7 @@ String _localizedName(BuildContext context, Permission p, String fallback) {
   final l10n = AppLocalizations.of(context);
   if (p == Permission.locationWhenInUse) return l10n.permLocationWhileUsingName;
   if (p == Permission.locationAlways) return l10n.permLocationAlwaysName;
+  if (p == Permission.notification) return l10n.permNotificationName;
   return fallback;
 }
 
@@ -29,6 +30,7 @@ String _localizedDescription(
   final l10n = AppLocalizations.of(context);
   if (p == Permission.locationWhenInUse) return l10n.permLocationWhileUsingDesc;
   if (p == Permission.locationAlways) return l10n.permLocationAlwaysDesc;
+  if (p == Permission.notification) return l10n.permNotificationDesc;
   return fallback;
 }
 

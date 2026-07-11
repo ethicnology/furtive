@@ -1,14 +1,58 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- COARSE must be requested alongside FINE: on Android 12+ the OS
+         silently ignores a runtime request for ACCESS_FINE_LOCATION alone on
+         some releases (logcat: "ACCESS_FINE_LOCATION must be requested with
+         ACCESS_COARSE_LOCATION"), so the precise-location dialog may never
+         appear without it. permission_handler builds its request list from
+         whichever of the two are declared here, so this alone makes it
+         request both together. See
+         https://developer.android.com/develop/sensors-and-location/location/permissions/runtime -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Optional in practice, not load-bearing for how tracking works today:
+         recording is always started while the app is in the foreground, and
+         a foreground service with foregroundServiceType="location" keeps
+         full location access once the screen turns off / the app backgrounds
+         WITHOUT this permission (Android only requires it to *start* such a
+         service from the background — see
+         https://developer.android.com/develop/sensors-and-location/location/permissions).
+         Declared anyway, and requested as a purely optional permission (see
+         permission_data_source.dart / Permission.locationAlways) purely as a
+         defensive measure: some OEM battery managers key their whitelisting
+         heuristics off "Allow all the time" being granted. NOT kept as a
+         stepping stone toward a native kill-survival service — that
+         architecture was evaluated and explicitly rejected as disproportionate
+         maintenance cost for this project, see AUDIT-2026-07.md §2. Re-evaluate
+         (possible removal) if the OEM-whitelisting hypothesis turns out to
+         have no measurable effect. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- On Android 13+ a foreground service does NOT need this permission to
+         run, but WITHOUT it the "Recording activity" notification is not
+         shown in the notification drawer (it only appears in the Android 13+
+         Task Manager) — the user loses the visible signal that a run is being
+         tracked, and the setOngoing anti-swipe-kill mitigation below becomes
+         invisible. See
+         https://developer.android.com/develop/ui/views/notifications/notification-permission
+         Requested at runtime as an optional permission (see
+         permission_data_source.dart); a denial does not block recording. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Declared so geolocator's foreground service can hold a partial wake
          lock (enableWakeLock: true) and keep delivering GPS fixes while the
          screen is off and the device is in Doze. The geolocator_android
          manifest also declares it; this makes the dependency explicit. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Lets the app ask the user to exempt it from battery optimisation
+         (Doze / App Standby). Without the exemption, aggressive OEM battery
+         managers (Xiaomi/MIUI, Samsung, Huawei, ...) can kill the foreground
+         service process while the phone is locked, silently ending a
+         recording. The permission only allows *requesting* the exemption via
+         the system dialog; the user still decides. Google Play restricts this
+         permission, but Furtive is distributed outside Play (GitHub / F-Droid)
+         where a continuous location tracker is exactly the sanctioned use. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <application
         android:label="furtive"
         android:name="${applicationName}"

@@ -377,6 +377,9 @@ String _localizedName(BuildContext context, PermissionEntity p) {
   if (p.permission == Permission.locationAlways) {
     return l10n.permLocationAlwaysName;
   }
+  if (p.permission == Permission.notification) {
+    return l10n.permNotificationName;
+  }
   return p.name;
 }
 
@@ -387,6 +390,9 @@ String _localizedDescription(BuildContext context, PermissionEntity p) {
   }
   if (p.permission == Permission.locationAlways) {
     return l10n.permLocationAlwaysDesc;
+  }
+  if (p.permission == Permission.notification) {
+    return l10n.permNotificationDesc;
   }
   return p.description;
 }
