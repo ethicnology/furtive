@@ -12,9 +12,12 @@ class MyLogs {
   final Directory dir;
   final dep.LoggerColorful logger;
   static const _logFilename = 'logs.tsv';
-  /// Hard cap for the log file. SEVERE/WARNING-only writes mean realistic
-  /// growth is slow, but with no rotation a long-lived install would
-  /// accumulate indefinitely — bad for disk usage AND privacy (older
+  /// Hard cap for the log file. Every level except INFO is persisted (see
+  /// the listener below) — in practice CONFIG (device fingerprint, written
+  /// once at startup), WARNING and SEVERE, since INFO is what call sites use
+  /// for noisy per-event/flow logging they don't want on disk. That keeps
+  /// realistic growth slow, but with no rotation a long-lived install would
+  /// still accumulate indefinitely — bad for disk usage AND privacy (older
   /// session data sitting on disk forever). Trimmed on startup from
   /// `ensureLogsExist`.
   static const _maxLogBytes = 1024 * 1024; // 1 MB
