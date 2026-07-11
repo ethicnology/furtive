@@ -11,8 +11,14 @@ void main() {
     double ele = 0,
     int sec = 0,
     ActivityPointStatusEntity status = ActivityPointStatusEntity.active,
+    double? verticalAccuracy,
   }) => ActivityPointEntity(
-    position: PositionEntity(latitude: lat, longitude: lon, elevation: ele),
+    position: PositionEntity(
+      latitude: lat,
+      longitude: lon,
+      elevation: ele,
+      verticalAccuracy: verticalAccuracy,
+    ),
     time: t0.add(Duration(seconds: sec)),
     status: status,
   );
@@ -93,6 +99,95 @@ void main() {
       // +10 (0->10), -5 ignored, +10 (5->15) = 20.
       expect(a.activeElevationGain, closeTo(20, 0.001));
     });
+
+    test(
+      'falls back to raw sum when no point carries verticalAccuracy '
+      '(legacy recordings / no quality signal at all)',
+      () {
+        // Same shape as the test above, confirming the smoothed path never
+        // engages just because it exists — it needs an explicit quality
+        // signal on at least one point.
+        final a = act([
+          pt(0, 0, ele: 0, sec: 0),
+          pt(0, 0.0001, ele: 10, sec: 1),
+          pt(0, 0.0002, ele: 5, sec: 2),
+          pt(0, 0.0003, ele: 15, sec: 3),
+        ]);
+        expect(a.activeElevationGain, closeTo(20, 0.001));
+      },
+    );
+
+    test(
+      'smooths + applies a hysteresis dead-band once verticalAccuracy is '
+      'present, suppressing GPS noise on a flat route',
+      () {
+        // A "flat" route with ±3-4 m GPS altitude noise around 100 m. The
+        // raw sum of positive deltas would be ~15 m of bogus D+; smoothing
+        // (5-sample trailing average) then a 10 m dead-band collapses every
+        // wobble to zero real gain.
+        const elevations = [100, 103, 99, 102, 98, 101, 100, 104, 97, 100];
+        final points = [
+          for (var i = 0; i < elevations.length; i++)
+            pt(
+              0,
+              0.0001 * i,
+              ele: elevations[i].toDouble(),
+              sec: i * 5,
+              verticalAccuracy: 5,
+            ),
+        ];
+        final a = act(points);
+        expect(a.activeElevationGain, closeTo(0, 0.001));
+      },
+    );
+
+    test(
+      'smooths + applies a hysteresis dead-band to register a genuine climb',
+      () {
+        // A clean 55 m ramp (100 -> 155 in 5 m steps). Worked out by hand: a
+        // 5-sample trailing moving average followed by a 10 m dead-band
+        // yields exactly 40 m (it inherently lags behind the moving average
+        // and drops the sub-threshold tail) — nowhere near the raw 55 m, but
+        // nowhere near the ~0 the flat-route case above gets either.
+        final points = [
+          for (var i = 0; i < 12; i++)
+            pt(
+              0,
+              0.0001 * i,
+              ele: 100.0 + i * 5,
+              sec: i * 5,
+              verticalAccuracy: 5,
+            ),
+        ];
+        final a = act(points);
+        expect(a.activeElevationGain, closeTo(40, 0.001));
+      },
+    );
+
+    test(
+      'excludes a point whose verticalAccuracy exceeds the trust threshold '
+      'instead of letting it corrupt the smoothed trace',
+      () {
+        final points = [
+          for (var i = 0; i < 12; i++)
+            pt(
+              0,
+              0.0001 * i,
+              ele: 100.0 + i * 5,
+              sec: i * 5,
+              verticalAccuracy: 5,
+            ),
+          // A wild outlier fix with untrustworthy vertical accuracy, spliced
+          // in between two ramp points. If it weren't excluded it would blow
+          // up the moving average and the resulting gain.
+          pt(0, 0.00027, ele: 500, sec: 27, verticalAccuracy: 999),
+        ];
+        final a = act(points);
+        // Same 40 m as the clean-ramp case above — the outlier is dropped
+        // before smoothing ever sees it, not merely capped.
+        expect(a.activeElevationGain, closeTo(40, 0.001));
+      },
+    );
   });
 
   group('pace formatting', () {

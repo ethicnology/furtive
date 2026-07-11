@@ -205,7 +205,42 @@ extension ActivityStatisticsExtension on ActivityEntity {
     return totalDistance;
   }
 
+  // Reject an altitude sample for gain purposes when its reported vertical
+  // accuracy is worse than this. GPS vertical noise is typically 1.5-2x the
+  // horizontal figure, so this is looser than GpsQualityFilter's 25 m
+  // horizontal threshold. See AUDIT-2026-07.md §4.4.
+  static const _maxElevationVerticalAccuracyMeters = 20.0;
+
+  // Window (in samples) for the trailing moving-average smoothing applied
+  // before the hysteresis gain calculation — roughly 25-35 s of trace at the
+  // ~5 s fix interval this app records at.
+  static const _elevationSmoothingWindow = 5;
+
+  // A smoothed altitude must move away from its anchor by more than this
+  // before it counts as real elevation gain. GPS-only altitude (no
+  // barometer) is noisy enough that summing every raw delta wildly
+  // overstates D+ on a perfectly flat route; this dead-band is the standard
+  // fix (see e.g. Strava's own description of smoothing + a gain threshold
+  // in "Elevation on Strava").
+  static const _elevationHysteresisMeters = 10.0;
+
   double _calculateSegmentsElevationGain(List<ActivitySegment> segments) {
+    // Only every point in every prior recording (and every point in tests
+    // that don't set it) has verticalAccuracy == null — "no quality signal
+    // at all for this data". Rather than invent a smoothing/hysteresis
+    // behaviour those recordings were never measured against, fall back to
+    // the original raw-sum-of-positive-deltas algorithm. A modern recording
+    // — which will have verticalAccuracy on essentially every point — takes
+    // the smoothed path below.
+    final hasQualityData = segments.any(
+      (s) => s.points.any((p) => p.position.verticalAccuracy != null),
+    );
+    return hasQualityData
+        ? _smoothedElevationGain(segments)
+        : _rawElevationGain(segments);
+  }
+
+  double _rawElevationGain(List<ActivitySegment> segments) {
     double totalGain = 0.0;
     for (final segment in segments) {
       final points = segment.points;
@@ -216,6 +251,68 @@ extension ActivityStatisticsExtension on ActivityEntity {
       }
     }
     return totalGain;
+  }
+
+  double _smoothedElevationGain(List<ActivitySegment> segments) {
+    double totalGain = 0.0;
+    for (final segment in segments) {
+      // Drop samples whose reported vertical accuracy is too poor to trust,
+      // keeping the rest in original order — a dropped sample is skipped
+      // entirely (not zeroed), so the next trusted sample is compared
+      // against the last trusted one, not against a synthetic gap.
+      final trusted = segment.points
+          .where(
+            (p) =>
+                p.position.verticalAccuracy == null ||
+                p.position.verticalAccuracy! <=
+                    _maxElevationVerticalAccuracyMeters,
+          )
+          .map((p) => p.position.elevation)
+          .where((e) => e.isFinite)
+          .toList();
+      if (trusted.length < 2) continue;
+
+      totalGain += _hysteresisGain(
+        _movingAverage(trusted, _elevationSmoothingWindow),
+        _elevationHysteresisMeters,
+      );
+    }
+    return totalGain;
+  }
+
+  /// Trailing (causal) moving average with a window clamped to the samples
+  /// available so far — usable on a live/in-progress trace, not just a
+  /// finished one.
+  List<double> _movingAverage(List<double> values, int window) {
+    final out = List<double>.filled(values.length, 0);
+    double sum = 0;
+    for (int i = 0; i < values.length; i++) {
+      sum += values[i];
+      final start = i - window + 1;
+      if (start > 0) sum -= values[start - 1];
+      final count = i - (start < 0 ? 0 : start) + 1;
+      out[i] = sum / count;
+    }
+    return out;
+  }
+
+  /// Dead-band elevation gain: only accumulate once the smoothed altitude
+  /// has moved away from the last anchor by more than [threshold] (whether
+  /// climbing or descending resets the anchor; only climbing accumulates).
+  double _hysteresisGain(List<double> smoothed, double threshold) {
+    if (smoothed.isEmpty) return 0;
+    double gain = 0;
+    double anchor = smoothed.first;
+    for (final value in smoothed.skip(1)) {
+      final diff = value - anchor;
+      if (diff >= threshold) {
+        gain += diff;
+        anchor = value;
+      } else if (diff <= -threshold) {
+        anchor = value;
+      }
+    }
+    return gain;
   }
 }
 

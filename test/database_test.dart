@@ -41,6 +41,20 @@ void main() {
           stopped_at INTEGER NULL
         );
       ''');
+      // activity_points predates every migration exercised here — v2/v3/v4
+      // never touched it — but v5 (below) adds columns to it, so the fake
+      // "device on v2" schema needs it present, as a real device would.
+      raw.execute('''
+        CREATE TABLE activity_points (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          elevation REAL NOT NULL,
+          time INTEGER NOT NULL,
+          activity_id TEXT NOT NULL REFERENCES activities (id),
+          status TEXT NOT NULL
+        );
+      ''');
       raw.execute('''
         INSERT INTO preferences
           (id, map_theme, map_language, accuracy_in_meters,
@@ -52,6 +66,11 @@ void main() {
           (id, name, description, created_at, started_at, stopped_at)
         VALUES ('old', 'Track', '', 1000, 1000, 2000);
       ''');
+      raw.execute('''
+        INSERT INTO activity_points
+          (latitude, longitude, elevation, time, activity_id, status)
+        VALUES (48.0, 2.0, 100, 1000, 'old', 'active');
+      ''');
       raw.execute('PRAGMA user_version = 2;');
 
       final db = LocalDatabase.forTesting(NativeDatabase.opened(raw));
@@ -62,7 +81,7 @@ void main() {
           await (db.select(db.preferences)..where((t) => t.id.equals(1)))
               .getSingle();
 
-      expect(db.schemaVersion, 4);
+      expect(db.schemaVersion, 7);
       // Existing preferences survive untouched.
       expect(prefs.mapTheme, MapThemeColumn.white);
       expect(prefs.hasCompletedOnboarding, isTrue);
@@ -79,6 +98,23 @@ void main() {
       expect(activity.name, 'Track');
       expect(activity.distanceMeters, -1);
       expect(activity.activeDurationMs, -1);
+
+      // v5 quality columns added as NULL ("unknown"), not backfilled; the
+      // existing point survives with its original lat/lon/elevation intact.
+      final point =
+          await (db.select(db.activityPoints)
+                ..where((t) => t.activityId.equals('old')))
+              .getSingle();
+      expect(point.latitude, 48.0);
+      expect(point.accuracy, isNull);
+      expect(point.verticalAccuracy, isNull);
+
+      // v6 map-tiles opt-out added with its true default — an upgrading
+      // user keeps today's tile-fetching behaviour unless they opt out.
+      expect(prefs.mapTilesEnabled, isTrue);
+
+      // v7 lock-screen-visibility toggle, same true-default treatment.
+      expect(prefs.showOnLockScreen, isTrue);
     });
   });
 
@@ -283,10 +319,56 @@ void main() {
       expect(row.activeDurationMs, const Duration(seconds: 10).inMilliseconds);
     });
 
+    test('score() drops a late fix for an already-ceased activity', () async {
+      final ds = ActivityLocalDataSource();
+      final t = DateTime.utc(2026, 1, 1, 12);
+      await ds.store(
+        ActivityModel(
+          id: 's1',
+          name: 'Track',
+          description: '',
+          createdAt: t,
+          startedAt: t,
+          stoppedAt: null,
+          points: [
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0,
+              elevation: 0,
+              time: t,
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+
+      await ds.cease('s1');
+
+      // A GPS fix that was already queued when the user tapped Stop: it must be
+      // dropped, not landed past stoppedAt where it would desync the stored
+      // aggregates from the points actually in the DB.
+      await ds.score('s1', [
+        ActivityPointModel(
+          latitude: 0,
+          longitude: 0.001,
+          elevation: 0,
+          time: t.add(const Duration(seconds: 10)),
+          status: ActivityPointsStatusColumn.active,
+        ),
+      ]);
+
+      final single = await ds.fetchSingle('s1');
+      expect(single.points.length, 1);
+    });
+
     test('fetchOngoing returns the newest un-ceased activity with its points',
         () async {
       final ds = ActivityLocalDataSource();
       final t = DateTime.utc(2026, 1, 1, 12);
+      // The live run must have a *recent* last fix to be resumable: an ongoing
+      // row whose newest fix is older than the stale window is treated as an
+      // abandoned/crashed recording and auto-ceased instead. Anchor it to now.
+      final now = DateTime.now().toUtc();
 
       // An older ceased run — must be ignored.
       await ds.store(
@@ -306,22 +388,22 @@ void main() {
           id: 'live',
           name: 'Track',
           description: '',
-          createdAt: t.add(const Duration(hours: 1)),
-          startedAt: t.add(const Duration(hours: 1)),
+          createdAt: now.subtract(const Duration(minutes: 5)),
+          startedAt: now.subtract(const Duration(minutes: 5)),
           stoppedAt: null,
           points: [
             ActivityPointModel(
               latitude: 0,
               longitude: 0,
               elevation: 0,
-              time: t.add(const Duration(hours: 1)),
+              time: now.subtract(const Duration(minutes: 5)),
               status: ActivityPointsStatusColumn.active,
             ),
             ActivityPointModel(
               latitude: 0,
               longitude: 0.001,
               elevation: 0,
-              time: t.add(const Duration(hours: 1, seconds: 10)),
+              time: now.subtract(const Duration(minutes: 4, seconds: 50)),
               status: ActivityPointsStatusColumn.active,
             ),
           ],
@@ -334,6 +416,92 @@ void main() {
       expect(ongoing.stoppedAt, isNull);
       // Points written before the kill are restored for the resumed run.
       expect(ongoing.points.length, 2);
+    });
+
+    test('fetchOngoing auto-ceases a stale ongoing run and returns null',
+        () async {
+      final ds = ActivityLocalDataSource();
+      // Last fix well beyond the 12h stale window: an abandoned/crashed
+      // recording, not something to resume as a bogus multi-day live run.
+      final old = DateTime.now().toUtc().subtract(const Duration(days: 2));
+      await ds.store(
+        ActivityModel(
+          id: 'stale',
+          name: 'Track',
+          description: '',
+          createdAt: old,
+          startedAt: old,
+          stoppedAt: null,
+          points: [
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0,
+              elevation: 0,
+              time: old,
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+
+      expect(await ds.fetchOngoing(), isNull);
+      // The stale run is finalised, not left dangling as "in progress".
+      final single = await ds.fetchSingle('stale');
+      expect(single.stoppedAt, isNotNull);
+    });
+
+    test('fetchOngoing auto-ceases older orphans, resumes only the newest',
+        () async {
+      final ds = ActivityLocalDataSource();
+      final now = DateTime.now().toUtc();
+
+      // An older orphan (never ceased) left by a prior kill.
+      await ds.store(
+        ActivityModel(
+          id: 'orphan',
+          name: 'Track',
+          description: '',
+          createdAt: now.subtract(const Duration(hours: 2)),
+          startedAt: now.subtract(const Duration(hours: 2)),
+          stoppedAt: null,
+          points: [
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0,
+              elevation: 0,
+              time: now.subtract(const Duration(hours: 2)),
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+      // The newest ongoing run — the resume candidate.
+      await ds.store(
+        ActivityModel(
+          id: 'newest',
+          name: 'Track',
+          description: '',
+          createdAt: now.subtract(const Duration(minutes: 2)),
+          startedAt: now.subtract(const Duration(minutes: 2)),
+          stoppedAt: null,
+          points: [
+            ActivityPointModel(
+              latitude: 0,
+              longitude: 0,
+              elevation: 0,
+              time: now.subtract(const Duration(minutes: 2)),
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+
+      final ongoing = await ds.fetchOngoing();
+      expect(ongoing, isNotNull);
+      expect(ongoing!.id, 'newest');
+      // The older orphan is finalised so it stops being "in progress" forever.
+      final orphan = await ds.fetchSingle('orphan');
+      expect(orphan.stoppedAt, isNotNull);
     });
 
     test('fetchOngoing returns null when every activity is ceased', () async {
