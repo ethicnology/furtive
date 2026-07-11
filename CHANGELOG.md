@@ -5,6 +5,51 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Remediation pass following a full audit of location tracking, permissions,
+GPS accuracy and privacy — see `AUDIT-2026-07.md` for the detailed findings
+and rationale behind every item below.
+
+### Added
+- **Notifications permission** — optionally grant it so the "Recording
+  activity" notification is actually visible in the notification drawer on
+  Android 13+ (it still works without it, just less visibly).
+- **GPS fix quality is now used, not discarded** — recorded points carry
+  horizontal/vertical accuracy when the platform reports it. Noisy or
+  teleporting fixes (multipath, urban canyon) are filtered out of the live
+  trace, and elevation gain (D+) is smoothed with a noise dead-band instead
+  of summing every raw altitude wiggle — recordings made before this update
+  are unaffected and keep their original numbers.
+- **Map tiles preference** — turn off map tile loading in Preferences for a
+  functional, tileless map with zero network requests, even on a build with
+  a map key configured.
+- **Lock-screen visibility preference** (Android) — turn off showing the
+  live map/position on top of a locked screen while recording.
+- Diagnostic logging of why the app's previous process disappeared (OS/OEM
+  kill vs. you stopping it) to help make sense of "my recording just
+  stopped" reports.
+
+### Changed
+- Resuming an in-progress recording after the OS kills the app no longer
+  depends on getting a fresh GPS fix first — a slow/cold GPS right after
+  unlocking the phone could previously delay or skip the resume entirely,
+  which is very likely what caused reports of an activity being
+  unexpectedly "killed" after unlocking the screen.
+- The one-shot "centre on me" GPS fix now times out instead of being able to
+  hang indefinitely.
+- `ACCESS_COARSE_LOCATION` is now requested alongside fine location, as
+  Android 12+ expects — without it the precise-location permission dialog
+  could silently fail to appear on some devices.
+
+### Security & privacy
+- iOS: the local database and log file are now excluded from iCloud/iTunes
+  backups, matching the opt-out Android already had.
+- Old shared activity-card images are cleaned up instead of accumulating in
+  the app's temporary storage indefinitely.
+- Hardened error logging around the (currently unused) public-traces search
+  so a future re-enable can't leak a precise map viewport into the log file.
+
 ## [1.2.0] - 2026-06-06
 
 ### Added
