@@ -165,6 +165,10 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
     try {
       final style = await _getMapConfigUseCase();
+      logs.info(
+        '$InitMap getMapConfig: style '
+        '${style == null ? 'null (tileless)' : 'loaded'}',
+      );
       emit(state.copyWith(style: style));
     } catch (e) {
       logs.severe('$InitMap getMapConfig: $e');

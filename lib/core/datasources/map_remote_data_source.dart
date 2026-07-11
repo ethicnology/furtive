@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:furtive/core/database/tables/preferences_table.dart';
+import 'package:furtive/core/logs.dart';
 import 'package:http/http.dart' as http;
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
@@ -93,11 +94,18 @@ class MapRemoteDataSource {
     // makes a keyed build behave exactly like the keyless one: same
     // tileless map, zero network calls to Protomaps. See
     // AUDIT-2026-07.md §5.
-    if (_protomapsKey.isEmpty || !tilesEnabled) return null;
+    if (_protomapsKey.isEmpty || !tilesEnabled) {
+      logs.warning(
+        'getMapConfig: tileless map '
+        '(keyEmpty: ${_protomapsKey.isEmpty}, tilesEnabled: $tilesEnabled)',
+      );
+      return null;
+    }
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl =
         '$_protomapsUrl/${theme.name}/$lang.json?key=$_protomapsKey';
+    logs.info('getMapConfig: fetching style ${_redactKey(styleUrl)}');
 
     // We don't use StyleReader.read() directly because the Protomaps v5
     // style JSON encodes localised labels with a MapLibre `format`
@@ -113,7 +121,12 @@ class MapRemoteDataSource {
     }
     _patchTextFields(styleJson, lang);
 
-    return _buildStyle(styleJson);
+    final builtStyle = await _buildStyle(styleJson);
+    logs.info(
+      'getMapConfig: style built (name: ${builtStyle.name}, '
+      'providers: ${builtStyle.providers.tileProviderBySource.keys.toList()})',
+    );
+    return builtStyle;
   }
 
   /// Walk every layer and replace its `text-field` (which Protomaps emits
