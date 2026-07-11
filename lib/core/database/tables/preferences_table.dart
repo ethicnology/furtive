@@ -21,6 +21,24 @@ class Preferences extends Table {
   // Opt-out for the once-a-day GitHub release check. Defaults to true; users
   // who want zero network calls can turn it off in Preferences.
   BoolColumn get checkUpdates => boolean().withDefault(const Constant(true))();
+  // Opt-out for fetching Protomaps map tiles/style/sprites. Defaults to
+  // true (matches today's behaviour for anyone who compiled in a
+  // PROTOMAPS_KEY). Every map-tile request reveals the current viewport —
+  // and therefore an approximation of the user's live position and, via the
+  // activity detail page, past activity locations — to the tile host, tied
+  // to its API key and the requester's IP. Turning this off makes the app
+  // behave like the keyless FOSS build (a functional, tileless map) even
+  // when a key was compiled in. See AUDIT-2026-07.md §5.
+  BoolColumn get mapTilesEnabled =>
+      boolean().withDefault(const Constant(true))();
+  // Whether MainActivity may show on top of the Android lock screen
+  // (applied at runtime via LockScreenFacade; the manifest's
+  // showWhenLocked="true" is only the cold-start default). Defaults to true
+  // (today's behaviour). Off => the live map/position is hidden while the
+  // phone is locked. iOS/other platforms ignore this. See
+  // AUDIT-2026-07.md §5.
+  BoolColumn get showOnLockScreen =>
+      boolean().withDefault(const Constant(true))();
 }
 
 enum MapThemeColumn { light, dark, white, grayscale, black }

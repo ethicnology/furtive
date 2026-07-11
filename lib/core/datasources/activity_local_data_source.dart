@@ -71,11 +71,29 @@ class ActivityLocalDataSource {
             ),
           );
 
-      await score(activity.id, activity.points);
+      // Points inserted alongside the header row belong to it by construction
+      // (new recording or GPX import), so skip the ongoing-guard which would
+      // reject an import whose stoppedAt is already stamped.
+      await score(activity.id, activity.points, enforceOngoing: false);
     });
   }
 
-  Future<void> score(String activityId, List<ActivityPointModel> points) async {
+  /// Persists GPS fixes for [activityId].
+  ///
+  /// [enforceOngoing] (default true) rejects the write inside a transaction if
+  /// the activity is already ceased (`stoppedAt != null`) or gone. This closes
+  /// the score-after-cease race: bloc handlers run concurrently, so a
+  /// ScoreActivity that passed its in-memory null-check can otherwise be
+  /// ordered *after* cease()'s transaction and land a point past stoppedAt —
+  /// leaving the stored aggregates permanently short of a point that is in the
+  /// DB. With the guard, such a late point is dropped rather than corrupting
+  /// the stored-vs-live agreement. Set false only from store(), where the
+  /// header row is inserted in the same transaction.
+  Future<void> score(
+    String activityId,
+    List<ActivityPointModel> points, {
+    bool enforceOngoing = true,
+  }) async {
     // Drop any non-finite fix before it reaches SQLite. A REAL column stores
     // NaN/Infinity as NULL, and latitude/longitude are non-nullable in the
     // model — so a single bad fix would make every later read of this
@@ -91,23 +109,47 @@ class ActivityLocalDataSource {
             )
             .toList();
     if (finite.isEmpty) return;
-    // Batched insert: compile the statement once and run it for each point,
-    // wrapped in an implicit transaction. Orders of magnitude faster than
-    // N awaited inserts for long activities.
-    await db.batch((batch) {
-      batch.insertAll(
-        db.activityPoints,
-        finite.map(
-          (point) => ActivityPointsCompanion(
-            activityId: Value(activityId),
-            latitude: Value(point.latitude),
-            longitude: Value(point.longitude),
-            elevation: Value(point.elevation),
-            time: Value(point.time),
-            status: Value(point.status),
+
+    Future<void> insert() async {
+      // Batched insert: compile the statement once and run it for each point,
+      // wrapped in an implicit transaction. Orders of magnitude faster than
+      // N awaited inserts for long activities.
+      await db.batch((batch) {
+        batch.insertAll(
+          db.activityPoints,
+          finite.map(
+            (point) => ActivityPointsCompanion(
+              activityId: Value(activityId),
+              latitude: Value(point.latitude),
+              longitude: Value(point.longitude),
+              elevation: Value(point.elevation),
+              time: Value(point.time),
+              status: Value(point.status),
+              accuracy: Value(point.accuracy),
+              verticalAccuracy: Value(point.verticalAccuracy),
+            ),
           ),
-        ),
-      );
+        );
+      });
+    }
+
+    if (!enforceOngoing) {
+      await insert();
+      return;
+    }
+
+    // Read the stoppedAt flag and insert atomically so a cease() can't slip
+    // between the check and the write.
+    await db.transaction(() async {
+      final row =
+          await (db.select(db.activities)
+                ..where((t) => t.id.equals(activityId)))
+              .getSingleOrNull();
+      if (row == null || row.stoppedAt != null) {
+        // Activity ceased or deleted while this fix was queued — drop it.
+        return;
+      }
+      await insert();
     });
   }
 
@@ -146,27 +188,59 @@ class ActivityLocalDataSource {
     });
   }
 
+  /// Beyond this since the last recorded fix, an ongoing (never-ceased)
+  /// activity is considered abandoned rather than resumable — a cease() that
+  /// crashed, or a kill so old the user has moved on. Resuming it would show a
+  /// bogus multi-hour/day "live" run with a runaway timer. Such activities are
+  /// auto-ceased (finalised with real aggregates) instead of resumed.
+  static const _ongoingStaleAfter = Duration(hours: 12);
+
   /// The most recently started activity that was never ceased
-  /// (`stoppedAt == null`), with its points — or null if none. Used to resume
-  /// a recording the user started before the OS killed the app process (Doze /
-  /// aggressive OEM battery management) so reopening the app restores the
-  /// ongoing run instead of cold-starting to a blank map. Points are written
-  /// on every fix, so whatever survived the kill is here. Newest-first + limit
-  /// 1: if several runs were orphaned by repeated kills we resume the latest.
+  /// (`stoppedAt == null`), with its points — or null if none resumable. Used
+  /// to resume a recording the user started before the OS killed the app
+  /// process (Doze / aggressive OEM battery management) so reopening the app
+  /// restores the ongoing run instead of cold-starting to a blank map. Points
+  /// are written on every fix, so whatever survived the kill is here.
+  ///
+  /// Reconciles orphans first: if repeated kills left several `stoppedAt IS
+  /// NULL` rows, only the newest is a resume candidate — every older one is
+  /// auto-ceased so it stops being "in progress" forever (and stops forcing
+  /// fetchSummaries to recompute its aggregates on every list open). The
+  /// newest candidate is itself auto-ceased (and null returned) when its last
+  /// fix is older than [_ongoingStaleAfter].
   Future<ActivityModel?> fetchOngoing() async {
-    final activity =
+    final ongoing =
         await (db.select(db.activities)
               ..where((t) => t.stoppedAt.isNull())
-              ..orderBy([(t) => OrderingTerm.desc(t.startedAt)])
-              ..limit(1))
-            .getSingleOrNull();
-    if (activity == null) return null;
+              ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]))
+            .get();
+    if (ongoing.isEmpty) return null;
 
+    // Auto-cease every orphan except the newest candidate.
+    for (final orphan in ongoing.skip(1)) {
+      await cease(orphan.id);
+    }
+
+    final candidate = ongoing.first;
     final points =
         await (db.select(db.activityPoints)
-          ..where((t) => t.activityId.equals(activity.id))).get();
+              ..where((t) => t.activityId.equals(candidate.id))
+              ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+            .get();
 
-    return ActivityModel.fromDatabase(activity, points);
+    // Stale check against the last fix (fall back to startedAt if pointless).
+    final lastFix = points.isEmpty
+        ? candidate.startedAt
+        : points
+              .map((p) => p.time)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+    if (DateTime.now().toUtc().difference(lastFix.toUtc()) >
+        _ongoingStaleAfter) {
+      await cease(candidate.id);
+      return null;
+    }
+
+    return ActivityModel.fromDatabase(candidate, points);
   }
 
   Future<ActivityModel> fetchSingle(String activityId) async {
@@ -177,7 +251,9 @@ class ActivityLocalDataSource {
 
     final points =
         await (db.select(db.activityPoints)
-          ..where((t) => t.activityId.equals(activityId))).get();
+              ..where((t) => t.activityId.equals(activityId))
+              ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+            .get();
 
     return ActivityModel.fromDatabase(activity, points);
   }

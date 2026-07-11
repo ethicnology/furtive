@@ -27,6 +27,14 @@ class PreferencesEntity with PreferencesEntityMappable {
   final String? lastShownChangelogVersion;
   // Whether the daily GitHub release check may run. Defaults to true.
   final bool checkUpdates;
+  // Whether map tiles/style/sprites may be fetched from Protomaps. Defaults
+  // to true (today's behaviour). Off => the app renders the same tileless
+  // map as the keyless FOSS build, with zero tile requests, even if a
+  // PROTOMAPS_KEY was compiled in — see preferences_table.dart.
+  final bool mapTilesEnabled;
+  // Whether the app may show on top of the Android lock screen. Defaults
+  // to true (today's behaviour). See preferences_table.dart.
+  final bool showOnLockScreen;
 
   PreferencesEntity({
     required this.mapTheme,
@@ -39,5 +47,7 @@ class PreferencesEntity with PreferencesEntityMappable {
     this.uiLocale,
     this.lastShownChangelogVersion,
     this.checkUpdates = true,
+    this.mapTilesEnabled = true,
+    this.showOnLockScreen = true,
   });
 }

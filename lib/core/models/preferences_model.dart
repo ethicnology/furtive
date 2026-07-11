@@ -9,6 +9,8 @@ class PreferencesModel {
   final String? uiLocale;
   final String? lastShownChangelogVersion;
   final bool checkUpdates;
+  final bool mapTilesEnabled;
+  final bool showOnLockScreen;
 
   PreferencesModel({
     required this.mapTheme,
@@ -18,6 +20,8 @@ class PreferencesModel {
     this.uiLocale,
     this.lastShownChangelogVersion,
     this.checkUpdates = true,
+    this.mapTilesEnabled = true,
+    this.showOnLockScreen = true,
   });
 
   static PreferencesModel fromEntity(PreferencesEntity preferences) {
@@ -29,6 +33,8 @@ class PreferencesModel {
       uiLocale: preferences.uiLocale,
       lastShownChangelogVersion: preferences.lastShownChangelogVersion,
       checkUpdates: preferences.checkUpdates,
+      mapTilesEnabled: preferences.mapTilesEnabled,
+      showOnLockScreen: preferences.showOnLockScreen,
     );
   }
 
@@ -41,6 +47,8 @@ class PreferencesModel {
       uiLocale: model.uiLocale,
       lastShownChangelogVersion: model.lastShownChangelogVersion,
       checkUpdates: model.checkUpdates,
+      mapTilesEnabled: model.mapTilesEnabled,
+      showOnLockScreen: model.showOnLockScreen,
     );
   }
 }

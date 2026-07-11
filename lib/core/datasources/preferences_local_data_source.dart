@@ -23,6 +23,8 @@ class PreferencesLocalDataSource {
             lastShownChangelogVersion:
                 Value(preferences.lastShownChangelogVersion),
             checkUpdates: Value(preferences.checkUpdates),
+            mapTilesEnabled: Value(preferences.mapTilesEnabled),
+            showOnLockScreen: Value(preferences.showOnLockScreen),
           ),
         );
   }
@@ -59,6 +61,8 @@ class PreferencesLocalDataSource {
       uiLocale: preferences.uiLocale,
       lastShownChangelogVersion: preferences.lastShownChangelogVersion,
       checkUpdates: preferences.checkUpdates,
+      mapTilesEnabled: preferences.mapTilesEnabled,
+      showOnLockScreen: preferences.showOnLockScreen,
     );
   }
 }

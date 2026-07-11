@@ -27,7 +27,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -80,6 +80,29 @@ class LocalDatabase extends _$LocalDatabase {
         await m.addColumn(activities, activities.distanceMeters);
         await m.addColumn(activities, activities.activeDurationMs);
       }
+      if (from < 5) {
+        // v5: per-fix GPS quality metadata (accuracy, verticalAccuracy).
+        // Both nullable with no default — existing points simply have
+        // "unknown" quality, which every reader already treats as "trust it
+        // fully" (GpsQualityFilter only rejects on a *present* oversized
+        // value; the elevation-gain smoothing in activity_entity.dart falls
+        // back to the pre-v5 raw-sum algorithm whenever a segment has no
+        // quality data at all). See AUDIT-2026-07.md §4.
+        await m.addColumn(activityPoints, activityPoints.accuracy);
+        await m.addColumn(activityPoints, activityPoints.verticalAccuracy);
+      }
+      if (from < 6) {
+        // v6: opt-out for map tile fetches (viewport-location privacy —
+        // see preferences_table.dart doc on the column). Default true
+        // preserves existing behaviour for upgrading users.
+        await m.addColumn(preferences, preferences.mapTilesEnabled);
+      }
+      if (from < 7) {
+        // v7: runtime-toggleable lock-screen visibility (see
+        // preferences_table.dart doc on the column). Default true preserves
+        // existing behaviour for upgrading users.
+        await m.addColumn(preferences, preferences.showOnLockScreen);
+      }
     },
     beforeOpen: (details) async {
       // SQLite disables foreign-key enforcement per-connection by default;
@@ -105,6 +128,11 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'app.sqlite'));
-    return NativeDatabase(file);
+    // Run SQLite on a background isolate so per-fix writes and — more
+    // importantly — loading every point of a multi-hour activity (24 h at one
+    // fix / 5 s ≈ 17k rows) never block the UI isolate and jank the map /
+    // activity list. createInBackground spawns a dedicated isolate and
+    // marshals statements to it; the API is otherwise identical.
+    return NativeDatabase.createInBackground(file);
   });
 }
