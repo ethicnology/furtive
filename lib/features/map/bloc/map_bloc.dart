@@ -11,6 +11,7 @@ import 'package:furtive/core/usecases/score_activity_use_case.dart';
 import 'package:furtive/core/usecases/start_activity_use_case.dart';
 import 'package:furtive/core/usecases/cease_activity_use_case.dart';
 import 'package:furtive/core/usecases/resume_ongoing_activity_use_case.dart';
+import 'package:furtive/core/usecases/ensure_background_tracking_use_case.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
@@ -32,6 +33,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   final _startTrackPositionUsecase = StartTrackPositionUseCase();
   final _getUserLocationUseCase = GetUserLocationUseCase();
   final _resumeOngoingActivityUseCase = ResumeOngoingActivityUseCase();
+  final _ensureBackgroundTrackingUseCase = EnsureBackgroundTrackingUseCase();
 
   StreamSubscription<PositionEntity>? _positionStream;
   Timer? _elapsedTimer;
@@ -59,6 +61,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     on<ScoreActivity>(_onScoreActivity);
     on<PauseActivity>(_onPauseActivity);
     on<ClearError>(_onClearError);
+    on<ClearTrackingGap>(_onClearTrackingGap);
     on<UpdateElapsedTime>(_onUpdateElapsedTime);
     on<UpdateUserLocation>(_onUpdateUserLocation);
     on<ToggleFollowUser>(_onToggleFollowUser);
@@ -103,37 +106,68 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   }
 
   Future<void> _onInitMap(InitMap event, Emitter<MapState> emit) async {
+    emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
+
+    // B38/H1: InitMap can re-fire — from the onboarding finish and from
+    // PreferencesBloc on every theme/locale apply. Open the position stream
+    // only once: if it's already running, leave it untouched so a preference
+    // change mid-activity doesn't tear down live tracking (dropping fixes) or
+    // leak a second listener. A re-init then just refreshes the user
+    // location and map style below. A failed first subscription leaves
+    // _positionStream null, so a later InitMap retries. Isolated in its own
+    // try/catch so a failure here can never prevent the resume or style load
+    // below from running (see AUDIT-2026-07.md §1: a single unguarded await
+    // used to be able to strand an ongoing activity until it got
+    // auto-ceased).
+    final isColdOpen = _positionStream == null;
+    if (isColdOpen) {
+      try {
+        await _openPositionStream();
+      } catch (e) {
+        logs.severe('$InitMap openPositionStream: $e');
+        emit(state.copyWith(error: AppError(e.toString())));
+      }
+    }
+
+    // Cold start may follow an OS process kill that happened mid-recording
+    // (Doze / OEM battery killer while the phone was locked). The activity
+    // and its points are still in the DB; rehydrate the run so the user sees
+    // their ongoing activity instead of losing it to a later auto-cease.
+    //
+    // Runs BEFORE the one-shot fix below and is NOT gated on isColdOpen
+    // anymore: the internal `state.activity != null` guard in
+    // _resumeOngoingActivity already makes a repeat call a cheap no-op once
+    // resumed, and decoupling from isColdOpen means a transient failure gets
+    // retried on the next InitMap instead of permanently skipping the
+    // resume. Previously this ran AFTER _getUserLocationUseCase(), whose
+    // one-shot GPS fix has no timeout and can hang or throw right after an
+    // unlock (GPS not warmed up yet); since _positionStream was already
+    // non-null by then, isColdOpen stayed false forever and the resume was
+    // never retried — the ongoing activity sat orphaned in the DB until an
+    // auto-cease silently "killed" it. Doing the resume first, independent of
+    // the fix outcome, closes that gap. The map's recenter listener is gated
+    // to fire only on a fresh start (see MapPage), so resuming here does not
+    // move the camera before the map mounts.
+    await _resumeOngoingActivity(emit);
+
     try {
-      emit(state.copyWith(loadingStatus: LoadingStatus.localizing));
-
-      // B38/H1: InitMap can re-fire — from the onboarding finish and from
-      // PreferencesBloc on every theme/locale apply. Open the position stream
-      // only once: if it's already running, leave it untouched so a preference
-      // change mid-activity doesn't tear down live tracking (dropping fixes) or
-      // leak a second listener. A re-init then just
-      // refreshes the user location and map style below. A failed first
-      // subscription leaves _positionStream null, so a later InitMap retries.
-      final isColdOpen = _positionStream == null;
-      if (isColdOpen) await _openPositionStream();
-
       final userPosition = await _getUserLocationUseCase();
       emit(state.copyWith(userLocation: userPosition));
+    } catch (e) {
+      // Non-fatal and deliberately silent (no error banner): right after a
+      // cold start the GPS may simply not be warmed up yet. The already-open
+      // position stream will deliver a fix and update userLocation as soon
+      // as one arrives; blocking/erroring the whole init on this one-shot
+      // fix is exactly what used to prevent the resume above from mattering.
+      logs.severe('$InitMap getUserLocation: $e');
+    }
 
-      // Cold start may follow an OS process kill that happened mid-recording
-      // (Doze / OEM battery killer while the phone was locked). The activity
-      // and its points are still in the DB; rehydrate the run so the user sees
-      // their ongoing activity instead of a blank map. Runs only on the first
-      // stream open, and only if no activity is already live in memory. The
-      // map's recenter listener is gated to fire only on a fresh start (see
-      // MapPage), so resuming here does not move the camera before the map
-      // mounts.
-      if (isColdOpen) await _resumeOngoingActivity(emit);
-
-      emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
+    emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
+    try {
       final style = await _getMapConfigUseCase();
       emit(state.copyWith(style: style));
     } catch (e) {
-      logs.severe('$InitMap: $e');
+      logs.severe('$InitMap getMapConfig: $e');
       emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(loadingStatus: null));
@@ -173,9 +207,23 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   ) async {
     if (state.activity == null) return;
     final last = _lastFixAt;
-    final stale =
-        last == null || DateTime.now().difference(last) > _staleStreamThreshold;
+    final gap = last == null ? null : DateTime.now().difference(last);
+    final stale = gap == null || gap > _staleStreamThreshold;
     if (_positionStream != null && !stale) return;
+
+    // A stale stream while recording means the OS suspended/killed the
+    // foreground service in the background and no fixes were recorded for the
+    // gap — the trace has a hole the reopen below can't backfill. Surface it
+    // so the user knows a segment is missing (and can grant the battery
+    // exemption). Only flag genuinely significant gaps, not first-open (no
+    // prior fix) jitter just above the threshold.
+    if (!state.isPaused && gap != null && gap > _staleStreamThreshold) {
+      logs.warning(
+        'EnsureTracking: tracking gap of ${gap.inSeconds}s detected '
+        '(stream suspended/killed while backgrounded).',
+      );
+      emit(state.copyWith(trackingGap: gap));
+    }
 
     logs.warning('EnsureTracking: position stream stale/dead, reopening.');
     await _positionStream?.cancel();
@@ -185,6 +233,10 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     } catch (e) {
       logs.severe('EnsureTracking reopen: $e');
     }
+  }
+
+  void _onClearTrackingGap(ClearTrackingGap event, Emitter<MapState> emit) {
+    emit(state.copyWith(trackingGap: null));
   }
 
   // Restore an in-progress recording from the DB after a cold start. No-op if
@@ -263,6 +315,18 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   ) async {
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.startingActivity));
+
+      // Ask for the battery-optimisation exemption before recording begins so
+      // the foreground service survives a locked screen on aggressive OEMs.
+      // Best-effort and non-blocking to the recording: a denial still starts
+      // the run (FGS + wake lock remain), we just surface it as a warning.
+      final exempt = await _ensureBackgroundTrackingUseCase();
+      if (!exempt) {
+        logs.warning(
+          'Battery optimisation exemption not granted; tracking may stop '
+          'while the phone is locked on aggressive OEMs.',
+        );
+      }
 
       _elapsedTimer?.cancel();
       _pauseStartTime = null;

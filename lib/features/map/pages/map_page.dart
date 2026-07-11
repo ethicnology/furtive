@@ -119,6 +119,28 @@ class _MapPageState extends State<MapPage>
         BlocListener<MapBloc, MapState>(
           listenWhen:
               (previous, current) =>
+                  previous.trackingGap != current.trackingGap &&
+                  current.trackingGap != null,
+          listener: (context, state) {
+            final gap = state.trackingGap!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).mapTrackingGapMsg(gap.inSeconds),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+                backgroundColor: Colors.orange.shade900,
+                duration: const Duration(seconds: 6),
+              ),
+            );
+            context.read<MapBloc>().add(const ClearTrackingGap());
+          },
+        ),
+        BlocListener<MapBloc, MapState>(
+          listenWhen:
+              (previous, current) =>
                   previous.loadingStatus == LoadingStatus.startingActivity &&
                   current.loadingStatus == null,
           listener: (context, state) {

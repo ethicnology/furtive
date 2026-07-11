@@ -48,6 +48,13 @@ class ClearError extends MapEvent {
   const ClearError();
 }
 
+/// Dismisses the "tracking gap" banner (see MapState.trackingGap) after the
+/// user has acknowledged that a segment of the trace was lost while the app
+/// was suspended in the background.
+class ClearTrackingGap extends MapEvent {
+  const ClearTrackingGap();
+}
+
 class UpdateElapsedTime extends MapEvent {
   const UpdateElapsedTime();
 }
