@@ -1,4 +1,4 @@
-.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible format analyze test check
 
 fvm-check:
 	@echo "🔍 Checking FVM"
@@ -47,6 +47,26 @@ en = arbs['en']; \
 bad = [(loc, sorted(en - keys), sorted(keys - en)) for loc, keys in arbs.items() if loc != 'en' and (en - keys or keys - en)]; \
 print(f'  {len(arbs)} locales, {len(en)} keys each'); \
 sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing={m} extra={e}') for loc,m,e in bad], sys.exit(1))"
+
+format:
+	@echo "🎨 Checking formatting (dart format --set-exit-if-changed)"
+	@fvm dart format --set-exit-if-changed lib test
+
+analyze:
+	@echo "🔎 Running flutter analyze"
+	@fvm flutter analyze
+
+test:
+	@echo "🧪 Running flutter test"
+	@fvm flutter test
+
+# Everything CI runs on every push/PR (see .github/workflows/ci.yml) — kept
+# as a single make target so it can also be run locally before pushing.
+# `translations` both regenerates lib/l10n/app_localizations*.dart (gitignored,
+# needed for analyze/test to see the generated AppLocalizations class) and
+# checks ARB key parity across every locale.
+check: translations format analyze test
+	@echo "✅ All checks passed"
 
 ios-pod-update:
 	@if [ "$$(uname)" != "Darwin" ]; then echo "Skipping pod update (not macOS)"; exit 0; fi
