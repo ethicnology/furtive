@@ -20,15 +20,14 @@ class ActivityLocalDataSource {
     // Filter to the exact set score() persists (finite lat/lon/elevation) so a
     // point with a NaN elevation can't make the stored aggregate disagree with
     // what the detail page recomputes from the persisted points.
-    final finite =
-        points
-            .where(
-              (p) =>
-                  p.latitude.isFinite &&
-                  p.longitude.isFinite &&
-                  p.elevation.isFinite,
-            )
-            .toList();
+    final finite = points
+        .where(
+          (p) =>
+              p.latitude.isFinite &&
+              p.longitude.isFinite &&
+              p.elevation.isFinite,
+        )
+        .toList();
     final entity = ActivityEntity(
       id: '',
       name: '',
@@ -99,15 +98,14 @@ class ActivityLocalDataSource {
     // model — so a single bad fix would make every later read of this
     // activity throw. The render layer also filters non-finite coords, but it
     // never runs if the read itself fails first.
-    final finite =
-        points
-            .where(
-              (p) =>
-                  p.latitude.isFinite &&
-                  p.longitude.isFinite &&
-                  p.elevation.isFinite,
-            )
-            .toList();
+    final finite = points
+        .where(
+          (p) =>
+              p.latitude.isFinite &&
+              p.longitude.isFinite &&
+              p.elevation.isFinite,
+        )
+        .toList();
     if (finite.isEmpty) return;
 
     Future<void> insert() async {
@@ -141,10 +139,9 @@ class ActivityLocalDataSource {
     // Read the stoppedAt flag and insert atomically so a cease() can't slip
     // between the check and the write.
     await db.transaction(() async {
-      final row =
-          await (db.select(db.activities)
-                ..where((t) => t.id.equals(activityId)))
-              .getSingleOrNull();
+      final row = await (db.select(
+        db.activities,
+      )..where((t) => t.id.equals(activityId))).getSingleOrNull();
       if (row == null || row.stoppedAt != null) {
         // Activity ceased or deleted while this fix was queued — drop it.
         return;
@@ -153,38 +150,59 @@ class ActivityLocalDataSource {
     });
   }
 
-  Future<void> cease(String activityId) async {
+  /// Stamps [activityId] as stopped and persists its final aggregates.
+  ///
+  /// [stoppedAt] defaults to now — the deliberate-stop path (user taps Stop)
+  /// wants the stop wall-clock. The auto-cease paths in [fetchOngoing] pass
+  /// the timestamp of the last recorded fix instead, so an activity
+  /// abandoned days ago (found stale on the next cold start) doesn't get a
+  /// `stoppedAt` days later than its last real data point — every consumer
+  /// of `stoppedAt` (the detail page's elapsed time, list sort order, a
+  /// future export) would otherwise see a misleadingly long "duration".
+  ///
+  /// Idempotent: ceasing an already-stopped activity is a silent no-op
+  /// rather than throwing. The only two callers are MapBloc (already
+  /// guarded in-memory against a double user-tap before it ever calls this)
+  /// and fetchOngoing's orphan reconciliation, which must tolerate a
+  /// concurrent/repeat cease of the same row without surfacing an
+  /// AppError that would abort the whole resume flow.
+  Future<void> cease(String activityId, {DateTime? stoppedAt}) async {
     // One transaction so the point-read, aggregate compute and the stoppedAt +
     // aggregate write are atomic. Without it, a score() insert from a GPS fix
     // still in flight when the user taps Stop can land between the read and the
     // write, leaving the stored aggregate short of a point that IS in the DB —
     // the exact stored-vs-live divergence the denormalisation tries to avoid.
     await db.transaction(() async {
-      final activity =
-          await (db.select(db.activities)
-            ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+      final activity = await (db.select(
+        db.activities,
+      )..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
       if (activity == null) throw AppError('Activity not found');
-      if (activity.stoppedAt != null) {
-        throw AppError('Activity already stopped');
-      }
+      if (activity.stoppedAt != null) return;
 
       // Stamp stoppedAt and the denormalised aggregates together so the list
-      // never sees a ceased activity with stale (-1) stats.
+      // never sees a ceased activity with stale (-1) stats. Ordered by id
+      // (insertion order): _aggregates ultimately segments by a STABLE sort
+      // that relies on ties (same-second timestamps, notably the ±1µs
+      // signalLost boundary pairs — truncated to whole seconds by SQLite)
+      // being broken by this input order, not an arbitrary one.
       final pointRows =
           await (db.select(db.activityPoints)
-            ..where((t) => t.activityId.equals(activityId))).get();
+                ..where((t) => t.activityId.equals(activityId))
+                ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+              .get();
       final agg = _aggregates(
         pointRows.map(ActivityPointModel.fromDatabase).toList(),
       );
-      await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
-          .write(
-            ActivitiesCompanion(
-              stoppedAt: Value(DateTime.now().toUtc()),
-              distanceMeters: Value(agg.distanceMeters),
-              activeDurationMs: Value(agg.durationMs),
-            ),
-          );
+      await (db.update(
+        db.activities,
+      )..where((t) => t.id.equals(activityId))).write(
+        ActivitiesCompanion(
+          stoppedAt: Value(stoppedAt ?? DateTime.now().toUtc()),
+          distanceMeters: Value(agg.distanceMeters),
+          activeDurationMs: Value(agg.durationMs),
+        ),
+      );
     });
   }
 
@@ -216,9 +234,23 @@ class ActivityLocalDataSource {
             .get();
     if (ongoing.isEmpty) return null;
 
-    // Auto-cease every orphan except the newest candidate.
+    // Auto-cease every orphan except the newest candidate, stamped with
+    // each orphan's own last fix (see cease()'s stoppedAt doc) rather than
+    // "now" — an orphan abandoned days ago must not report a multi-day
+    // "duration" just because that's when the reconciliation happened to
+    // run.
     for (final orphan in ongoing.skip(1)) {
-      await cease(orphan.id);
+      final orphanPoints =
+          await (db.select(db.activityPoints)
+                ..where((t) => t.activityId.equals(orphan.id))
+                ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+              .get();
+      final orphanLastFix = orphanPoints.isEmpty
+          ? orphan.startedAt
+          : orphanPoints
+                .map((p) => p.time)
+                .reduce((a, b) => a.isAfter(b) ? a : b);
+      await cease(orphan.id, stoppedAt: orphanLastFix);
     }
 
     final candidate = ongoing.first;
@@ -231,12 +263,10 @@ class ActivityLocalDataSource {
     // Stale check against the last fix (fall back to startedAt if pointless).
     final lastFix = points.isEmpty
         ? candidate.startedAt
-        : points
-              .map((p) => p.time)
-              .reduce((a, b) => a.isAfter(b) ? a : b);
+        : points.map((p) => p.time).reduce((a, b) => a.isAfter(b) ? a : b);
     if (DateTime.now().toUtc().difference(lastFix.toUtc()) >
         _ongoingStaleAfter) {
-      await cease(candidate.id);
+      await cease(candidate.id, stoppedAt: lastFix);
       return null;
     }
 
@@ -244,9 +274,9 @@ class ActivityLocalDataSource {
   }
 
   Future<ActivityModel> fetchSingle(String activityId) async {
-    final activity =
-        await (db.select(db.activities)
-          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    final activity = await (db.select(
+      db.activities,
+    )..where((t) => t.id.equals(activityId))).getSingleOrNull();
     if (activity == null) throw AppError('Activity not found');
 
     final points =
@@ -265,10 +295,9 @@ class ActivityLocalDataSource {
   /// once and — for ceased activities — persists the result so later loads
   /// stay cheap.
   Future<List<ActivitySummary>> fetchSummaries() async {
-    final rows =
-        await (db.select(db.activities)
-              ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]))
-            .get();
+    final rows = await (db.select(
+      db.activities,
+    )..orderBy([(t) => OrderingTerm.desc(t.startedAt)])).get();
 
     final summaries = <ActivitySummary>[];
     for (final row in rows) {
@@ -276,9 +305,12 @@ class ActivityLocalDataSource {
       var durationMs = row.activeDurationMs;
 
       if (distance < 0 || durationMs < 0) {
+        // Ordered by id — see the identical comment in cease() above.
         final pointRows =
             await (db.select(db.activityPoints)
-              ..where((t) => t.activityId.equals(row.id))).get();
+                  ..where((t) => t.activityId.equals(row.id))
+                  ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+                .get();
         final agg = _aggregates(
           pointRows.map(ActivityPointModel.fromDatabase).toList(),
         );
@@ -287,13 +319,14 @@ class ActivityLocalDataSource {
         // Persist only for completed activities; an in-progress one keeps the
         // sentinel so it recomputes live until ceased.
         if (row.stoppedAt != null) {
-          await (db.update(db.activities)..where((t) => t.id.equals(row.id)))
-              .write(
-                ActivitiesCompanion(
-                  distanceMeters: Value(distance),
-                  activeDurationMs: Value(durationMs),
-                ),
-              );
+          await (db.update(
+            db.activities,
+          )..where((t) => t.id.equals(row.id))).write(
+            ActivitiesCompanion(
+              distanceMeters: Value(distance),
+              activeDurationMs: Value(durationMs),
+            ),
+          );
         }
       }
 
@@ -311,15 +344,14 @@ class ActivityLocalDataSource {
   }
 
   Future<void> updateName(String activityId, String newName) async {
-    final activity =
-        await (db.select(db.activities)
-          ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    final activity = await (db.select(
+      db.activities,
+    )..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
     if (activity == null) throw AppError('Activity not found');
 
-    await (db.update(db.activities)..where(
-      (t) => t.id.equals(activityId),
-    )).write(ActivitiesCompanion(name: Value(newName)));
+    await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
+        .write(ActivitiesCompanion(name: Value(newName)));
   }
 
   Future<void> delete(String activityId) async {
@@ -327,17 +359,19 @@ class ActivityLocalDataSource {
     // them can't leave orphan activity_points rows pointing at a missing
     // activity. SQLite-level cascade isn't declared on the FK either.
     await db.transaction(() async {
-      final activity =
-          await (db.select(db.activities)
-            ..where((t) => t.id.equals(activityId))).getSingleOrNull();
+      final activity = await (db.select(
+        db.activities,
+      )..where((t) => t.id.equals(activityId))).getSingleOrNull();
 
       if (activity == null) throw AppError('Activity not found');
 
-      await (db.delete(db.activityPoints)
-        ..where((t) => t.activityId.equals(activityId))).go();
+      await (db.delete(
+        db.activityPoints,
+      )..where((t) => t.activityId.equals(activityId))).go();
 
-      await (db.delete(db.activities)
-        ..where((t) => t.id.equals(activityId))).go();
+      await (db.delete(
+        db.activities,
+      )..where((t) => t.id.equals(activityId))).go();
     });
   }
 }

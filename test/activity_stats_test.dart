@@ -100,46 +100,40 @@ void main() {
       expect(a.activeElevationGain, closeTo(20, 0.001));
     });
 
-    test(
-      'falls back to raw sum when no point carries verticalAccuracy '
-      '(legacy recordings / no quality signal at all)',
-      () {
-        // Same shape as the test above, confirming the smoothed path never
-        // engages just because it exists — it needs an explicit quality
-        // signal on at least one point.
-        final a = act([
-          pt(0, 0, ele: 0, sec: 0),
-          pt(0, 0.0001, ele: 10, sec: 1),
-          pt(0, 0.0002, ele: 5, sec: 2),
-          pt(0, 0.0003, ele: 15, sec: 3),
-        ]);
-        expect(a.activeElevationGain, closeTo(20, 0.001));
-      },
-    );
+    test('falls back to raw sum when no point carries verticalAccuracy '
+        '(legacy recordings / no quality signal at all)', () {
+      // Same shape as the test above, confirming the smoothed path never
+      // engages just because it exists — it needs an explicit quality
+      // signal on at least one point.
+      final a = act([
+        pt(0, 0, ele: 0, sec: 0),
+        pt(0, 0.0001, ele: 10, sec: 1),
+        pt(0, 0.0002, ele: 5, sec: 2),
+        pt(0, 0.0003, ele: 15, sec: 3),
+      ]);
+      expect(a.activeElevationGain, closeTo(20, 0.001));
+    });
 
-    test(
-      'smooths + applies a hysteresis dead-band once verticalAccuracy is '
-      'present, suppressing GPS noise on a flat route',
-      () {
-        // A "flat" route with ±3-4 m GPS altitude noise around 100 m. The
-        // raw sum of positive deltas would be ~15 m of bogus D+; smoothing
-        // (5-sample trailing average) then a 10 m dead-band collapses every
-        // wobble to zero real gain.
-        const elevations = [100, 103, 99, 102, 98, 101, 100, 104, 97, 100];
-        final points = [
-          for (var i = 0; i < elevations.length; i++)
-            pt(
-              0,
-              0.0001 * i,
-              ele: elevations[i].toDouble(),
-              sec: i * 5,
-              verticalAccuracy: 5,
-            ),
-        ];
-        final a = act(points);
-        expect(a.activeElevationGain, closeTo(0, 0.001));
-      },
-    );
+    test('smooths + applies a hysteresis dead-band once verticalAccuracy is '
+        'present, suppressing GPS noise on a flat route', () {
+      // A "flat" route with ±3-4 m GPS altitude noise around 100 m. The
+      // raw sum of positive deltas would be ~15 m of bogus D+; smoothing
+      // (5-sample trailing average) then a 10 m dead-band collapses every
+      // wobble to zero real gain.
+      const elevations = [100, 103, 99, 102, 98, 101, 100, 104, 97, 100];
+      final points = [
+        for (var i = 0; i < elevations.length; i++)
+          pt(
+            0,
+            0.0001 * i,
+            ele: elevations[i].toDouble(),
+            sec: i * 5,
+            verticalAccuracy: 5,
+          ),
+      ];
+      final a = act(points);
+      expect(a.activeElevationGain, closeTo(0, 0.001));
+    });
 
     test(
       'smooths + applies a hysteresis dead-band to register a genuine climb',
@@ -164,30 +158,27 @@ void main() {
       },
     );
 
-    test(
-      'excludes a point whose verticalAccuracy exceeds the trust threshold '
-      'instead of letting it corrupt the smoothed trace',
-      () {
-        final points = [
-          for (var i = 0; i < 12; i++)
-            pt(
-              0,
-              0.0001 * i,
-              ele: 100.0 + i * 5,
-              sec: i * 5,
-              verticalAccuracy: 5,
-            ),
-          // A wild outlier fix with untrustworthy vertical accuracy, spliced
-          // in between two ramp points. If it weren't excluded it would blow
-          // up the moving average and the resulting gain.
-          pt(0, 0.00027, ele: 500, sec: 27, verticalAccuracy: 999),
-        ];
-        final a = act(points);
-        // Same 40 m as the clean-ramp case above — the outlier is dropped
-        // before smoothing ever sees it, not merely capped.
-        expect(a.activeElevationGain, closeTo(40, 0.001));
-      },
-    );
+    test('excludes a point whose verticalAccuracy exceeds the trust threshold '
+        'instead of letting it corrupt the smoothed trace', () {
+      final points = [
+        for (var i = 0; i < 12; i++)
+          pt(
+            0,
+            0.0001 * i,
+            ele: 100.0 + i * 5,
+            sec: i * 5,
+            verticalAccuracy: 5,
+          ),
+        // A wild outlier fix with untrustworthy vertical accuracy, spliced
+        // in between two ramp points. If it weren't excluded it would blow
+        // up the moving average and the resulting gain.
+        pt(0, 0.00027, ele: 500, sec: 27, verticalAccuracy: 999),
+      ];
+      final a = act(points);
+      // Same 40 m as the clean-ramp case above — the outlier is dropped
+      // before smoothing ever sees it, not merely capped.
+      expect(a.activeElevationGain, closeTo(40, 0.001));
+    });
   });
 
   group('pace formatting', () {
@@ -251,23 +242,80 @@ void main() {
   });
 
   group('km split duration accounts for stationary legs', () {
-    test('split durations sum to active duration despite a zero-distance leg', () {
-      final a = act([
-        pt(0, 0, sec: 0),
-        pt(0, 0.005, sec: 60), // ~556 m
-        pt(0, 0.005, sec: 90), // stationary 30 s, same spot
-        pt(0, 0.010, sec: 150), // ~556 m
-      ]);
-      final splits = a.kmSplits;
-      expect(splits, isNotEmpty);
-      final total = splits.fold<Duration>(
-        Duration.zero,
-        (sum, s) => sum + s.duration,
-      );
-      // The 30 s stationary stretch must be counted; total split time equals
-      // the activity's active duration (150 s).
-      expect(total, a.activeDuration);
-      expect(total, const Duration(seconds: 150));
+    test(
+      'split durations sum to active duration despite a zero-distance leg',
+      () {
+        final a = act([
+          pt(0, 0, sec: 0),
+          pt(0, 0.005, sec: 60), // ~556 m
+          pt(0, 0.005, sec: 90), // stationary 30 s, same spot
+          pt(0, 0.010, sec: 150), // ~556 m
+        ]);
+        final splits = a.kmSplits;
+        expect(splits, isNotEmpty);
+        final total = splits.fold<Duration>(
+          Duration.zero,
+          (sum, s) => sum + s.duration,
+        );
+        // The 30 s stationary stretch must be counted; total split time equals
+        // the activity's active duration (150 s).
+        expect(total, a.activeDuration);
+        expect(total, const Duration(seconds: 150));
+      },
+    );
+  });
+
+  group('signalLost segments (GPS outage brackets)', () {
+    // Shape produced by ScoreActivityUseCase.gapFrom / the GPX import: an
+    // active run, then two signalLost duplicates bracketing the outage
+    // (last-before-gap +1µs, first-after-gap -1µs), then the active run
+    // resumes. 0.01 deg lon at the equator ~= 1113 m.
+    List<ActivityPointEntity> bracketedGap() => [
+      pt(0, 0, sec: 0),
+      pt(0, 0.001, sec: 10),
+      ActivityPointEntity(
+        position: PositionEntity(latitude: 0, longitude: 0.001, elevation: 0),
+        time: t0.add(const Duration(seconds: 10, microseconds: 1)),
+        status: ActivityPointStatusEntity.signalLost,
+      ),
+      ActivityPointEntity(
+        position: PositionEntity(latitude: 0, longitude: 0.011, elevation: 0),
+        time: t0.add(const Duration(seconds: 610, microseconds: -1)),
+        status: ActivityPointStatusEntity.signalLost,
+      ),
+      pt(0, 0.011, sec: 610),
+      pt(0, 0.012, sec: 620),
+    ];
+
+    test('outage time and distance are excluded from active stats', () {
+      final a = act(bracketedGap());
+      expect(a.segments.length, 3);
+      // Active: two 111 m legs, 10 s each — the 600 s / ~1113 m gap is out.
+      expect(a.activeDuration, const Duration(seconds: 20));
+      expect(a.activeDistanceMeters, closeTo(222.6, 2));
+      expect(a.pausedDuration, Duration.zero);
+    });
+
+    test('outage carries its own informative duration and distance', () {
+      final a = act(bracketedGap());
+      expect(a.signalLostSegments.length, 1);
+      // 600 s minus the 2µs consumed by the brackets.
+      expect(a.signalLostDuration.inSeconds, 599);
+      expect(a.signalLostDistanceMeters, closeTo(1113, 5));
+    });
+
+    test('active pace is not tanked by the outage', () {
+      final a = act(bracketedGap());
+      // 222.6 m in 20 s ≈ 11.1 m/s — the 600 s gap would have crushed this
+      // to ~0.36 m/s if it leaked into the active duration.
+      expect(a.activeSpeedMps, closeTo(11.1, 0.2));
+    });
+
+    test('no signalLost stats on a gap-free activity', () {
+      final a = act([pt(0, 0, sec: 0), pt(0, 0.001, sec: 10)]);
+      expect(a.signalLostSegments, isEmpty);
+      expect(a.signalLostDuration, Duration.zero);
+      expect(a.signalLostDistanceMeters, 0);
     });
   });
 

@@ -27,18 +27,47 @@ GpxPoint? parseTrkpt(XmlElement point) {
   if (lat == null || !lat.isFinite || lat < -90 || lat > 90) return null;
   if (lon == null || !lon.isFinite || lon < -180 || lon > 180) return null;
 
-  final eleStr = point.findElements('ele').firstOrNull?.innerText;
+  final eleStr = point
+      .findElements('ele', namespace: '*')
+      .firstOrNull
+      ?.innerText;
   final eleRaw = eleStr != null ? double.tryParse(eleStr) : null;
   final elevation = (eleRaw != null && eleRaw.isFinite) ? eleRaw : 0.0;
 
-  final timeStr = point.findElements('time').firstOrNull?.innerText;
-  final time = timeStr != null ? DateTime.tryParse(timeStr) : null;
+  final timeStr = point
+      .findElements('time', namespace: '*')
+      .firstOrNull
+      ?.innerText;
+  final time = timeStr != null ? _parseGpxTime(timeStr) : null;
 
   return GpxPoint(
     latitude: lat,
     longitude: lon,
     elevation: elevation,
     time: time,
+  );
+}
+
+/// Parses a GPX `<time>` value, treating an offset-less timestamp as UTC —
+/// per the GPX schema (built on xsd:dateTime), a time with no explicit zone
+/// is UTC. `DateTime.tryParse` instead assumes such a string is in the
+/// device's LOCAL zone (`isUtc == false`), which would make the very same
+/// GPX file resolve to a different absolute instant depending on where it's
+/// imported. A string WITH an explicit zone/offset ("Z" or "+02:00") is
+/// parsed correctly as-is (`isUtc == true` in both cases in Dart) and
+/// returned unchanged.
+DateTime? _parseGpxTime(String s) {
+  final parsed = DateTime.tryParse(s);
+  if (parsed == null || parsed.isUtc) return parsed;
+  return DateTime.utc(
+    parsed.year,
+    parsed.month,
+    parsed.day,
+    parsed.hour,
+    parsed.minute,
+    parsed.second,
+    parsed.millisecond,
+    parsed.microsecond,
   );
 }
 
@@ -56,18 +85,31 @@ List<List<GpxPoint>> parseGpxSegments(XmlElement root) {
     if (parsed.isNotEmpty) groups.add(parsed);
   }
 
-  for (final trk in root.findAllElements('trk')) {
-    for (final seg in trk.findAllElements('trkseg')) {
-      collect(seg.findAllElements('trkpt'));
+  // `namespace: '*'` matches by LOCAL name regardless of any namespace
+  // prefix (e.g. a file using `<x:trkpt>`) — without it, findAllElements
+  // matches the fully-qualified name, so a namespaced file would silently
+  // find zero points and fall through to GpxNoPointsError.
+  for (final trk in root.findAllElements('trk', namespace: '*')) {
+    final segments = trk.findAllElements('trkseg', namespace: '*').toList();
+    if (segments.isNotEmpty) {
+      for (final seg in segments) {
+        collect(seg.findAllElements('trkpt', namespace: '*'));
+      }
+    } else {
+      // Malformed-but-real-world: a <trk> with <trkpt> children directly,
+      // not wrapped in a <trkseg>. Previously silently dropped whenever
+      // *any other* <trk> in the same file did use <trkseg> (the fallback
+      // below only fires when groups is empty overall).
+      collect(trk.findAllElements('trkpt', namespace: '*'));
     }
   }
-  for (final rte in root.findAllElements('rte')) {
-    collect(rte.findAllElements('rtept'));
+  for (final rte in root.findAllElements('rte', namespace: '*')) {
+    collect(rte.findAllElements('rtept', namespace: '*'));
   }
   if (groups.isEmpty) {
     collect([
-      ...root.findAllElements('trkpt'),
-      ...root.findAllElements('rtept'),
+      ...root.findAllElements('trkpt', namespace: '*'),
+      ...root.findAllElements('rtept', namespace: '*'),
     ]);
   }
   return groups;

@@ -22,9 +22,16 @@ class ActivityPoints extends Table {
   RealColumn get verticalAccuracy => real().nullable()();
 }
 
+// `signalLost` added without a schema migration on purpose: drift's textEnum
+// stores the enum *name* in a plain TEXT column with no CHECK constraint,
+// so a new value changes no DDL — old rows keep reading fine and new rows
+// simply store the new name. Only a downgrade to an older APK would choke
+// on it (unsupported anyway). See ActivityPointStatusEntity.signalLost for
+// the semantics.
 enum ActivityPointsStatusColumn {
   active,
-  paused;
+  paused,
+  signalLost;
 
   static ActivityPointsStatusColumn fromEntity(
     ActivityPointStatusEntity status,
@@ -34,6 +41,8 @@ enum ActivityPointsStatusColumn {
         return ActivityPointsStatusColumn.active;
       case ActivityPointStatusEntity.paused:
         return ActivityPointsStatusColumn.paused;
+      case ActivityPointStatusEntity.signalLost:
+        return ActivityPointsStatusColumn.signalLost;
     }
   }
 
@@ -43,6 +52,8 @@ enum ActivityPointsStatusColumn {
         return ActivityPointStatusEntity.active;
       case ActivityPointsStatusColumn.paused:
         return ActivityPointStatusEntity.paused;
+      case ActivityPointsStatusColumn.signalLost:
+        return ActivityPointStatusEntity.signalLost;
     }
   }
 }
