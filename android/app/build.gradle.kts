@@ -12,7 +12,7 @@ val androidNdkVersion = project.properties["android.ndkVersion"] as String
 val androidJvmTarget = JavaVersion.toVersion(project.properties["android.jvmTarget"] as String)
 
 android {
-    namespace = "com.example.furtive"
+    namespace = "com.ethicnology.furtive"
     compileSdk = androidCompileSdk
     ndkVersion = androidNdkVersion
 
@@ -27,8 +27,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.furtive"
+        applicationId = "com.ethicnology.furtive"
         minSdk = androidMinSdk
         targetSdk = androidTargetSdk
         versionCode = flutter.versionCode

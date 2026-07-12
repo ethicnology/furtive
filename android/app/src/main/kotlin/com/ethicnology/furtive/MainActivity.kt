@@ -1,4 +1,4 @@
-package com.example.furtive
+package com.ethicnology.furtive
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
