@@ -163,10 +163,9 @@ class MapRemoteDataSource {
       final value = entry.value;
       if (value is! Map) continue;
       final sourceType = value['type'];
-      final type =
-          TileProviderType.values
-              .where((e) => e.name.replaceAll('_', '-') == sourceType)
-              .firstOrNull;
+      final type = TileProviderType.values
+          .where((e) => e.name.replaceAll('_', '-') == sourceType)
+          .firstOrNull;
       if (type == null) continue;
 
       dynamic source = value;
@@ -236,11 +235,19 @@ class MapRemoteDataSource {
     // Exact query-parameter check (not a substring) and host allowlist.
     if (uri.queryParameters.containsKey('key')) return url;
     if (uri.host != _keyHost) return url;
-    return uri
-        .replace(
-          queryParameters: {...uri.queryParameters, 'key': _protomapsKey},
-        )
-        .toString();
+    // Textual concatenation, NOT uri.replace(queryParameters: ...): a tile
+    // URL template contains literal placeholders like {z}/{x}/{y}, and
+    // Uri.replace re-encodes the whole query/path component, turning them
+    // into %7Bz%7D/%7Bx%7D/%7By%7D — NetworkVectorTileProvider substitutes
+    // placeholders via a regex that only matches the unencoded braces, so
+    // every tile request would 404. Currently masked because Protomaps'
+    // TileJSON responses already embed `?key=` in their own tile templates
+    // (the early return above), but this path is hit directly for `sprite`/
+    // style-level `url` fields, and would be hit for tiles too if Protomaps
+    // ever stopped pre-baking the key.
+    final separator = url.contains('?') ? '&' : '?';
+    return '$url$separator'
+        'key=$_protomapsKey';
   }
 
   // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung

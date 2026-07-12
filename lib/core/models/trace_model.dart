@@ -24,15 +24,6 @@ class TraceModel {
     );
   }
 
-  static TraceModel fromEntity(TraceEntity entity) {
-    return TraceModel(
-      name: entity.name,
-      description: entity.description,
-      url: entity.url,
-      points: entity.points.map(TracePointModel.fromEntity).toList(),
-    );
-  }
-
   static TraceModel fromGpx(XmlElement track) =>
       _build(track, track.findAllElements('trkpt'));
 
@@ -88,15 +79,6 @@ class TracePointModel {
       longitude: model.longitude,
       elevation: model.elevation,
       time: model.time,
-    );
-  }
-
-  static TracePointModel fromEntity(TracePointEntity entity) {
-    return TracePointModel(
-      latitude: entity.latitude,
-      longitude: entity.longitude,
-      elevation: entity.elevation,
-      time: entity.time,
     );
   }
 }

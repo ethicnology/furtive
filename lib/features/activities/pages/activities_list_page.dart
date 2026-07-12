@@ -29,6 +29,10 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // when the listener fires.
   bool _importPending = false;
   final _getActivity = GetActivityUseCase();
+  // Guards against a double-tap on a list item pushing the detail page
+  // twice while the first tap's DB fetch is still in flight. See L-U6 in
+  // REVIEW-2026-07-FULL-APP.md.
+  bool _openingActivity = false;
 
   @override
   void initState() {
@@ -109,8 +113,36 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             // (which would cause a second rebuild on every emit).
             final activities = state.activities;
 
-            if (state.isLoading || activities == null) {
+            // Loading state ONLY when there's nothing to show yet — an error
+            // with no prior successful fetch must not render as a permanent
+            // spinner (the previous condition matched both cases identically:
+            // isLoading stays false and activities stays null on a failed
+            // fetch, per _onFetchActivities' catch block). See M12 in
+            // REVIEW-2026-07-FULL-APP.md.
+            if (state.isLoading && activities == null) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (activities == null) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      state.error?.message ?? l10n.activitiesLoadError,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.tertiary.foreground),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.read<ActivitiesBloc>().add(
+                        const FetchActivities(),
+                      ),
+                      child: Text(l10n.btnRetry),
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (activities.isEmpty) {
@@ -197,6 +229,8 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // The list holds lightweight summaries (no GPS points); load the full
   // activity with its points before opening the detail page.
   Future<void> _openActivity(String id) async {
+    if (_openingActivity) return;
+    _openingActivity = true;
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
@@ -219,6 +253,8 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
           duration: const Duration(seconds: 3),
         ),
       );
+    } finally {
+      _openingActivity = false;
     }
   }
 }

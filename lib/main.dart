@@ -143,6 +143,7 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<LocaleCubit, Locale?>(
         builder: (context, locale) => MaterialApp(
+          scaffoldMessengerKey: Global.scaffoldMessengerKey,
           // onGenerateTitle ensures the title in the OS task switcher is
           // localised every time the locale changes.
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,

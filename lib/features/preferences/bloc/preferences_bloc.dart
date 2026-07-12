@@ -3,6 +3,7 @@ import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
+import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/usecases/get_preferences_use_case.dart';
 import 'package:furtive/core/usecases/update_preferences_use_case.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
@@ -51,10 +52,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     emit(state.copyWith(preferences: newPreferences));
   }
 
-  void _onChangeUiLocale(
-    ChangeUiLocale event,
-    Emitter<PreferencesState> emit,
-  ) {
+  void _onChangeUiLocale(ChangeUiLocale event, Emitter<PreferencesState> emit) {
     final newPreferences = state.preferences.copyWith(
       uiLocale: event.languageCode,
     );
@@ -96,11 +94,27 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     Emitter<PreferencesState> emit,
   ) async {
     final previous = state.preferences;
-    await _updatePreferencesUseCase(event.preferences);
+    try {
+      await _updatePreferencesUseCase(event.preferences);
+    } catch (e, s) {
+      // PreferencesPage pops immediately after dispatching Apply, so by the
+      // time this settles there is very likely no UI left to show an error
+      // on. Logging at least makes a failed save discoverable in the
+      // exported logs instead of vanishing into the bloc's global error
+      // handler silently. See M5 in REVIEW-2026-07-FULL-APP.md.
+      logs.severe('$UpdatePreferences', error: e, trace: s);
+      return;
+    }
+
     // The page pops (and closes this bloc) right after dispatching Apply; the
-    // await above can outlive it. Don't emit on a closed bloc.
-    if (isClosed) return;
-    emit(state.copyWith(preferences: event.preferences));
+    // DB write above can outlive it. emit() would throw on a closed bloc, so
+    // it alone is guarded — but the side effects below (locale, map re-init,
+    // lock-screen) don't touch bloc state at all and must run regardless of
+    // isClosed. Previously the single `if (isClosed) return;` above skipped
+    // them too whenever the write outlived the pop, leaving settings
+    // persisted to disk but never actually applied until the next app
+    // restart. See M5 in REVIEW-2026-07-FULL-APP.md.
+    if (!isClosed) emit(state.copyWith(preferences: event.preferences));
 
     // Re-init the map only when something the map style actually depends on
     // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for
