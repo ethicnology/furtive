@@ -143,54 +143,56 @@ ThemeData get appTheme {
     scaffoldBackgroundColor: kBackground,
     canvasColor: kBackground,
     dividerColor: kOutline,
-    textTheme: base.textTheme.apply(fontFamily: kFontFamily).copyWith(
-      // Big numeric readouts (activity stats, elapsed time).
-      displayMedium: base.textTheme.displayMedium?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w700,
-        fontFeatures: kTabularFigures,
-        color: Colors.white,
-      ),
-      // Page titles (AppBar titles use headlineSmall by default in M2-style
-      // AppBarTheme.titleTextStyle below, kept here too for consistency).
-      headlineSmall: base.textTheme.headlineSmall?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-      ),
-      // Card headers, list item titles.
-      titleMedium: base.textTheme.titleMedium?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-      titleLarge: base.textTheme.titleLarge?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-      ),
-      bodyMedium: base.textTheme.bodyMedium?.copyWith(
-        fontFamily: kFontFamily,
-        color: Colors.white,
-      ),
-      bodySmall: base.textTheme.bodySmall?.copyWith(
-        fontFamily: kFontFamily,
-        color: kTextMuted,
-      ),
-      // Uppercase-style stat labels ("DISTANCE", "PACE"): letter-spacing
-      // reads better than the default when the widget itself upper-cases
-      // the string (see StatBlock).
-      labelSmall: base.textTheme.labelSmall?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.6,
-        color: kTextMuted,
-      ),
-      labelLarge: base.textTheme.labelLarge?.copyWith(
-        fontFamily: kFontFamily,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
+    textTheme: base.textTheme
+        .apply(fontFamily: kFontFamily)
+        .copyWith(
+          // Big numeric readouts (activity stats, elapsed time).
+          displayMedium: base.textTheme.displayMedium?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w700,
+            fontFeatures: kTabularFigures,
+            color: Colors.white,
+          ),
+          // Page titles (AppBar titles use headlineSmall by default in M2-style
+          // AppBarTheme.titleTextStyle below, kept here too for consistency).
+          headlineSmall: base.textTheme.headlineSmall?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+          // Card headers, list item titles.
+          titleMedium: base.textTheme.titleMedium?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+          titleLarge: base.textTheme.titleLarge?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+          bodyMedium: base.textTheme.bodyMedium?.copyWith(
+            fontFamily: kFontFamily,
+            color: Colors.white,
+          ),
+          bodySmall: base.textTheme.bodySmall?.copyWith(
+            fontFamily: kFontFamily,
+            color: kTextMuted,
+          ),
+          // Uppercase-style stat labels ("DISTANCE", "PACE"): letter-spacing
+          // reads better than the default when the widget itself upper-cases
+          // the string (see StatBlock).
+          labelSmall: base.textTheme.labelSmall?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
+            color: kTextMuted,
+          ),
+          labelLarge: base.textTheme.labelLarge?.copyWith(
+            fontFamily: kFontFamily,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
     appBarTheme: const AppBarTheme(
       backgroundColor: kBackground,
       elevation: 0,
@@ -260,9 +262,7 @@ ThemeData get appTheme {
       ),
     ),
     iconButtonTheme: const IconButtonThemeData(
-      style: ButtonStyle(
-        foregroundColor: WidgetStatePropertyAll(kMint),
-      ),
+      style: ButtonStyle(foregroundColor: WidgetStatePropertyAll(kMint)),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: kMint,
@@ -340,10 +340,19 @@ ThemeData get appTheme {
         color: kDangerText,
       ),
       helperStyle: const TextStyle(fontFamily: kFontFamily, color: kTextMuted),
-      prefixStyle: const TextStyle(fontFamily: kFontFamily, color: Colors.white),
-      suffixStyle: const TextStyle(fontFamily: kFontFamily, color: Colors.white),
+      prefixStyle: const TextStyle(
+        fontFamily: kFontFamily,
+        color: Colors.white,
+      ),
+      suffixStyle: const TextStyle(
+        fontFamily: kFontFamily,
+        color: Colors.white,
+      ),
       counterStyle: const TextStyle(fontFamily: kFontFamily, color: kTextMuted),
-      floatingLabelStyle: const TextStyle(fontFamily: kFontFamily, color: kMint),
+      floatingLabelStyle: const TextStyle(
+        fontFamily: kFontFamily,
+        color: kMint,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: outlineBorder,
@@ -360,9 +369,8 @@ ThemeData get appTheme {
     switchTheme: SwitchThemeData(
       thumbColor: const WidgetStatePropertyAll(Colors.white),
       trackColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? kMintMuted
-            : kSurfaceHigh,
+        (states) =>
+            states.contains(WidgetState.selected) ? kMintMuted : kSurfaceHigh,
       ),
       trackOutlineColor: const WidgetStatePropertyAll(kOutline),
     ),

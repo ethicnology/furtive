@@ -16,18 +16,17 @@ class KmMilestonesLayer extends StatelessWidget {
     final milestones = activity.kmMilestones;
     if (milestones.isEmpty) return const MarkerLayer(markers: []);
     return MarkerLayer(
-      markers:
-          milestones
-              .map(
-                (m) => Marker(
-                  point: m.position.toLatLng(),
-                  width: 28,
-                  height: 28,
-                  alignment: Alignment.center,
-                  child: _Chip(label: '${m.km}'),
-                ),
-              )
-              .toList(),
+      markers: milestones
+          .map(
+            (m) => Marker(
+              point: m.position.toLatLng(),
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              child: _Chip(label: '${m.km}'),
+            ),
+          )
+          .toList(),
     );
   }
 }

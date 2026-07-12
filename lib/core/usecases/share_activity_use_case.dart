@@ -104,9 +104,7 @@ class ShareActivityUseCase {
       // pixelRatio 2.0 gives 2160x2700 PNG — sharp on retina, ~1MB file.
       // Higher ratios bloat the file with no visual gain on mobile.
       final image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       if (byteData == null) {
         throw const AppError('Failed to encode share image');

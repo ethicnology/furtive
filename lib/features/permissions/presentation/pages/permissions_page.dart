@@ -60,10 +60,9 @@ class _PermissionsPageState extends State<PermissionsPage>
     // skips the wizard once permissions are granted.
     final prefs = await _getPreferences();
     if (!mounted) return;
-    final destination =
-        prefs.hasCompletedOnboarding
-            ? const BottomNavigationWidget()
-            : const OnboardingPage();
+    final destination = prefs.hasCompletedOnboarding
+        ? const BottomNavigationWidget()
+        : const OnboardingPage();
     await Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
@@ -133,7 +132,11 @@ class _PermissionsPageState extends State<PermissionsPage>
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      _localizedName(context, permission.permission, permission.name),
+                                      _localizedName(
+                                        context,
+                                        permission.permission,
+                                        permission.name,
+                                      ),
                                       style: textTheme.titleMedium,
                                     ),
                                   ),
@@ -143,7 +146,11 @@ class _PermissionsPageState extends State<PermissionsPage>
                               Padding(
                                 padding: const EdgeInsets.only(left: 34),
                                 child: Text(
-                                  _localizedDescription(context, permission.permission, permission.description),
+                                  _localizedDescription(
+                                    context,
+                                    permission.permission,
+                                    permission.description,
+                                  ),
                                   style: textTheme.bodySmall,
                                 ),
                               ),

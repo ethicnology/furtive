@@ -9,4 +9,3 @@ class DeleteActivityUseCase {
     await _activityRepository.delete(activityId);
   }
 }
-

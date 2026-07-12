@@ -26,7 +26,8 @@ class PermissionDataSource {
       ),
       PermissionModel(
         name: 'Location Always',
-        description: 'Optional: keeps tracking accurate during long activities, even if the OS suspends the app.',
+        description:
+            'Optional: keeps tracking accurate during long activities, even if the OS suspends the app.',
         permission: Permission.locationAlways,
         status: locationAlwaysStatus,
         isOptional: true,

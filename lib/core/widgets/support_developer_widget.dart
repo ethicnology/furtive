@@ -72,7 +72,10 @@ class SupportDeveloperWidget extends StatelessWidget {
                       context,
                       'https://github.com/sponsors/ethicnology',
                     ),
-                    icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.volunteer_activism_rounded,
+                      size: 18,
+                    ),
                     label: Text(l10n.btnSponsor),
                   ),
                 ),

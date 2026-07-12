@@ -12,6 +12,7 @@ class MyLogs {
   final Directory dir;
   final dep.LoggerColorful logger;
   static const _logFilename = 'logs.tsv';
+
   /// Hard cap for the log file. Every level, including INFO, is persisted
   /// (see the listener below) so a session can be fully reconstructed from
   /// the in-app Logs page without a computer/adb attached. With no rotation

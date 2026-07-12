@@ -165,24 +165,19 @@ class _OnboardingPageState extends State<OnboardingPage>
                           !isLastStep || permissionsState.requiredGranted;
                       return ElevatedButton(
                         onPressed: (_saving || !canFinish) ? null : _next,
-                        child:
-                            _saving
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : Text(
-                                  isLastStep
-                                      ? AppLocalizations.of(
-                                        context,
-                                      ).btnFinish
-                                      : AppLocalizations.of(
-                                        context,
-                                      ).btnNext,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
+                              )
+                            : Text(
+                                isLastStep
+                                    ? AppLocalizations.of(context).btnFinish
+                                    : AppLocalizations.of(context).btnNext,
+                              ),
                       );
                     },
                   ),
@@ -213,10 +208,9 @@ class _ProgressIndicator extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color:
-                    filled
-                        ? AppColors.primary.background
-                        : AppColors.tertiary.background,
+                color: filled
+                    ? AppColors.primary.background
+                    : AppColors.tertiary.background,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -325,11 +319,9 @@ class _SettingsStep extends StatelessWidget {
             LabeledDropdown<String?>(
               value: uiLocale,
               items: uiLanguageOptions,
-              labelFor:
-                  (code) =>
-                      code == null
-                          ? l10n.settingsUiLanguageSystem
-                          : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+              labelFor: (code) => code == null
+                  ? l10n.settingsUiLanguageSystem
+                  : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
               onChanged: onUiLocaleChanged,
             ),
           ],

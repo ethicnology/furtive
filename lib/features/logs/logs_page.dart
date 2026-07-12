@@ -150,9 +150,7 @@ class _LogsPageState extends State<LogsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(
-              context,
-            ).logsCopiedMsg(_filteredLogs.length),
+            AppLocalizations.of(context).logsCopiedMsg(_filteredLogs.length),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -201,134 +199,125 @@ class _LogsPageState extends State<LogsPage> {
           ),
         ],
       ),
-      body:
-          _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Container(
-                color: Colors.black,
-                child: Column(
-                  children: [
-                    if (_startDate != null && _endDate != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              l10n.logsFiltered(
-                                _formatDate(context, _startDate!),
-                                _formatDate(context, _endDate!),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Container(
+              color: Colors.black,
+              child: Column(
+                children: [
+                  if (_startDate != null && _endDate != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            l10n.logsFiltered(
+                              _formatDate(context, _startDate!),
+                              _formatDate(context, _endDate!),
                             ),
-                            const Spacer(),
-                            Text(
-                              l10n.logsShowingCount(
-                                filteredLogs.length,
-                                _logs.length,
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
                             ),
-                          ],
-                        ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            l10n.logsShowingCount(
+                              filteredLogs.length,
+                              _logs.length,
+                            ),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    Expanded(
-                      child:
-                          filteredLogs.isEmpty
-                              ? Center(
-                                child: Text(
-                                  AppLocalizations.of(context).logsEmpty,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              )
-                              : Scrollbar(
-                                thumbVisibility: true,
-                                child: ListView.builder(
-                                  itemCount: filteredLogs.length,
-                                  itemBuilder: (context, index) {
-                                    final logLine = filteredLogs[index];
-                                    final parts = logLine.split('\t');
-                                    Color textColor = Colors.white;
+                    ),
+                  Expanded(
+                    child: filteredLogs.isEmpty
+                        ? Center(
+                            child: Text(
+                              AppLocalizations.of(context).logsEmpty,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          )
+                        : Scrollbar(
+                            thumbVisibility: true,
+                            child: ListView.builder(
+                              itemCount: filteredLogs.length,
+                              itemBuilder: (context, index) {
+                                final logLine = filteredLogs[index];
+                                final parts = logLine.split('\t');
+                                Color textColor = Colors.white;
 
-                                    if (parts.length > 1) {
-                                      textColor = switch (parts[1]) {
-                                        'FINEST' => Colors.lightGreenAccent,
-                                        'FINER' => Colors.lightGreen,
-                                        'FINE' => Colors.green,
-                                        'CONFIG' => Colors.brown,
-                                        'INFO' => Colors.blue,
-                                        'WARNING' => Colors.orange,
-                                        'SEVERE' => Colors.red,
-                                        'SHOUT' => Colors.purple,
-                                        _ => Colors.white,
-                                      };
-                                    }
+                                if (parts.length > 1) {
+                                  textColor = switch (parts[1]) {
+                                    'FINEST' => Colors.lightGreenAccent,
+                                    'FINER' => Colors.lightGreen,
+                                    'FINE' => Colors.green,
+                                    'CONFIG' => Colors.brown,
+                                    'INFO' => Colors.blue,
+                                    'WARNING' => Colors.orange,
+                                    'SEVERE' => Colors.red,
+                                    'SHOUT' => Colors.purple,
+                                    _ => Colors.white,
+                                  };
+                                }
 
-                                    final displayParts = parts.toList();
-                                    if (displayParts.isNotEmpty &&
-                                        displayParts[0].length > 7) {
-                                      try {
-                                        displayParts[0] = displayParts[0]
-                                            .substring(
-                                              0,
-                                              displayParts[0].length - 7,
-                                            );
-                                      } catch (_) {}
-                                    }
+                                final displayParts = parts.toList();
+                                if (displayParts.isNotEmpty &&
+                                    displayParts[0].length > 7) {
+                                  try {
+                                    displayParts[0] = displayParts[0].substring(
+                                      0,
+                                      displayParts[0].length - 7,
+                                    );
+                                  } catch (_) {}
+                                }
 
-                                    final displayText = displayParts
-                                        .where((part) => part.isNotEmpty)
-                                        .join(' | ');
+                                final displayText = displayParts
+                                    .where((part) => part.isNotEmpty)
+                                    .join(' | ');
 
-                                    return GestureDetector(
-                                      onLongPress: () {
-                                        Clipboard.setData(
-                                          ClipboardData(text: logLine),
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              AppLocalizations.of(
-                                                context,
-                                              ).logCopiedMsg,
-                                            ),
-                                            duration: const Duration(
-                                              seconds: 1,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 1,
-                                          horizontal: 8,
+                                return GestureDetector(
+                                  onLongPress: () {
+                                    Clipboard.setData(
+                                      ClipboardData(text: logLine),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          ).logCopiedMsg,
                                         ),
-                                        child: SelectableText(
-                                          displayText,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontFamily: 'monospace',
-                                            fontSize: 13,
-                                          ),
-                                        ),
+                                        duration: const Duration(seconds: 1),
                                       ),
                                     );
                                   },
-                                ),
-                              ),
-                    ),
-                  ],
-                ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 1,
+                                      horizontal: 8,
+                                    ),
+                                    child: SelectableText(
+                                      displayText,
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontFamily: 'monospace',
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                ],
               ),
+            ),
     );
   }
 }

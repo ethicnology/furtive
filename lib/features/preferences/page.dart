@@ -119,8 +119,8 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
         value: state.preferences.mapTheme,
         items: MapThemeEntity.values,
         labelFor: (t) => mapThemeName(AppLocalizations.of(context), t),
-        onChanged:
-            (v) => context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
       ),
     ],
   );
@@ -146,8 +146,8 @@ Widget _buildCheckUpdatesSection(BuildContext context, PreferencesState state) {
     ),
     subtitle: Text(l10n.prefCheckUpdatesSubtitle),
     value: state.preferences.checkUpdates,
-    onChanged:
-        (v) => context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
   );
 }
 
@@ -161,8 +161,8 @@ Widget _buildMapTilesSection(BuildContext context, PreferencesState state) {
     ),
     subtitle: Text(l10n.prefMapTilesSubtitle),
     value: state.preferences.mapTilesEnabled,
-    onChanged:
-        (v) => context.read<PreferencesBloc>().add(ChangeMapTilesEnabled(v)),
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeMapTilesEnabled(v)),
   );
 }
 
@@ -176,9 +176,8 @@ Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
     ),
     subtitle: Text(l10n.prefShowOnLockScreenSubtitle),
     value: state.preferences.showOnLockScreen,
-    onChanged:
-        (v) =>
-            context.read<PreferencesBloc>().add(ChangeShowOnLockScreen(v)),
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeShowOnLockScreen(v)),
   );
 }
 
@@ -195,13 +194,11 @@ Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
       LabeledDropdown<String?>(
         value: state.preferences.uiLocale,
         items: uiLanguageOptions,
-        labelFor:
-            (code) =>
-                code == null
-                    ? l10n.settingsUiLanguageSystem
-                    : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
-        onChanged:
-            (v) => context.read<PreferencesBloc>().add(ChangeUiLocale(v)),
+        labelFor: (code) => code == null
+            ? l10n.settingsUiLanguageSystem
+            : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeUiLocale(v)),
       ),
     ],
   );

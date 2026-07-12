@@ -109,7 +109,11 @@ Widget _buildStatsPage({
               value: '$distance km',
               emphasize: true,
             ),
-            StatBlock(icon: Icons.timer_outlined, label: l10n.statPace, value: pace),
+            StatBlock(
+              icon: Icons.timer_outlined,
+              label: l10n.statPace,
+              value: pace,
+            ),
           ],
         ),
         const SizedBox(height: 16),

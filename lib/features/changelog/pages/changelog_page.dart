@@ -33,9 +33,8 @@ class ChangelogPage extends StatelessWidget {
                 ),
                 itemCount: releases.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder:
-                    (context, index) =>
-                        _ReleaseCard(release: releases[index]),
+                itemBuilder: (context, index) =>
+                    _ReleaseCard(release: releases[index]),
               ),
             ),
             Padding(
