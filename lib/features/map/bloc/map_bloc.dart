@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
@@ -16,6 +17,7 @@ import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
 import 'package:furtive/core/usecases/get_traces_use_case.dart';
+import 'package:furtive/core/utils/signal_gap_detector.dart';
 import 'package:furtive/features/map/error.dart';
 
 const double kSearchHalfSideDegrees = 0.01425;
@@ -36,6 +38,20 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   final _ensureBackgroundTrackingUseCase = EnsureBackgroundTrackingUseCase();
 
   StreamSubscription<PositionEntity>? _positionStream;
+
+  // Guards concurrent callers of _openPositionStream(): InitMap can re-fire
+  // (onboarding finish + MapPage.initState both dispatch it, and the
+  // default bloc transformer runs different-typed events concurrently) and
+  // races with EnsureTracking on app resume. _positionStream is only
+  // assigned once _openPositionStream()'s internal await resolves, so a
+  // naive "if (_positionStream == null)" check is a check-then-act with an
+  // await in between — without this guard, two callers can both see null
+  // and both call .listen(), leaking one subscription forever and
+  // double-writing every GPS fix to the DB. All callers must go through
+  // _ensurePositionStreamOpen() instead of _openPositionStream() directly.
+  // See REVIEW-2026-07-FULL-APP.md H3.
+  Future<void>? _openingPositionStream;
+
   Timer? _elapsedTimer;
   DateTime? _activityStartTime;
   DateTime? _pauseStartTime;
@@ -45,6 +61,14 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   // the OS silently suspended in the background (no onDone, no error — a known
   // geolocator behaviour in deep Doze, see Baseflow/flutter-geolocator #1023).
   DateTime? _lastFixAt;
+
+  // Detects GPS outages (indoors, tunnel, process kill) from the cadence of
+  // recorded fixes — see _onScoreActivity. Reset on StartActivity so one
+  // run's cadence history never leaks into the next; deliberately NOT reset
+  // on resume-from-kill, where an empty window (fresh bloc) falls back to
+  // the nominal threshold and still catches the kill-induced gap on the
+  // first new fix.
+  final _gapDetector = SignalGapDetector();
 
   // On foreground-resume, if a recording is running and no fix has arrived for
   // longer than this, assume the stream stalled and reopen it. The Android
@@ -58,7 +82,15 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     on<FetchTraces>(_onTracesSearchRequested);
     on<StartActivity>(_onStartActivity);
     on<CeaseActivity>(_onCeaseActivity);
-    on<ScoreActivity>(_onScoreActivity);
+    // sequential(): the default bloc transformer processes events of the
+    // same type concurrently. At ~5s per GPS fix this has no throughput
+    // cost, but concurrency here is actively harmful — two ScoreActivity
+    // handlers in flight together (e.g. the OS delivering a backlog of
+    // buffered fixes right after a resume) can both capture the same
+    // `activity.points.last` for gap detection and each write their own
+    // signalLost boundary pair, or clobber each other's in-memory point
+    // append. See REVIEW-2026-07-FULL-APP.md M1.
+    on<ScoreActivity>(_onScoreActivity, transformer: sequential());
     on<PauseActivity>(_onPauseActivity);
     on<ClearError>(_onClearError);
     on<ClearTrackingGap>(_onClearTrackingGap);
@@ -118,15 +150,17 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     // try/catch so a failure here can never prevent the resume or style load
     // below from running (see AUDIT-2026-07.md §1: a single unguarded await
     // used to be able to strand an ongoing activity until it got
-    // auto-ceased).
-    final isColdOpen = _positionStream == null;
-    if (isColdOpen) {
-      try {
-        await _openPositionStream();
-      } catch (e, s) {
-        logs.severe('$InitMap openPositionStream', error: e, trace: s);
-        emit(state.copyWith(error: AppError(e.toString())));
-      }
+    // auto-ceased). _ensurePositionStreamOpen() (not _openPositionStream()
+    // directly) closes the race where two concurrent InitMap calls — the
+    // default bloc transformer runs different events concurrently, and
+    // onboarding + MapPage.initState commonly both dispatch InitMap in quick
+    // succession — would otherwise both see _positionStream == null and both
+    // open a subscription (see H3 in REVIEW-2026-07-FULL-APP.md).
+    try {
+      await _ensurePositionStreamOpen();
+    } catch (e, s) {
+      logs.severe('$InitMap openPositionStream', error: e, trace: s);
+      emit(state.copyWith(error: AppError(e.toString())));
     }
 
     // Cold start may follow an OS process kill that happened mid-recording
@@ -178,8 +212,22 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     }
   }
 
+  // Opens the position stream if it isn't already open, memoising the
+  // in-flight Future so concurrent callers (InitMap re-firing, EnsureTracking
+  // racing with it) all await the SAME open instead of each independently
+  // seeing _positionStream == null and calling .listen() themselves — the
+  // check-then-act race that used to leak a subscription and double-write
+  // every GPS fix to the DB (see H3 in REVIEW-2026-07-FULL-APP.md). ALWAYS
+  // go through this method rather than _openPositionStream() directly.
+  Future<void> _ensurePositionStreamOpen() {
+    if (_positionStream != null) return Future.value();
+    return _openingPositionStream ??= _openPositionStream().whenComplete(() {
+      _openingPositionStream = null;
+    });
+  }
+
   // Opens the geolocator position stream and wires it into the bloc. Sets
-  // _positionStream; callers guard on it being null so we never double-listen.
+  // _positionStream. Only ever called through _ensurePositionStreamOpen().
   Future<void> _openPositionStream() async {
     final userPositionStream = await _startTrackPositionUsecase();
     _positionStream = userPositionStream
@@ -242,7 +290,10 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     await _positionStream?.cancel();
     _positionStream = null;
     try {
-      await _openPositionStream();
+      // Goes through the same guard as InitMap: if an open is already in
+      // flight (e.g. a concurrent InitMap), this piggybacks on it instead
+      // of racing to open a second subscription.
+      await _ensurePositionStreamOpen();
       logs.info('EnsureTracking: position stream reopened successfully.');
     } catch (e, s) {
       logs.severe('EnsureTracking reopen', error: e, trace: s);
@@ -280,9 +331,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
                 .reduce((a, b) => a.isAfter(b) ? a : b);
       final wasPaused =
           lastTime != null &&
-          ongoing.points
-                  .firstWhere((p) => p.time == lastTime)
-                  .status ==
+          ongoing.points.firstWhere((p) => p.time == lastTime).status ==
               ActivityPointStatusEntity.paused;
 
       final Duration elapsed;
@@ -292,15 +341,13 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
         // without double counting. Freeze elapsed at the pause moment; no timer
         // while paused.
         _pauseStartTime = lastTime;
-        elapsed = lastTime.difference(_activityStartTime!) - _totalPausedDuration;
+        elapsed =
+            lastTime.difference(_activityStartTime!) - _totalPausedDuration;
       } else {
         _elapsedTimer?.cancel();
-        _elapsedTimer = Timer.periodic(
-          const Duration(seconds: 1),
-          (_) {
+        _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
           if (!isClosed) add(const UpdateElapsedTime());
-        },
-        );
+        });
         elapsed =
             DateTime.now().difference(_activityStartTime!) -
             _totalPausedDuration;
@@ -347,6 +394,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
       _elapsedTimer?.cancel();
       _pauseStartTime = null;
       _totalPausedDuration = Duration.zero;
+      _gapDetector.reset();
 
       // First we wait for user location
       final userPosition = await _getUserLocationUseCase();
@@ -360,12 +408,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
       add(UpdateUserLocation(position: userPosition));
       _activityStartTime = activity.startedAt;
 
-      _elapsedTimer = Timer.periodic(
-        const Duration(seconds: 1),
-        (_) {
-          if (!isClosed) add(const UpdateElapsedTime());
-        },
-      );
+      _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!isClosed) add(const UpdateElapsedTime());
+      });
 
       emit(state.copyWith(activity: activity));
     } catch (e, s) {
@@ -388,16 +433,39 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     final activity = state.activity;
     if (activity == null) return;
     final position = event.position;
-    final status =
-        state.isPaused
-            ? ActivityPointStatusEntity.paused
-            : ActivityPointStatusEntity.active;
+    final status = state.isPaused
+        ? ActivityPointStatusEntity.paused
+        : ActivityPointStatusEntity.active;
+
+    // GPS-outage detection: only between two consecutive *active* fixes —
+    // a pause already excludes its time from the active stats, and the
+    // active↔paused transition is an inter-segment gap that is never
+    // counted. The check runs on the fix's own timestamp (same source the
+    // stored point gets) so a queued/delayed handler can't fake a gap.
+    ActivityPointEntity? gapFrom;
+    final previous = activity.points.isEmpty ? null : activity.points.last;
+    if (previous != null &&
+        previous.status == ActivityPointStatusEntity.active &&
+        status == ActivityPointStatusEntity.active) {
+      final fixTime = position.time ?? DateTime.now().toUtc();
+      final gap = _gapDetector.check(previous.time, fixTime);
+      if (gap != null) {
+        gapFrom = previous;
+        logs.warning(
+          '$ScoreActivity: GPS outage of ${gap.inSeconds}s detected on '
+          'activity ${activity.id} (threshold '
+          '${_gapDetector.threshold.inSeconds}s) — bracketing with '
+          'signalLost boundary points.',
+        );
+      }
+    }
 
     try {
-      final newPoint = await _scoreActivityUseCase(
+      final newPoints = await _scoreActivityUseCase(
         activityId: activity.id,
         position: position,
         status: status,
+        gapFrom: gapFrom,
       );
       // Append to the LATEST in-memory activity, not the pre-await capture:
       // concurrent ScoreActivity handlers would otherwise each append to the
@@ -405,7 +473,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
       // the live polyline). If a cease landed during the await, skip the emit.
       final current = state.activity;
       if (current == null || current.id != activity.id) return;
-      final pointCount = current.points.length + 1;
+      final pointCount = current.points.length + newPoints.length;
       // Heartbeat, not one line per fix (every ~5s would flood the log over
       // a long activity) — roughly one line/minute so a walk's continuity
       // (or a silent gap) is still visible in the exported logs.
@@ -417,7 +485,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
       }
       emit(
         state.copyWith(
-          activity: current.copyWith(points: [...current.points, newPoint]),
+          activity: current.copyWith(points: [...current.points, ...newPoints]),
         ),
       );
     } catch (e, s) {
@@ -442,12 +510,9 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
           _totalPausedDuration += DateTime.now().difference(_pauseStartTime!);
           _pauseStartTime = null;
         }
-        _elapsedTimer = Timer.periodic(
-          const Duration(seconds: 1),
-          (_) {
+        _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
           if (!isClosed) add(const UpdateElapsedTime());
-        },
-        );
+        });
       } else {
         _pauseStartTime = DateTime.now();
         _elapsedTimer?.cancel();
