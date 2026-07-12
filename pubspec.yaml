@@ -41,6 +41,7 @@ dependencies:
   flutter_map_location_marker: ^10.2.0
   vector_map_tiles: ^9.0.0-beta.8
   vector_tile_renderer: ^6.0.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
+  executor_lib: ^1.1.2 # transitive of vector_map_tiles, imported directly to recognise its benign CancellationException
   flutter_bloc: ^9.1.1
   get_it: ^9.2.1
   latlong2: ^0.9.1 # pinned by vector_map_tiles 9.x

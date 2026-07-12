@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:executor_lib/executor_lib.dart' show CancellationException;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/facades/backup_exclusion_facade.dart';
@@ -108,6 +109,16 @@ void main() {
       // throws, calling logs here would raise LateInitializationError and mask
       // the real error. Fall back to debugPrint.
       try {
+        if (error is CancellationException) {
+          // vector_map_tiles (via executor_lib) cancels superseded tile
+          // fetches whenever the map pans/zooms faster than tiles load —
+          // expected and harmless, not a real failure. Some of its internal
+          // code paths let this escape as an uncaught zone error instead of
+          // swallowing it, so without this it reads as a crash ("Cancelled")
+          // in the exported logs every time the map moves quickly.
+          logs.fine('Tile load cancelled (map panned/zoomed).');
+          return;
+        }
         logs.severe(error.toString(), error: error, trace: stack);
       } catch (_) {
         debugPrint('Unhandled startup error: $error\n$stack');
