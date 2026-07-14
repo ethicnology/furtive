@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/widgets/stat_block.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 
 class ActivityStatsWidget extends StatelessWidget {
@@ -10,7 +11,7 @@ class ActivityStatsWidget extends StatelessWidget {
   // When true (live recording overlay on the map), paint a black backdrop
   // so the stats stand out over the map tiles. When false (inside a themed
   // bottom sheet), inherit the parent surface so we don't render a black
-  // rectangle inside the blueGrey sheet.
+  // rectangle inside the sheet.
   final bool opaqueBackground;
 
   const ActivityStatsWidget({
@@ -23,31 +24,29 @@ class ActivityStatsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final fg = AppColors.tertiary.foreground;
+    final textTheme = Theme.of(context).textTheme;
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
                 child: Text(
                   l10n.statsRecordingTitle,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: textTheme.labelSmall,
                 ),
               ),
+              // The one number that should draw the eye first while
+              // recording — displayMedium + mint, everything else below is
+              // white/muted.
               Text(
                 elapsedTime.toHHMMSS(),
-                style: TextStyle(
-                  color: fg,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
+                style: textTheme.displayMedium?.copyWith(
+                  fontSize: 28,
+                  color: kMint,
                 ),
               ),
             ],
@@ -64,7 +63,6 @@ class ActivityStatsWidget extends StatelessWidget {
                   speed: activity.activeSpeedKmh.fmt2,
                   pace: activity.activePaceMinPerKm,
                   elevationGain: activity.activeElevationGain,
-                  foreground: fg,
                 ),
                 _buildStatsPage(
                   l10n: l10n,
@@ -73,7 +71,6 @@ class ActivityStatsWidget extends StatelessWidget {
                   speed: activity.pausedSpeedKmh.fmt2,
                   pace: activity.pausedPaceMinPerKm,
                   elevationGain: null,
-                  foreground: fg,
                 ),
               ],
             ),
@@ -93,7 +90,6 @@ Widget _buildStatsPage({
   required String speed,
   required String pace,
   required double? elevationGain,
-  required Color foreground,
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -104,17 +100,19 @@ Widget _buildStatsPage({
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _StatItem(
-              icon: Icons.straighten,
+            // Distance is the primary stat while recording — emphasized in
+            // mint, the rest stay white/muted so it doesn't get lost among
+            // four equally-loud numbers.
+            StatBlock(
+              icon: Icons.straighten_rounded,
               label: l10n.statDistance,
               value: '$distance km',
-              foreground: foreground,
+              emphasize: true,
             ),
-            _StatItem(
-              icon: Icons.timer,
+            StatBlock(
+              icon: Icons.timer_outlined,
               label: l10n.statPace,
               value: pace,
-              foreground: foreground,
             ),
           ],
         ),
@@ -122,68 +120,20 @@ Widget _buildStatsPage({
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _StatItem(
-              icon: Icons.speed,
+            StatBlock(
+              icon: Icons.speed_rounded,
               label: l10n.statSpeed,
               value: '$speed km/h',
-              foreground: foreground,
             ),
             if (elevationGain != null)
-              _StatItem(
-                icon: Icons.terrain,
+              StatBlock(
+                icon: Icons.terrain_rounded,
                 label: l10n.statElevation,
                 value: '${elevationGain.round()} m',
-                foreground: foreground,
               ),
           ],
         ),
       ],
     ),
   );
-}
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color foreground;
-
-  const _StatItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.foreground,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: foreground),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: foreground,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                color: foreground,
-                fontSize: 25,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 }

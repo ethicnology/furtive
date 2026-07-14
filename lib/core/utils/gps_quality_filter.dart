@@ -50,9 +50,7 @@ class GpsQualityFilter {
     }
 
     final previous = _lastAccepted;
-    if (previous != null &&
-        previous.time != null &&
-        position.time != null) {
+    if (previous != null && previous.time != null && position.time != null) {
       final dtSeconds =
           position.time!.difference(previous.time!).inMilliseconds / 1000;
       // dtSeconds <= 0: out-of-order/duplicate-timestamp fix. Not this

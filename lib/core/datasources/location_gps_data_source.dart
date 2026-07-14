@@ -47,7 +47,9 @@ class LocationGpsDataSource {
     // down long-running tracking on a temporary GPS gap (tunnel, dense
     // urban canyon). Staleness while recording is instead detected and
     // recovered by MapBloc._onEnsureTracking.
-    return Geolocator.getPositionStream(locationSettings: getLocationSettings());
+    return Geolocator.getPositionStream(
+      locationSettings: getLocationSettings(),
+    );
   }
 
   Future<bool> requestLocationPermission() async {

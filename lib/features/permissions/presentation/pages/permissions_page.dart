@@ -60,10 +60,9 @@ class _PermissionsPageState extends State<PermissionsPage>
     // skips the wizard once permissions are granted.
     final prefs = await _getPreferences();
     if (!mounted) return;
-    final destination =
-        prefs.hasCompletedOnboarding
-            ? const BottomNavigationWidget()
-            : const OnboardingPage();
+    final destination = prefs.hasCompletedOnboarding
+        ? const BottomNavigationWidget()
+        : const OnboardingPage();
     await Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
@@ -95,20 +94,25 @@ class _PermissionsPageState extends State<PermissionsPage>
 
           final allRequiredGranted = state.requiredGranted;
 
+          final textTheme = Theme.of(context).textTheme;
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.permissionsInstructions),
+                Text(
+                  l10n.permissionsInstructions,
+                  style: textTheme.bodyMedium?.copyWith(color: kTextMuted),
+                ),
+                const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
+                  child: ListView.separated(
                     itemCount: state.permissions.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final permission = state.permissions[index];
 
                       return Card(
-                        color: AppColors.primary.background,
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -118,53 +122,67 @@ class _PermissionsPageState extends State<PermissionsPage>
                                 children: [
                                   Icon(
                                     permission.isGranted
-                                        ? Icons.check_circle
-                                        : Icons.cancel,
-                                    color:
-                                        permission.isGranted
-                                            ? Colors.green
-                                            : Colors.red,
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_unchecked_rounded,
+                                    color: permission.isGranted
+                                        ? kMint
+                                        : kTextMuted,
+                                    size: 22,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      _localizedName(context, permission.permission, permission.name),
-                                      style: TextStyle(
-                                        color: AppColors.primary.foreground,
-                                        fontWeight: FontWeight.bold,
+                                      _localizedName(
+                                        context,
+                                        permission.permission,
+                                        permission.name,
                                       ),
+                                      style: textTheme.titleMedium,
                                     ),
                                   ),
                                 ],
                               ),
-                              Text(
-                                _localizedDescription(context, permission.permission, permission.description),
-                                style: TextStyle(
-                                  color: AppColors.primary.foreground,
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 34),
+                                child: Text(
+                                  _localizedDescription(
+                                    context,
+                                    permission.permission,
+                                    permission.description,
+                                  ),
+                                  style: textTheme.bodySmall,
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed:
-                                    permission.isGranted
-                                        ? null
-                                        : () {
-                                          context.read<PermissionsBloc>().add(
-                                            RequestPermission(
-                                              permission.permission,
-                                            ),
-                                          );
-                                        },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppColors.quaternary.background,
-                                  foregroundColor:
-                                      AppColors.quaternary.foreground,
+                              if (!permission.isGranted) ...[
+                                const SizedBox(height: 12),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 34),
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      context.read<PermissionsBloc>().add(
+                                        RequestPermission(
+                                          permission.permission,
+                                        ),
+                                      );
+                                    },
+                                    child: Text(l10n.btnGrantPermission),
+                                  ),
                                 ),
-                                child: Text(l10n.btnGrantPermission),
-                              ),
-
+                              ],
                               if (permission.isPermanentlyDenied)
-                                Text(l10n.permPermanentlyDenied),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 34,
+                                    top: 8,
+                                  ),
+                                  child: Text(
+                                    l10n.permPermanentlyDenied,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: kWarning,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

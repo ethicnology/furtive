@@ -95,25 +95,28 @@ void main() {
       expect(out.single.longitude, 0);
     });
 
-    test('keeps comparing against the last good anchor, not the rejected '
-        'outlier, so a real fix right after a jump is still accepted', () async {
-      final filter = GpsQualityFilter();
-      final out = await collect(
-        filter.apply(
-          Stream.fromIterable([
-            pos(lat: 0, lon: 0, sec: 0),
-            // Rejected teleport.
-            pos(lat: 0, lon: 0.01, sec: 5),
-            // Back near the original anchor — plausible movement from fix 1,
-            // must be accepted even though it would look like a teleport
-            // relative to the rejected fix.
-            pos(lat: 0, lon: 0.0002, sec: 10),
-          ]),
-        ),
-      );
-      expect(out.length, 2);
-      expect(out.last.longitude, 0.0002);
-    });
+    test(
+      'keeps comparing against the last good anchor, not the rejected '
+      'outlier, so a real fix right after a jump is still accepted',
+      () async {
+        final filter = GpsQualityFilter();
+        final out = await collect(
+          filter.apply(
+            Stream.fromIterable([
+              pos(lat: 0, lon: 0, sec: 0),
+              // Rejected teleport.
+              pos(lat: 0, lon: 0.01, sec: 5),
+              // Back near the original anchor — plausible movement from fix 1,
+              // must be accepted even though it would look like a teleport
+              // relative to the rejected fix.
+              pos(lat: 0, lon: 0.0002, sec: 10),
+            ]),
+          ),
+        );
+        expect(out.length, 2);
+        expect(out.last.longitude, 0.0002);
+      },
+    );
 
     test('never rejects when either fix is missing a timestamp', () async {
       final filter = GpsQualityFilter();

@@ -15,6 +15,7 @@
   "btnGrantToContinue": "Grant Required Permissions to Continue",
   "btnViewStats": "View Statistics",
   "btnCancel": "Cancel",
+"btnRetry": "Retry",
   "btnRename": "Rename",
   "btnDelete": "Delete",
   "btnApply": "Apply",
@@ -96,6 +97,18 @@
     }
   },
   "statsRecordingTitle": "Recording Activity",
+  "statSignalLost": "GPS signal lost for {duration} (~{meters} m as the crow flies) — this time is excluded from the active stats.",
+  "@statSignalLost": {
+    "description": "Shown in the activity detail stats sheet when the recording contains detected GPS outages (e.g. indoors). duration is preformatted as h:mm:ss.",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
   "statDistance": "Distance",
   "statDuration": "Duration",
   "statPace": "Pace",

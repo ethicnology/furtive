@@ -59,3 +59,7 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Stray log file written to CWD by some dev/test environments instead of
+# the app documents directory
+/logs.tsv

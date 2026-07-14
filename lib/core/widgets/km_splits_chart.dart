@@ -5,6 +5,37 @@ import 'package:furtive/l10n/app_localizations.dart';
 
 enum _Metric { pace, speed }
 
+/// Indices of the fastest/slowest full (non-partial) splits for a given
+/// metric. "Faster" means a SMALLER pace (less time per km) but a LARGER
+/// speed (more distance per hour) — the comparison direction must flip
+/// with [fasterIsSmaller], or the fastest/slowest labels get swapped when
+/// the metric switches. Exposed at library-private top level (rather than
+/// nested in the widget's build method) so it's directly unit-testable.
+({int? fastestIdx, int? slowestIdx}) fastestAndSlowestSplitIndices(
+  List<KmSplit> fullSplits,
+  double Function(KmSplit) value, {
+  required bool fasterIsSmaller,
+}) {
+  int? fastestIdx;
+  int? slowestIdx;
+  double bestVal = fasterIsSmaller ? double.infinity : -double.infinity;
+  double worstVal = fasterIsSmaller ? -double.infinity : double.infinity;
+  for (final s in fullSplits) {
+    final v = value(s);
+    final isBetter = fasterIsSmaller ? v < bestVal : v > bestVal;
+    final isWorse = fasterIsSmaller ? v > worstVal : v < worstVal;
+    if (isBetter) {
+      bestVal = v;
+      fastestIdx = s.index;
+    }
+    if (isWorse) {
+      worstVal = v;
+      slowestIdx = s.index;
+    }
+  }
+  return (fastestIdx: fastestIdx, slowestIdx: slowestIdx);
+}
+
 /// Strava-style per-kilometre splits: one horizontal bar per km in a
 /// vertical scroll. Bar length scales with the chosen metric. The
 /// fastest km is rendered in primary/teal, the slowest in destructive
@@ -35,36 +66,24 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
       );
     }
 
-    // Slowest = max pace (or min speed). Fastest = min pace (or max
-    // speed). Partial trailing km is skewed and excluded.
+    // Partial trailing km is excluded from the fastest/slowest comparison.
     final fullSplits = splits.where((s) => !s.isPartial).toList();
-    int? fastestIdx;
-    int? slowestIdx;
-    if (fullSplits.isNotEmpty) {
-      double bestVal = double.infinity;
-      double worstVal = -double.infinity;
-      for (final s in fullSplits) {
-        final v = _value(s);
-        if (v < bestVal) {
-          bestVal = v;
-          fastestIdx = s.index;
-        }
-        if (v > worstVal) {
-          worstVal = v;
-          slowestIdx = s.index;
-        }
-      }
-    }
+    final ranked = fastestAndSlowestSplitIndices(
+      fullSplits,
+      _value,
+      fasterIsSmaller: _metric == _Metric.pace,
+    );
+    final fastestIdx = ranked.fastestIdx;
+    final slowestIdx = ranked.slowestIdx;
 
     // Filter out non-finite metric values before reducing — a single NaN
     // would poison the rolling max (`NaN > x` is false in both directions),
     // then `NaN / maxValue` would feed NaN into FractionallySizedBox, which
     // throws on non-finite widthFactor.
     final finiteValues = splits.map(_value).where((v) => v.isFinite).toList();
-    final rawMax =
-        finiteValues.isEmpty
-            ? 0.0
-            : finiteValues.reduce((a, b) => a > b ? a : b);
+    final rawMax = finiteValues.isEmpty
+        ? 0.0
+        : finiteValues.reduce((a, b) => a > b ? a : b);
     final maxValue = rawMax > 0 ? rawMax : 1;
 
     return Column(
@@ -95,8 +114,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
                   ),
                 ],
                 selected: {_metric},
-                onSelectionChanged:
-                    (s) => setState(() => _metric = s.first),
+                onSelectionChanged: (s) => setState(() => _metric = s.first),
                 showSelectedIcon: false,
               ),
             ],
@@ -107,11 +125,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
             split: s,
             label: _format(s),
             barFraction: _safeFraction(_value(s), maxValue),
-            color: _barColor(
-              s,
-              fastestIdx: fastestIdx,
-              slowestIdx: slowestIdx,
-            ),
+            color: _barColor(s, fastestIdx: fastestIdx, slowestIdx: slowestIdx),
             isFastest: !s.isPartial && s.index == fastestIdx,
             isSlowest: !s.isPartial && s.index == slowestIdx,
           ),
@@ -170,10 +184,9 @@ class _SplitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indexLabel =
-        split.isPartial
-            ? (split.distanceMeters / 1000).toStringAsFixed(2)
-            : '${split.index}';
+    final indexLabel = split.isPartial
+        ? (split.distanceMeters / 1000).toStringAsFixed(2)
+        : '${split.index}';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -220,17 +233,19 @@ class _SplitRow extends StatelessWidget {
               label,
               textAlign: TextAlign.right,
               style: TextStyle(
-                color:
-                    isFastest
-                        ? AppColors.primary.background
-                        : isSlowest
-                            ? AppColors.destructive.background
-                            : AppColors.tertiary.foreground,
+                // kDestructive (not kDangerText) is tuned for white text ON
+                // a red fill; here the red itself IS the text colour on a
+                // dark background, which needs the brighter kDangerText —
+                // see theme.dart.
+                color: isFastest
+                    ? AppColors.primary.background
+                    : isSlowest
+                    ? kDangerText
+                    : AppColors.tertiary.foreground,
                 fontSize: 13,
-                fontWeight:
-                    isFastest || isSlowest
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                fontWeight: isFastest || isSlowest
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
           ),

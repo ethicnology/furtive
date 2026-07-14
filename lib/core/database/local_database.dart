@@ -6,20 +6,10 @@ import 'package:furtive/core/database/tables/preferences_table.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'tables/trace_metadata_table.dart';
-import 'tables/trace_points_table.dart';
 
 part 'local_database.g.dart';
 
-@DriftDatabase(
-  tables: [
-    TraceMetadatas,
-    TracePoints,
-    Activities,
-    ActivityPoints,
-    Preferences,
-  ],
-)
+@DriftDatabase(tables: [Activities, ActivityPoints, Preferences])
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
@@ -27,7 +17,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -64,8 +54,9 @@ class LocalDatabase extends _$LocalDatabase {
         // Indices on hot columns: foreign keys + the startedAt column the
         // activities list page sorts by on every fetch. Fresh installs get
         // them via m.createAll(); v1 users need them created explicitly.
+        // (trace_points' index used to be created here too — moot since v8
+        // drops that table outright for everyone.)
         await m.createIndex(idxActivityPointsActivityId);
-        await m.createIndex(idxTracePointsTraceId);
         await m.createIndex(idxActivitiesStartedAt);
       }
       if (from < 3) {
@@ -103,13 +94,26 @@ class LocalDatabase extends _$LocalDatabase {
         // existing behaviour for upgrading users.
         await m.addColumn(preferences, preferences.showOnLockScreen);
       }
+      if (from < 8) {
+        // v8: drop the trace_points/trace_metadatas tables. The feature
+        // they backed (persisting third-party OSM traces fetched while
+        // panning the map) was removed — the store path had no reader and
+        // grew unbounded, retaining third-party GPS data on disk at odds
+        // with the app's privacy stance (see GetTracesUseCase). Users who
+        // panned the map before this fix may have accumulated rows here;
+        // dropping the tables purges that residual data rather than just
+        // leaving the code path dead. Points first: it has the FK onto
+        // metadata.
+        await m.deleteTable('trace_points');
+        await m.deleteTable('trace_metadatas');
+      }
     },
     beforeOpen: (details) async {
       // SQLite disables foreign-key enforcement per-connection by default;
       // drift does not turn it on for us. Without this the .references()
-      // constraints on activity_points / trace_points are inert metadata.
-      // Enabling it only affects new statements — existing rows are not
-      // re-validated, so this is safe to switch on for upgrading users.
+      // constraint on activity_points is inert metadata. Enabling it only
+      // affects new statements — existing rows are not re-validated, so
+      // this is safe to switch on for upgrading users.
       await customStatement('PRAGMA foreign_keys = ON');
       if (details.wasCreated) {
         await into(preferences).insert(

@@ -7,6 +7,7 @@ import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/usecases/get_activities_use_case.dart';
+import 'package:furtive/core/widgets/stat_block.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/bloc/activities_state.dart';
@@ -28,6 +29,10 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // when the listener fires.
   bool _importPending = false;
   final _getActivity = GetActivityUseCase();
+  // Guards against a double-tap on a list item pushing the detail page
+  // twice while the first tap's DB fetch is still in flight. See L-U6 in
+  // REVIEW-2026-07-FULL-APP.md.
+  bool _openingActivity = false;
 
   @override
   void initState() {
@@ -94,11 +99,9 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.navActivities),
-          backgroundColor: Colors.black87,
-          foregroundColor: Colors.white,
           actions: [
             IconButton(
-              icon: const Icon(Icons.file_upload),
+              icon: const Icon(Icons.file_upload_outlined),
               tooltip: l10n.activitiesImportTooltip,
               onPressed: _pickAndImportGpx,
             ),
@@ -110,8 +113,36 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             // (which would cause a second rebuild on every emit).
             final activities = state.activities;
 
-            if (state.isLoading || activities == null) {
+            // Loading state ONLY when there's nothing to show yet — an error
+            // with no prior successful fetch must not render as a permanent
+            // spinner (the previous condition matched both cases identically:
+            // isLoading stays false and activities stays null on a failed
+            // fetch, per _onFetchActivities' catch block). See M12 in
+            // REVIEW-2026-07-FULL-APP.md.
+            if (state.isLoading && activities == null) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (activities == null) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      state.error?.message ?? l10n.activitiesLoadError,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.tertiary.foreground),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.read<ActivitiesBloc>().add(
+                        const FetchActivities(),
+                      ),
+                      child: Text(l10n.btnRetry),
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (activities.isEmpty) {
@@ -144,40 +175,45 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  color: AppColors.quaternary.background,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     title: Text(
                       title,
-                      style: TextStyle(
-                        color: AppColors.tertiary.foreground,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 4,
+                        children: [
+                          // Distance is the one stat emphasized in mint —
+                          // the rest stay muted so the row reads as one
+                          // headline number plus supporting detail instead
+                          // of four equally-loud pills.
+                          StatBlock.compact(
+                            icon: Icons.straighten_rounded,
+                            value: '${activity.activeDistanceInKm.fmt2} km',
+                            emphasize: true,
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.timer_outlined,
+                            value: activity.activeDuration.toHHMMSS(),
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.speed_rounded,
+                            value: '${activity.activeSpeedKmh.fmt2} km/h',
+                          ),
+                          StatBlock.compact(
+                            icon: Icons.timelapse_rounded,
+                            value: activity.activePaceMinPerKm,
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            _buildStatChip(activity.activeDuration.toHHMMSS()),
-                            _buildStatChip(
-                              '${activity.activeDistanceInKm.fmt2} km',
-                            ),
-                            _buildStatChip(
-                              '${activity.activeSpeedKmh.fmt2} km/h',
-                            ),
-                            _buildStatChip(activity.activePaceMinPerKm),
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      color: AppColors.tertiary.foreground,
-                      size: 16,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: kTextMuted,
                     ),
                     onTap: () => unawaited(_openActivity(activity.id)),
                   ),
@@ -193,6 +229,8 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // The list holds lightweight summaries (no GPS points); load the full
   // activity with its points before opening the detail page.
   Future<void> _openActivity(String id) async {
+    if (_openingActivity) return;
+    _openingActivity = true;
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
@@ -215,24 +253,8 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
           duration: const Duration(seconds: 3),
         ),
       );
+    } finally {
+      _openingActivity = false;
     }
-  }
-
-  Widget _buildStatChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.primary.background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: AppColors.primary.foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
   }
 }

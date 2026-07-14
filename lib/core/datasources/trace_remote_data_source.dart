@@ -66,7 +66,9 @@ class TraceRemoteDataSource {
         final request = http.Request('GET', uri);
         response = await client.send(request).timeout(_requestTimeout);
       } catch (e) {
-        throw Exception('Failed to reach the OSM trace endpoint (${e.runtimeType})');
+        throw Exception(
+          'Failed to reach the OSM trace endpoint (${e.runtimeType})',
+        );
       }
 
       if (response.statusCode != 200) {
@@ -95,7 +97,9 @@ class TraceRemoteDataSource {
         // Re-throw our own oversized-response Exception as-is; wrap
         // anything else (stream timeout, connection drop) bbox-free.
         if (e.toString().contains('OSM trace response too large')) rethrow;
-        throw Exception('Failed to read the OSM trace response (${e.runtimeType})');
+        throw Exception(
+          'Failed to read the OSM trace response (${e.runtimeType})',
+        );
       }
       return utf8.decode(chunks.expand((c) => c).toList());
     } finally {

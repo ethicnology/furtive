@@ -9,4 +9,3 @@ class UpdateActivityNameUseCase {
     await _activityRepository.updateName(activityId, newName);
   }
 }
-

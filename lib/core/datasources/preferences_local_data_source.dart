@@ -20,8 +20,9 @@ class PreferencesLocalDataSource {
             accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
             uiLocale: Value(preferences.uiLocale),
-            lastShownChangelogVersion:
-                Value(preferences.lastShownChangelogVersion),
+            lastShownChangelogVersion: Value(
+              preferences.lastShownChangelogVersion,
+            ),
             checkUpdates: Value(preferences.checkUpdates),
             mapTilesEnabled: Value(preferences.mapTilesEnabled),
             showOnLockScreen: Value(preferences.showOnLockScreen),
@@ -30,9 +31,9 @@ class PreferencesLocalDataSource {
   }
 
   Future<PreferencesModel> fetch() async {
-    var preferences =
-        await (db.select(db.preferences)
-          ..where((tbl) => tbl.id.equals(1))).getSingleOrNull();
+    var preferences = await (db.select(
+      db.preferences,
+    )..where((tbl) => tbl.id.equals(1))).getSingleOrNull();
 
     // The seed row is created in beforeOpen, but a partially-migrated or
     // externally-cleared DB could lack it. Re-seed defaults (forcing id=1)
@@ -48,9 +49,9 @@ class PreferencesLocalDataSource {
               accuracyInMeters: Value(0),
             ),
           );
-      preferences =
-          await (db.select(db.preferences)
-            ..where((tbl) => tbl.id.equals(1))).getSingle();
+      preferences = await (db.select(
+        db.preferences,
+      )..where((tbl) => tbl.id.equals(1))).getSingle();
     }
 
     return PreferencesModel(

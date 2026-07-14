@@ -54,15 +54,18 @@ class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
         },
         items: [
           BottomNavigationBarItem(
-            icon: const Icon(Icons.map),
+            icon: const Icon(Icons.map_outlined),
+            activeIcon: const Icon(Icons.map_rounded),
             label: AppLocalizations.of(context).navMap,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.list),
+            icon: const Icon(Icons.list_alt_outlined),
+            activeIcon: const Icon(Icons.list_alt_rounded),
             label: AppLocalizations.of(context).navActivities,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
+            activeIcon: const Icon(Icons.settings_rounded),
             label: AppLocalizations.of(context).navSettings,
           ),
         ],

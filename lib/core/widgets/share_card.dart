@@ -32,13 +32,13 @@ class ShareCard extends StatelessWidget {
     // showed a "T" separator and the user's hour:minute:second in a fixed
     // english-friendly form.
     final localeName = Localizations.localeOf(context).toString();
-    final dateLabel = DateFormat.yMMMd(localeName)
-        .add_Hm()
-        .format(activity.startedAt.toLocal());
+    final dateLabel = DateFormat.yMMMd(
+      localeName,
+    ).add_Hm().format(activity.startedAt.toLocal());
     final activityName =
         (activity.name.isNotEmpty && activity.name != kDefaultActivityName)
-            ? activity.name
-            : dateLabel;
+        ? activity.name
+        : dateLabel;
 
     return Material(
       color: Colors.black,
@@ -109,7 +109,8 @@ class ShareCard extends StatelessWidget {
                     ),
                     _StatTile(
                       label: l10n.statElevation,
-                      value: '+${activity.activeElevationGain.toStringAsFixed(0)} m',
+                      value:
+                          '+${activity.activeElevationGain.toStringAsFixed(0)} m',
                     ),
                   ],
                 ),

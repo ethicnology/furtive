@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, design-refresh]
+  pull_request:
+
+jobs:
+  check:
+    # Pinned to 24.04 for consistency with build-android.yml.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Read Flutter version from .fvmrc
+        id: fvmrc
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: pub get (enforce lockfile)
+        run: flutter pub get --enforce-lockfile
+
+      # dart_mappable (*mapper.dart) and drift (*.g.dart) generated sources
+      # are gitignored — analyze/test can't resolve without them.
+      - name: build_runner (generate *.g.dart / *mapper.dart)
+        run: dart run build_runner build --delete-conflicting-outputs --force-jit
+
+      - name: Generate localizations + check ARB parity
+        run: |
+          flutter gen-l10n
+          python3 -c "import json, os, sys; \
+          d = 'lib/l10n'; \
+          arbs = {f[4:-4]: {k for k in json.load(open(os.path.join(d,f))).keys() if not k.startswith('@')} \
+                  for f in sorted(os.listdir(d)) if f.startswith('app_') and f.endswith('.arb')}; \
+          en = arbs['en']; \
+          bad = [(loc, sorted(en - keys), sorted(keys - en)) for loc, keys in arbs.items() if loc != 'en' and (en - keys or keys - en)]; \
+          print(f'  {len(arbs)} locales, {len(en)} keys each'); \
+          sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing={m} extra={e}') for loc,m,e in bad], sys.exit(1))"
+
+      - name: dart format --set-exit-if-changed
+        run: dart format --set-exit-if-changed lib test
+
+      - name: flutter analyze
+        run: flutter analyze
+
+      - name: flutter test
+        run: flutter test

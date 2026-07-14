@@ -39,8 +39,12 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
 
-    // Fire-and-forget — version check is informational, not gating
-    unawaited(checkNewVersion(context));
+    // Fire-and-forget — version check is informational, not gating.
+    // No BuildContext needed: checkNewVersion uses Global.scaffoldMessengerKey
+    // instead, since this page's context is unmounted (pushReplacement below)
+    // well before the HTTP call can settle. See M4 in
+    // REVIEW-2026-07-FULL-APP.md.
+    unawaited(checkNewVersion());
 
     final prefs = await _getPreferences();
     if (!mounted) return;
@@ -55,10 +59,9 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
       // Only the releases newer than what the user last saw — so an upgrade
       // never shows stale "what's new" for a version they've already seen,
       // and a build with no matching release entry shows nothing.
-      final newer =
-          changelogReleases(AppLocalizations.of(context))
-              .where((r) => isNewerVersion(r.version, lastSeen))
-              .toList();
+      final newer = changelogReleases(
+        AppLocalizations.of(context),
+      ).where((r) => isNewerVersion(r.version, lastSeen)).toList();
       if (newer.isNotEmpty) {
         await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => ChangelogPage(releases: newer)),
@@ -73,7 +76,11 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
         );
       } catch (e, st) {
         // Non-fatal — worst case the changelog shows again on next launch.
-        logs.warning('Failed to persist changelog version', error: e, trace: st);
+        logs.warning(
+          'Failed to persist changelog version',
+          error: e,
+          trace: st,
+        );
       }
       if (!mounted) return;
     }
