@@ -86,7 +86,21 @@ class _PermissionsPageState extends State<PermissionsPage>
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.permissionsTitle)),
-      body: BlocBuilder<PermissionsBloc, PermissionsState>(
+      body: BlocConsumer<PermissionsBloc, PermissionsState>(
+        listenWhen: (previous, current) =>
+            previous.errorMessage != current.errorMessage,
+        listener: (context, state) {
+          if (state.errorMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage!.message),
+                backgroundColor: kDestructive,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            context.read<PermissionsBloc>().add(const ClearPermissionsError());
+          }
+        },
         builder: (context, state) {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());

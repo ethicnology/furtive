@@ -5,11 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2026-07-15
 
 Remediation pass following a full audit of location tracking, permissions,
-GPS accuracy and privacy — see `AUDIT-2026-07.md` for the detailed findings
-and rationale behind every item below.
+GPS accuracy and privacy — see `AUDIT-2026-07.md` and
+`REVIEW-2026-07-FULL-APP.md` for the detailed findings and rationale behind
+every item below. Ships as 1.3.0 rather than 1.2.0: the Android versionCode
+had stayed at 1 across every prior release (1.0.0+1, 1.1.0+1, 1.2.0+1), which
+F-Droid and Android both require to strictly increase between releases.
 
 ### Added
 - **GPS outage detection ("signal lost")** — walking into a building or a
@@ -103,6 +106,34 @@ and rationale behind every item below.
 - An abandoned recording that gets auto-closed after being found stale no
   longer reports its "stopped at" time as the moment it was discovered,
   keeping its duration accurate.
+- Preference changes (map theme, map tiles, lock-screen visibility) now
+  actually apply immediately instead of silently requiring an app restart —
+  the "apply live" logic was comparing a value against itself and always
+  concluding nothing had changed.
+- A single intermittent GPS fix with no altitude reading no longer inflates
+  elevation gain by hundreds of metres; it's now correctly excluded from the
+  smoothing instead of being treated as a trusted 0 m sample.
+- A fast double-tap on "Start" could create two concurrent recordings, one
+  of which silently sat in the activities list as a near-empty orphan.
+- The background tracking watchdog no longer mistakes "every fix currently
+  fails the accuracy filter" (normal under tree cover, indoors, in an urban
+  canyon) for "the tracking service died", which used to restart a perfectly
+  healthy foreground service and show a false "tracking gap" banner.
+- The live location dot no longer freezes indefinitely if the OS suspends
+  the position stream while nothing is being recorded — the watchdog now
+  reopens it regardless.
+- GPX import: track segments/tracks that are not in chronological order in
+  the file (e.g. a GPX concatenated from several separate recordings) no
+  longer have their straight-line gap silently counted as active
+  distance/duration.
+- A backlogged/out-of-order GPS fix (delivered by the OS after the fact) can
+  no longer move the internal "last known good" anchor backwards, which
+  previously spliced a small spurious zig-zag into the recorded distance.
+- A database schema upgrade interrupted mid-way (app killed, battery pulled)
+  no longer permanently corrupts the local database; the upgrade is now a
+  single atomic transaction that cleanly retries on the next launch instead.
+  Sideloading an older build over a newer database is now refused outright
+  instead of silently corrupting the schema version.
 
 ### Security & privacy
 - iOS: the local database and log file are now excluded from iCloud/iTunes
@@ -117,6 +148,13 @@ and rationale behind every item below.
   F-Droid — that already manage updates themselves. See the README.
 - Hardened error logging around the (currently unused) public-traces search
   so a future re-enable can't leak a precise map viewport into the log file.
+- The opt-out GitHub update check no longer runs before the first-launch
+  wizard — a fresh install used to phone home before you had any chance to
+  see or decline the Preferences toggle that controls it.
+- Exported GPX files and shared activity-card images no longer risk deleting
+  each other out from under an in-flight share; each now purges only its own
+  file type, and any leftover from a previous session is also cleaned up at
+  the next app launch instead of only at the next share/export.
 
 ## [1.2.0] - 2026-06-06
 
@@ -173,4 +211,5 @@ and rationale behind every item below.
 - Removed background storage of third-party (OSM) trace data that was never
   read back.
 
+[1.3.0]: https://github.com/ethicnology/furtive/releases/tag/1.3.0
 [1.2.0]: https://github.com/ethicnology/furtive/releases/tag/1.2.0

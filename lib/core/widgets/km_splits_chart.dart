@@ -22,6 +22,13 @@ enum _Metric { pace, speed }
   double worstVal = fasterIsSmaller ? -double.infinity : double.infinity;
   for (final s in fullSplits) {
     final v = value(s);
+    // KmSplit.paceMinPerKm/speedKmh both sentinel to exactly 0 for a
+    // degenerate split (zero distance or zero duration — only reachable via
+    // a pathological GPX import with duplicate timestamps, never from a
+    // live recording). 0 is smaller than any real pace, so without this
+    // guard a degenerate split — rendered "--" by the caller — sorts as the
+    // fastest km instead of being excluded from the comparison entirely.
+    if (v == 0) continue;
     final isBetter = fasterIsSmaller ? v < bestVal : v > bestVal;
     final isWorse = fasterIsSmaller ? v > worstVal : v < worstVal;
     if (isBetter) {
@@ -67,6 +74,8 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
     }
 
     // Partial trailing km is excluded from the fastest/slowest comparison.
+    // (fastestAndSlowestSplitIndices additionally excludes any degenerate
+    // zero-value split on its own — see its doc comment.)
     final fullSplits = splits.where((s) => !s.isPartial).toList();
     final ranked = fastestAndSlowestSplitIndices(
       fullSplits,

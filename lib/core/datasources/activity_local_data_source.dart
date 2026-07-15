@@ -17,14 +17,19 @@ class ActivityLocalDataSource {
   ({double distanceMeters, int durationMs}) _aggregates(
     List<ActivityPointModel> points,
   ) {
-    // Filter to the exact set score() persists (finite lat/lon/elevation) so a
-    // point with a NaN elevation can't make the stored aggregate disagree with
-    // what the detail page recomputes from the persisted points.
+    // Filter to the exact set score() persists (finite, in-range lat/lon,
+    // finite elevation) so a point with a NaN elevation or an out-of-range
+    // coordinate can't make the stored aggregate disagree with what the
+    // detail page recomputes from the persisted points.
     final finite = points
         .where(
           (p) =>
               p.latitude.isFinite &&
+              p.latitude >= -90 &&
+              p.latitude <= 90 &&
               p.longitude.isFinite &&
+              p.longitude >= -180 &&
+              p.longitude <= 180 &&
               p.elevation.isFinite,
         )
         .toList();
@@ -98,11 +103,21 @@ class ActivityLocalDataSource {
     // model — so a single bad fix would make every later read of this
     // activity throw. The render layer also filters non-finite coords, but it
     // never runs if the read itself fails first.
+    //
+    // Also enforce the WGS84 range, matching the GPX import validation
+    // (gpx.dart) — this was the one entry point that only checked `isFinite`
+    // and let an out-of-range fix (e.g. a defective platform location like
+    // lat=200) through to storage, where it would silently poison
+    // Geolocator.distanceBetween-based aggregates.
     final finite = points
         .where(
           (p) =>
               p.latitude.isFinite &&
+              p.latitude >= -90 &&
+              p.latitude <= 90 &&
               p.longitude.isFinite &&
+              p.longitude >= -180 &&
+              p.longitude <= 180 &&
               p.elevation.isFinite,
         )
         .toList();

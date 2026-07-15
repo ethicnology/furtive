@@ -3,6 +3,7 @@ import 'package:executor_lib/executor_lib.dart' show CancellationException;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/facades/backup_exclusion_facade.dart';
+import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/facades/process_exit_facade.dart';
 import 'package:furtive/core/global.dart';
@@ -50,6 +51,13 @@ void main() {
           }
         }),
       );
+
+      // Best-effort: purge any share-card PNG / GPX export left over from a
+      // previous session so a one-off sharer doesn't keep a location-bearing
+      // temp file sitting around indefinitely (each call site also purges
+      // its own leftovers, but only on its NEXT invocation — see
+      // FileSystemFacade.purgeStaleTempFiles).
+      unawaited(FileSystemFacade.purgeStaleTempFiles());
 
       // Register DB + blocs. LocaleCubit is registered separately below
       // because its initial state requires a DB read first.

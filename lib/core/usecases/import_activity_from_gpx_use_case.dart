@@ -48,15 +48,18 @@ _GpxParseResult _parseGpxContent(String content) {
   // boundaries below so the stats math doesn't bridge them.
   final groups = parseGpxSegments(root);
 
-  final points = <ActivityPointEntity>[];
+  // Build each group's points first (real-or-synthesised time), keeping
+  // document order for the synthesis pass below — a foreign GPX missing
+  // `<time>` on some points still gets sane, monotonically increasing
+  // timestamps from wherever came before it in the file.
+  final groupPointLists = <List<ActivityPointEntity>>[];
   // Track the last timestamp (real or synthesised) so points without a
   // `<time>` element get a +1s offset from whatever came before — keeps
   // ordering correct in mixed files (some trkpts have <time>, some don't)
   // and gives sane timestamps for GPX exports that strip time entirely
   // (lastTime stays null on entry → falls back to now()).
   DateTime? lastTime;
-  for (var g = 0; g < groups.length; g++) {
-    final group = groups[g];
+  for (final group in groups) {
     final groupPoints = <ActivityPointEntity>[];
     for (final parsed in group) {
       final time =
@@ -75,6 +78,28 @@ _GpxParseResult _parseGpxContent(String content) {
         ),
       );
     }
+    if (groupPoints.isNotEmpty) groupPointLists.add(groupPoints);
+  }
+
+  // Order groups chronologically (by each group's first point) before
+  // bracketing gaps between them. ActivityEntity re-sorts every point by
+  // time regardless of the order we hand it (see _segmentPoints), so
+  // document order carries no meaning to the stats math — but the gap
+  // bracketing below only inserts a signalLost pair between what it
+  // considers "adjacent" groups. Bracketing by DOCUMENT adjacency (the
+  // previous behaviour) breaks down for a file whose <trk> blocks are not
+  // in chronological order (e.g. concatenated from several separate
+  // recordings, newest first): the entity's time-sort then interleaves both
+  // groups' active points with only the stray boundary point in between,
+  // silently counting the straight-line jump between them — and the wall
+  // clock span across it — as active distance/time instead of excluding it.
+  // Sorting groups by real time first makes bracketing-by-adjacency and
+  // bracketing-by-chronology the same operation.
+  groupPointLists.sort((a, b) => a.first.time.compareTo(b.first.time));
+
+  final points = <ActivityPointEntity>[];
+  for (var g = 0; g < groupPointLists.length; g++) {
+    final groupPoints = groupPointLists[g];
 
     // Between segments, bracket the gap with two signalLost boundary
     // points: a duplicate of the previous segment's last point (1µs later

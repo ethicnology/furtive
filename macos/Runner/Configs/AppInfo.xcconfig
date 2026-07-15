@@ -8,7 +8,7 @@
 PRODUCT_NAME = furtive
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.furtive
+PRODUCT_BUNDLE_IDENTIFIER = com.ethicnology.furtive
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 ethicnology. All rights reserved.

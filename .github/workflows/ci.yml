@@ -1,8 +1,12 @@
 name: CI
 
 on:
+  # Run on every push to every branch, not just main — otherwise work on a
+  # long-lived feature/release branch (like this one) only gets checked once
+  # a PR is opened, instead of on each push while it's still being iterated
+  # on. `pull_request` is kept for the (rare) case of a PR from a fork,
+  # where `push` wouldn't have repo permissions to report a status anyway.
   push:
-    branches: [main, design-refresh]
   pull_request:
 
 jobs:

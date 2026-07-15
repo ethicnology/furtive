@@ -130,5 +130,46 @@ void main() {
       );
       expect(out.length, 2);
     });
+
+    test(
+      'rejects an out-of-order/backlogged fix (dt <= 0) instead of moving '
+      'the anchor backwards and splicing a spurious zig-zag into the trace',
+      () async {
+        final filter = GpsQualityFilter();
+        final out = await collect(
+          filter.apply(
+            Stream.fromIterable([
+              pos(lat: 0, lon: 0, sec: 10),
+              // The OS delivers a backlogged fix stamped BEFORE the one just
+              // accepted (dt <= 0 relative to _lastAccepted). Must be
+              // rejected outright, not accepted as a new anchor.
+              pos(lat: 0, lon: 0.05, sec: 5),
+              // A fix consistent with continuing from the real anchor
+              // (sec:10 @ lon 0), not from the rejected backlogged fix.
+              pos(lat: 0, lon: 0.0002, sec: 15),
+            ]),
+          ),
+        );
+        expect(out.length, 2);
+        expect(out.first.longitude, 0);
+        expect(out.last.longitude, 0.0002);
+      },
+    );
+
+    test('rejects a duplicate-timestamp fix (dt == 0) rather than treating it '
+        'as a new anchor', () async {
+      final filter = GpsQualityFilter();
+      final out = await collect(
+        filter.apply(
+          Stream.fromIterable([
+            pos(lat: 0, lon: 0, sec: 10),
+            pos(lat: 0, lon: 0.05, sec: 10),
+            pos(lat: 0, lon: 0.0002, sec: 15),
+          ]),
+        ),
+      );
+      expect(out.length, 2);
+      expect(out.last.longitude, 0.0002);
+    });
   });
 }

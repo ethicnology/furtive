@@ -80,7 +80,16 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     on<InitMap>(_onInitMap);
     on<EnsureTracking>(_onEnsureTracking);
     on<FetchTraces>(_onTracesSearchRequested);
-    on<StartActivity>(_onStartActivity);
+    // droppable(): the default (concurrent) transformer let a fast
+    // double-tap on Start enqueue two StartActivity events; both await the
+    // multi-second one-shot GPS fix, both insert an activity row, and the
+    // loser sits in the DB as a near-empty orphan "Track" until the next
+    // cold start's fetchOngoing reconciliation auto-ceases it. Dropping any
+    // StartActivity that arrives while one is already being handled closes
+    // the race outright — a genuine second start (after the first
+    // completed) is unaffected since droppable() only discards events that
+    // arrive DURING an in-flight handler. See REVIEW-2026-07-FULL-APP.md M4.
+    on<StartActivity>(_onStartActivity, transformer: droppable());
     on<CeaseActivity>(_onCeaseActivity);
     // sequential(): the default bloc transformer processes events of the
     // same type concurrently. At ~5s per GPS fix this has no throughput
@@ -229,7 +238,15 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   // Opens the geolocator position stream and wires it into the bloc. Sets
   // _positionStream. Only ever called through _ensurePositionStreamOpen().
   Future<void> _openPositionStream() async {
-    final userPositionStream = await _startTrackPositionUsecase();
+    final userPositionStream = await _startTrackPositionUsecase(
+      // Stamp on every raw platform fix, not just ones that later survive
+      // GpsQualityFilter — see the doc comment on
+      // LocationRepository.getPositionStream(). Keeps EnsureTracking from
+      // mistaking "every recent fix failed the quality gate" (normal under
+      // tree cover/urban canyon/indoors) for "the stream/foreground service
+      // actually died".
+      onRawFix: () => _lastFixAt = DateTime.now(),
+    );
     _positionStream = userPositionStream
         .handleError(
           (error, StackTrace stack) =>
@@ -253,14 +270,19 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
         );
   }
 
-  // App returned to the foreground. If a recording is running but the stream
-  // died or went silent in the background (geolocator can suspend it in deep
-  // Doze without emitting onDone), reopen it so tracking resumes at once.
+  // App returned to the foreground. If the stream died or went silent in the
+  // background (geolocator can suspend it in deep Doze without emitting
+  // onDone), reopen it so tracking resumes at once — whether or not a
+  // recording is running. Previously this returned immediately when nothing
+  // was being recorded, which meant a stream the OS silently killed while
+  // idle (not recording) never got reopened for the rest of the session: no
+  // later event re-triggers it, so the live "blue dot" location would stay
+  // frozen at its last position until the app restarted. See
+  // REVIEW-2026-07-FULL-APP.md M3.
   Future<void> _onEnsureTracking(
     EnsureTracking event,
     Emitter<MapState> emit,
   ) async {
-    if (state.activity == null) return;
     final last = _lastFixAt;
     final gap = last == null ? null : DateTime.now().difference(last);
     final stale = gap == null || gap > _staleStreamThreshold;
@@ -272,13 +294,18 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
       return;
     }
 
-    // A stale stream while recording means the OS suspended/killed the
-    // foreground service in the background and no fixes were recorded for the
-    // gap — the trace has a hole the reopen below can't backfill. Surface it
-    // so the user knows a segment is missing (and can grant the battery
-    // exemption). Only flag genuinely significant gaps, not first-open (no
-    // prior fix) jitter just above the threshold.
-    if (!state.isPaused && gap != null && gap > _staleStreamThreshold) {
+    // A stale stream while actively recording means the OS suspended/killed
+    // the foreground service in the background and no fixes were recorded
+    // for the gap — the trace has a hole the reopen below can't backfill.
+    // Surface it so the user knows a segment is missing (and can grant the
+    // battery exemption). Only flag genuinely significant gaps (not
+    // first-open jitter), and only while there is a recording to lose data
+    // from — a frozen blue dot with nothing recording is silently reopened
+    // below with no user-facing banner.
+    if (state.activity != null &&
+        !state.isPaused &&
+        gap != null &&
+        gap > _staleStreamThreshold) {
       logs.warning(
         'EnsureTracking: tracking gap of ${gap.inSeconds}s detected '
         '(stream suspended/killed while backgrounded).',
@@ -376,6 +403,10 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     StartActivity event,
     Emitter<MapState> emit,
   ) async {
+    // Defence in depth alongside the droppable() transformer above: a
+    // recording is already running, so a Start tap here is a no-op rather
+    // than spawning a second concurrent activity.
+    if (state.activity != null) return;
     try {
       emit(state.copyWith(loadingStatus: LoadingStatus.startingActivity));
 

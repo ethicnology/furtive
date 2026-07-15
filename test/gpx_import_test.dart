@@ -145,6 +145,41 @@ void main() {
     expect(activity.stoppedAt, DateTime.parse('2026-01-01T01:00:10Z'));
   });
 
+  test('out-of-chronological-order <trk> blocks do not bridge the gap into '
+      'active distance/duration (regression: document-order bracketing used '
+      'to leave only a stray boundary point once the entity re-sorts by '
+      'time, counting the ~111 km jump and ~1 h span as active)', () async {
+    final file = await writeGpx('''
+<?xml version="1.0"?>
+<gpx version="1.1" creator="t" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="0" lon="1.000"><time>2026-01-01T01:00:00Z</time></trkpt>
+    <trkpt lat="0" lon="1.001"><time>2026-01-01T01:00:10Z</time></trkpt>
+  </trkseg></trk>
+  <trk><trkseg>
+    <trkpt lat="0" lon="0.000"><time>2026-01-01T00:00:00Z</time></trkpt>
+    <trkpt lat="0" lon="0.001"><time>2026-01-01T00:00:10Z</time></trkpt>
+  </trkseg></trk>
+</gpx>''');
+
+    final activity = await ImportActivityFromGpxUseCase()(file);
+
+    // Exactly the same shape as the chronologically-ordered multi-<trk>
+    // test: 2 signalLost boundary points bracketing the gap.
+    final lost = activity.points.where(
+      (p) => p.status == ActivityPointStatusEntity.signalLost,
+    );
+    expect(lost.length, 2);
+
+    // Each <trk> is a ~111 m leg (0.001 deg of longitude at the equator).
+    // Active distance must be ~222 m total, NOT the ~111 km jump between
+    // lon 0.001 and lon 1.000 that document-order bracketing let through.
+    expect(activity.activeDistanceMeters, closeTo(222.6, 5));
+    // Active duration must be the sum of the two 10 s legs, NOT the ~1 h
+    // wall-clock span between the two out-of-order tracks.
+    expect(activity.activeDuration, const Duration(seconds: 20));
+  });
+
   test('a file with no track points is rejected', () async {
     final file = await writeGpx('''
 <?xml version="1.0"?>

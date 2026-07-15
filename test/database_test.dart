@@ -221,6 +221,113 @@ void main() {
         expect(remainingTables, isEmpty);
       },
     );
+
+    test(
+      'v1 -> current: the from < 2 step (add columns, backfill, create '
+      'indices) actually runs and survives a full replay to schemaVersion',
+      () async {
+        // v1 predates hasCompletedOnboarding/uiLocale/lastShownChangelogVersion
+        // and the two hot-column indices — nothing in this suite exercises
+        // the `if (from < 2)` block otherwise (every other fixture starts at
+        // user_version 2 or 7).
+        final raw = sqlite3.openInMemory();
+        raw.execute('''
+        CREATE TABLE preferences (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          map_theme TEXT NOT NULL,
+          map_language TEXT NOT NULL,
+          accuracy_in_meters INTEGER NOT NULL
+        );
+      ''');
+        raw.execute('''
+        CREATE TABLE activities (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          started_at INTEGER NOT NULL,
+          stopped_at INTEGER NULL
+        );
+      ''');
+        raw.execute('''
+        CREATE TABLE activity_points (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          elevation REAL NOT NULL,
+          time INTEGER NOT NULL,
+          activity_id TEXT NOT NULL REFERENCES activities (id),
+          status TEXT NOT NULL
+        );
+      ''');
+        raw.execute('''
+        INSERT INTO preferences (id, map_theme, map_language, accuracy_in_meters)
+        VALUES (1, 'dark', 'en', 0);
+      ''');
+        raw.execute('''
+        INSERT INTO activities (id, name, description, created_at, started_at, stopped_at)
+        VALUES ('v1', 'Track', '', 1000, 1000, 2000);
+      ''');
+        raw.execute('PRAGMA user_version = 1;');
+
+        final db = LocalDatabase.forTesting(NativeDatabase.opened(raw));
+        addTearDown(db.close);
+
+        final prefs = await (db.select(
+          db.preferences,
+        )..where((t) => t.id.equals(1))).getSingle();
+
+        expect(db.schemaVersion, 8);
+        // v2 backfill: existing users skip onboarding and get the changelog
+        // sentinel; fresh installs (not this path) get the column defaults.
+        expect(prefs.hasCompletedOnboarding, isTrue);
+        expect(prefs.lastShownChangelogVersion, '0.0.0');
+        expect(prefs.uiLocale, isNull);
+        // v3/v6/v7 defaults preserved through the full replay from v1.
+        expect(prefs.checkUpdates, isTrue);
+        expect(prefs.mapTilesEnabled, isTrue);
+        expect(prefs.showOnLockScreen, isTrue);
+
+        final activity = await (db.select(
+          db.activities,
+        )..where((t) => t.id.equals('v1'))).getSingle();
+        expect(activity.distanceMeters, -1);
+
+        // The v2 step's createIndex calls didn't throw / silently no-op.
+        final indexNames = raw
+            .select(
+              "SELECT name FROM sqlite_master WHERE type='index' AND "
+              "name IN ('idx_activity_points_activity_id', "
+              "'idx_activities_started_at')",
+            )
+            .map((row) => row['name'] as String)
+            .toList();
+        expect(indexNames, hasLength(2));
+      },
+    );
+
+    test('refuses to open a database with a newer schema version than '
+        'this build knows about (downgrade guard)', () async {
+      // Simulates sideloading an older APK/IPA over a DB written by a newer
+      // version — without a guard, drift would silently no-op every
+      // migration step and stamp the LOWER version into user_version,
+      // corrupting the version bookkeeping (see M1 in the audit).
+      final raw = sqlite3.openInMemory();
+      raw.execute('''
+        CREATE TABLE preferences (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          map_theme TEXT NOT NULL,
+          map_language TEXT NOT NULL,
+          accuracy_in_meters INTEGER NOT NULL
+        );
+      ''');
+      raw.execute('PRAGMA user_version = 99;');
+
+      final db = LocalDatabase.forTesting(NativeDatabase.opened(raw));
+      addTearDown(db.close);
+
+      expect(() => db.select(db.preferences).get(), throwsA(isA<StateError>()));
+    });
   });
 
   group('fresh database (onCreate + beforeOpen)', () {

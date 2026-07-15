@@ -53,24 +53,31 @@ class GpsQualityFilter {
     if (previous != null && previous.time != null && position.time != null) {
       final dtSeconds =
           position.time!.difference(previous.time!).inMilliseconds / 1000;
-      // dtSeconds <= 0: out-of-order/duplicate-timestamp fix. Not this
-      // filter's job (LocationRepository already stamps fix time from the
-      // platform and score_activity_use_case/activity_entity already guard
-      // against non-positive deltas downstream) — accept and let those
-      // guards handle it rather than rejecting on ambiguous data here.
-      if (dtSeconds > 0) {
-        final meters = Geolocator.distanceBetween(
-          previous.latitude,
-          previous.longitude,
-          position.latitude,
-          position.longitude,
-        );
-        if (meters.isFinite && (meters / dtSeconds) > maxSpeedMps) {
-          // Reject without moving _lastAccepted: keep comparing subsequent
-          // fixes against the last known-good anchor rather than chaining
-          // off a fix we just decided not to trust.
-          return false;
-        }
+      // dtSeconds <= 0: out-of-order/duplicate-timestamp fix (a backlogged
+      // fix the OS delivers after the fact — LocationManager does this).
+      // Reject it WITHOUT moving _lastAccepted: accepting it would move the
+      // teleport anchor backwards in space/time, and
+      // score_activity_use_case/activity_entity's mergeSort would later
+      // re-order it back into chronological position — splicing a spurious
+      // zig-zag (out-and-back) into the trace that inflates
+      // activeDistanceMeters, and leaving the *next* genuine fix's speed
+      // check comparing against the wrong anchor. Downstream guards handle
+      // non-positive deltas for the case where such a fix slips through some
+      // other path, but this filter should not be the one letting it back
+      // the anchor up.
+      if (dtSeconds <= 0) return false;
+
+      final meters = Geolocator.distanceBetween(
+        previous.latitude,
+        previous.longitude,
+        position.latitude,
+        position.longitude,
+      );
+      if (meters.isFinite && (meters / dtSeconds) > maxSpeedMps) {
+        // Reject without moving _lastAccepted: keep comparing subsequent
+        // fixes against the last known-good anchor rather than chaining
+        // off a fix we just decided not to trust.
+        return false;
       }
     }
 

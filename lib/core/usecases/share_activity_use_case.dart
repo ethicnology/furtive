@@ -27,8 +27,14 @@ class ShareActivityUseCase {
 
   /// Prefix of every share-card PNG this use case ever writes to the temp
   /// dir — used both to build today's filename and to find yesterday's
-  /// leftovers to purge.
-  static const _filePrefix = 'furtive-';
+  /// leftovers to purge. Deliberately distinct from
+  /// FileSystemFacade's `furtive-export-` GPX prefix (rather than the
+  /// previous bare `furtive-`, which IS a prefix of `furtive-export-`): that
+  /// overlap meant sharing a card right after exporting a GPX purged the
+  /// just-exported GPX out from under a share target that might still be
+  /// asynchronously reading it (same iOS race this deferred-delete pattern
+  /// exists to avoid in the first place). See REVIEW-2026-07-FULL-APP.md M2.
+  static const _filePrefix = 'furtive-share-';
 
   Future<void> call(BuildContext context, ActivityEntity activity) async {
     // Read everything needed from context before the first await below —

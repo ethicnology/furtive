@@ -21,6 +21,33 @@ class FileSystemFacade {
   /// "deliberately not deleting immediately" note below).
   static const _tempFilePrefix = 'furtive-export-';
 
+  /// Deletes any leftover share/export temp file (GPX exports, share-card
+  /// PNGs — see ShareActivityUseCase's own `furtive-share-` prefix) from the
+  /// OS temp directory. Both call sites already purge their own leftovers
+  /// at the START of their next invocation, so a one-time sharer/exporter
+  /// otherwise keeps a location-bearing file sitting in the (sandboxed, but
+  /// not user-visible) cache dir indefinitely — until they happen to
+  /// share/export again. Called once at app startup so that window is
+  /// bounded to "until the next launch" instead of "until the next share".
+  /// Best-effort: never throws.
+  static Future<void> purgeStaleTempFiles() async {
+    try {
+      final tmpDir = await getTemporaryDirectory();
+      final entries = await tmpDir.list().toList();
+      for (final entry in entries) {
+        final name = p.basename(entry.path);
+        if (entry is File &&
+            (name.startsWith(_tempFilePrefix) ||
+                name.startsWith('furtive-share-'))) {
+          await entry.delete();
+        }
+      }
+    } catch (_) {
+      // Non-fatal — worst case a stale file lingers until the next
+      // share/export, same as before this existed.
+    }
+  }
+
   static Future<void> save({
     required String content,
     required String filename,

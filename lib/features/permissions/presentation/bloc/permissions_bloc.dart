@@ -20,6 +20,14 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
     on<LoadPermissions>(_onLoadPermissions);
     on<RequestPermission>(_onRequestPermission);
     on<CheckAllPermissions>(_onCheckAllPermissions);
+    on<ClearPermissionsError>(_onClearPermissionsError);
+  }
+
+  void _onClearPermissionsError(
+    ClearPermissionsError event,
+    Emitter<PermissionsState> emit,
+  ) {
+    emit(state.copyWith(errorMessage: null));
   }
 
   Future<void> _onLoadPermissions(

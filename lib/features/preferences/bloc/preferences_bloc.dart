@@ -30,7 +30,10 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
   static Future<PreferencesBloc> create() async {
     final getPreferencesUseCase = GetPreferencesUseCase();
     final preferences = await getPreferencesUseCase();
-    final initialState = PreferencesState(preferences: preferences);
+    final initialState = PreferencesState(
+      preferences: preferences,
+      persisted: preferences,
+    );
     return PreferencesBloc._(initialState: initialState);
   }
 
@@ -41,7 +44,13 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     emit(state.copyWith(isLoading: true));
     try {
       final preferences = await _getPreferencesUseCase();
-      emit(state.copyWith(preferences: preferences, isLoading: false));
+      emit(
+        state.copyWith(
+          preferences: preferences,
+          persisted: preferences,
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(error: AppError(e.toString()), isLoading: false));
     }
@@ -93,7 +102,13 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     UpdatePreferences event,
     Emitter<PreferencesState> emit,
   ) async {
-    final previous = state.preferences;
+    // Diff against the last-persisted preferences, NOT state.preferences: the
+    // Change* handlers already mutate state.preferences live as the user
+    // edits the form, so comparing against it here always finds "no change"
+    // and every live side effect below (map re-init, lock-screen toggle)
+    // would silently no-op until the next app restart. See
+    // REVIEW-2026-07-FULL-APP.md C1.
+    final previous = state.persisted;
     try {
       await _updatePreferencesUseCase(event.preferences);
     } catch (e, s) {
@@ -114,7 +129,14 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // them too whenever the write outlived the pop, leaving settings
     // persisted to disk but never actually applied until the next app
     // restart. See M5 in REVIEW-2026-07-FULL-APP.md.
-    if (!isClosed) emit(state.copyWith(preferences: event.preferences));
+    if (!isClosed) {
+      emit(
+        state.copyWith(
+          preferences: event.preferences,
+          persisted: event.preferences,
+        ),
+      );
+    }
 
     // Re-init the map only when something the map style actually depends on
     // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for

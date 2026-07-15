@@ -62,5 +62,41 @@ void main() {
       expect(r.fastestIdx, 1);
       expect(r.slowestIdx, 1);
     });
+
+    test('a degenerate (zero-value) split is never labelled fastest/slowest '
+        '(regression: 0 sorts as the smallest pace, so an unranked "--" split '
+        'used to be highlighted as the fastest km)', () {
+      final degenerate = KmSplit(
+        index: 4,
+        distanceMeters: 0,
+        duration: const Duration(minutes: 5),
+        isPartial: false,
+      );
+      final r = fastestAndSlowestSplitIndices(
+        [...splits, degenerate],
+        (s) => s.paceMinPerKm,
+        fasterIsSmaller: true,
+      );
+      expect(r.fastestIdx, 1);
+      expect(r.slowestIdx, 2);
+    });
+
+    test('all-degenerate input yields no fastest/slowest rather than picking '
+        'the first zero-value split', () {
+      final r = fastestAndSlowestSplitIndices(
+        [
+          KmSplit(
+            index: 1,
+            distanceMeters: 0,
+            duration: const Duration(minutes: 5),
+            isPartial: false,
+          ),
+        ],
+        (s) => s.paceMinPerKm,
+        fasterIsSmaller: true,
+      );
+      expect(r.fastestIdx, isNull);
+      expect(r.slowestIdx, isNull);
+    });
   });
 }

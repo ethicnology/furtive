@@ -7,12 +7,12 @@ class StartTrackPositionUseCase {
 
   StartTrackPositionUseCase();
 
-  Future<Stream<PositionEntity>> call() async {
+  Future<Stream<PositionEntity>> call({void Function()? onRawFix}) async {
     final hasPermission = await locationRepository.checkLocationPermission();
     if (!hasPermission) {
       final granted = await locationRepository.requestLocationPermission();
       if (!granted) throw AppError('Location permission not granted');
     }
-    return locationRepository.getPositionStream();
+    return locationRepository.getPositionStream(onRawFix: onRawFix);
   }
 }

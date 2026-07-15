@@ -97,7 +97,7 @@ class _LogsPageState extends State<LogsPage> {
       lastDate: DateTime.now(),
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _startDate = picked.start;
         _endDate = picked.end;
@@ -134,9 +134,9 @@ class _LogsPageState extends State<LogsPage> {
       },
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await logs.deleteLogs();
-      await _loadLogs();
+      if (mounted) await _loadLogs();
     }
   }
 
