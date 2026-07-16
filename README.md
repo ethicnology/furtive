@@ -18,10 +18,8 @@ Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 <td><img src="assets/readme/activity_stats_speed.png" width="100%" /></td>
 </tr>
 <tr>
-<td colspan="2"><img src="assets/readme/settings.png" width="100%" /></td>
-</tr>
-<tr>
-<td colspan="2"><img src="assets/readme/activities.png" width="100%" /></td>
+<td><img src="assets/readme/settings.png" width="100%" /></td>
+<td><img src="assets/readme/activities.png" width="100%" /></td>
 </tr>
 </table>
 
