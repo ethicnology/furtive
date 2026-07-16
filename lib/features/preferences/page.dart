@@ -68,6 +68,12 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     _buildMapThemeSection(context, state),
                     const SizedBox(height: 24),
                     _buildAppLanguageSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildCheckUpdatesSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildMapTilesSection(context, state),
+                    const SizedBox(height: 24),
+                    _buildLockScreenSection(context, state),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
@@ -112,11 +118,66 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
       LabeledDropdown<MapThemeEntity>(
         value: state.preferences.mapTheme,
         items: MapThemeEntity.values,
-        labelFor: (t) => t.name.toUpperCase(),
-        onChanged:
-            (v) => context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
+        labelFor: (t) => mapThemeName(AppLocalizations.of(context), t),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeMapTheme(v)),
       ),
     ],
+  );
+}
+
+/// Localised display name for a map theme. Shared with the onboarding wizard.
+String mapThemeName(AppLocalizations l10n, MapThemeEntity theme) =>
+    switch (theme) {
+      MapThemeEntity.light => l10n.prefThemeLight,
+      MapThemeEntity.dark => l10n.prefThemeDark,
+      MapThemeEntity.white => l10n.prefThemeWhite,
+      MapThemeEntity.grayscale => l10n.prefThemeGrayscale,
+      MapThemeEntity.black => l10n.prefThemeBlack,
+    };
+
+Widget _buildCheckUpdatesSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefCheckUpdates,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefCheckUpdatesSubtitle),
+    value: state.preferences.checkUpdates,
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
+  );
+}
+
+Widget _buildMapTilesSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefMapTiles,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefMapTilesSubtitle),
+    value: state.preferences.mapTilesEnabled,
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeMapTilesEnabled(v)),
+  );
+}
+
+Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefShowOnLockScreen,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefShowOnLockScreenSubtitle),
+    value: state.preferences.showOnLockScreen,
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeShowOnLockScreen(v)),
   );
 }
 
@@ -133,13 +194,11 @@ Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
       LabeledDropdown<String?>(
         value: state.preferences.uiLocale,
         items: uiLanguageOptions,
-        labelFor:
-            (code) =>
-                code == null
-                    ? l10n.settingsUiLanguageSystem
-                    : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
-        onChanged:
-            (v) => context.read<PreferencesBloc>().add(ChangeUiLocale(v)),
+        labelFor: (code) => code == null
+            ? l10n.settingsUiLanguageSystem
+            : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeUiLocale(v)),
       ),
     ],
   );

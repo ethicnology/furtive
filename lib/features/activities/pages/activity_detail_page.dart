@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:furtive/core/widgets/km_milestones_layer.dart';
@@ -14,6 +15,7 @@ import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
 import 'package:furtive/core/usecases/share_activity_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 class ActivityDetailPage extends StatefulWidget {
@@ -90,20 +92,19 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     // the localised display copy so RU/UK/FR users don't see English in
     // the AppBar.
     final l10n = AppLocalizations.of(context);
-    final displayName =
-        _currentName == kDefaultActivityName
-            ? l10n.activityDefaultName
-            : _currentName;
+    final displayName = _currentName == kDefaultActivityName
+        ? l10n.activityDefaultName
+        : _currentName;
     return Scaffold(
       appBar: AppBar(
         title: Text(displayName),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
             onPressed: _showRenameDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete_outline_rounded),
             onPressed: _showDeleteDialog,
           ),
           IconButton(
@@ -118,7 +119,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                     height: 24,
                     child: CircularProgressIndicator(),
                   )
-                : const Icon(Icons.share),
+                : const Icon(Icons.share_rounded),
           ),
           IconButton(
             onPressed: (_isExporting || _isSharing) ? null : _exportToGpx,
@@ -128,63 +129,81 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                     height: 24,
                     child: CircularProgressIndicator(),
                   )
-                : const Icon(Icons.file_download),
+                : const Icon(Icons.file_download_outlined),
           ),
         ],
       ),
-      body:
-          _isMapStyleLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                children: [
-                  Container(
-                    color: AppColors.tertiary.background,
-                    child:
-                        _mapStyle != null
-                            ? FlutterMap(
-                              mapController: _mapController,
-                              options: MapOptions(
-                                // Use the first point that has finite lat/lon
-                                // — `points.first` can be NaN if the GPS
-                                // emitted a junk fix and we'd crash
-                                // FlutterMap's LatLng constructor.
-                                initialCenter: _initialCenter(widget.activity),
-                                initialZoom: Global.maxZoom,
-                                maxZoom: Global.maxZoom,
-                              ),
-                              children: [
-                                VectorTileLayer(
-                                  maximumZoom: Global.maxZoom,
-                                  theme: _mapStyle!.theme,
-                                  tileProviders: _mapStyle!.providers,
-                                  sprites: _mapStyle!.sprites,
+      body: _isMapStyleLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Container(
+                  color: AppColors.tertiary.background,
+                  // Always render the map so the recorded track is visible.
+                  // The tile layer is shown only when a style is available
+                  // (keyed build, online); on the keyless FOSS build or an
+                  // offline style fetch the polyline draws on a blank canvas
+                  // instead of an error.
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      // Use the first point that has finite lat/lon —
+                      // `points.first` can be NaN if the GPS emitted a junk
+                      // fix and we'd crash FlutterMap's LatLng constructor.
+                      initialCenter: _initialCenter(widget.activity),
+                      initialZoom: Global.maxZoom,
+                      maxZoom: Global.maxZoom,
+                    ),
+                    children: [
+                      if (_mapStyle != null)
+                        VectorTileLayer(
+                          maximumZoom: Global.maxZoom,
+                          theme: _mapStyle!.theme,
+                          tileProviders: _mapStyle!.providers,
+                          sprites: _mapStyle!.sprites,
+                        ),
+                      widget.activity.toPolylineLayer(),
+                      KmMilestonesLayer(activity: widget.activity),
+                      // Attribution is required whenever OSM/Protomaps tiles
+                      // are shown.
+                      if (_mapStyle != null)
+                        RichAttributionWidget(
+                          alignment: AttributionAlignment.bottomLeft,
+                          attributions: [
+                            TextSourceAttribution(
+                              'OpenStreetMap',
+                              onTap: () => launchUrl(
+                                Uri.parse(
+                                  'https://www.openstreetmap.org/copyright',
                                 ),
-                                widget.activity.toPolylineLayer(),
-                                KmMilestonesLayer(activity: widget.activity),
-                              ],
-                            )
-                            : Center(
-                              child: Text(
-                                AppLocalizations.of(context).mapLoadFailed,
+                                mode: LaunchMode.externalApplication,
                               ),
                             ),
+                            TextSourceAttribution(
+                              'Protomaps',
+                              onTap: () => launchUrl(
+                                Uri.parse('https://protomaps.com'),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: context.screenPadding,
-                    left: context.screenPadding,
-                    right: context.screenPadding,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          () => _showStatisticsBottomSheet(
-                            context,
-                            widget.activity,
-                          ),
-                      icon: const Icon(Icons.analytics),
-                      label: Text(AppLocalizations.of(context).btnViewStats),
-                    ),
+                ),
+                Positioned(
+                  bottom: context.screenPadding,
+                  left: context.screenPadding,
+                  right: context.screenPadding,
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        _showStatisticsBottomSheet(context, widget.activity),
+                    icon: const Icon(Icons.analytics_rounded),
+                    label: Text(AppLocalizations.of(context).btnViewStats),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -206,45 +225,74 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       isDismissible: true,
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.3,
-            maxChildSize: 0.95,
-            expand: false,
-            builder:
-                (_, scrollController) => Container(
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: AppColors.tertiary.background,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.tertiary.background,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  child: ListView(
-                    controller: scrollController,
+                ),
+              ),
+              ActivityStatsWidget(
+                activity: activity,
+                elapsedTime: stoppedAt.difference(activity.startedAt),
+              ),
+              // Detected GPS outages (indoors, tunnel, process kill):
+              // shown only when the trace actually contains one, so
+              // the sheet stays clean for the common case. The time
+              // is excluded from the active stats above; the
+              // straight-line distance is informative only (the real
+              // path through the gap is unknown).
+              if (activity.signalLostDuration > Duration.zero)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(2),
+                      Icon(
+                        Icons.gps_off_rounded,
+                        size: 18,
+                        color: AppColors.secondary.background,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context).statSignalLost(
+                            activity.signalLostDuration.toHHMMSS(),
+                            activity.signalLostDistanceMeters.round(),
                           ),
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                      ActivityStatsWidget(
-                        activity: activity,
-                        elapsedTime: stoppedAt.difference(activity.startedAt),
-                      ),
-                      const SizedBox(height: 16),
-                      KmSplitsChart(activity: activity),
-                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
+              const SizedBox(height: 16),
+              KmSplitsChart(activity: activity),
+              const SizedBox(height: 24),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -261,6 +309,9 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
           ),
         );
       }
+    } on FileSaveCancelled {
+      // The user backed out of the share sheet / directory picker —
+      // silent no-op, not a failure (see L-G3 in REVIEW-2026-07-FULL-APP.md).
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -323,7 +374,8 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                 child: Text(l10n.btnCancel),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(context, textController.text),
+                onPressed: () =>
+                    Navigator.pop(context, textController.text.trim()),
                 child: Text(l10n.btnRename),
               ),
             ],

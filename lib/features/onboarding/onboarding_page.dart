@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:furtive/core/entities/preferences_entity.dart';
+import 'package:furtive/core/entities/preferences_entity.dart'
+    show MapThemeEntity;
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/usecases/get_preferences_use_case.dart';
 import 'package:furtive/core/usecases/update_preferences_use_case.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
+import 'package:furtive/features/preferences/page.dart' show mapThemeName;
 import 'package:furtive/features/permissions/domain/entities/permission_entity.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
@@ -34,6 +37,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage>
     with WidgetsBindingObserver {
   final _pageController = PageController();
+  final _getPreferences = GetPreferencesUseCase();
   final _updatePreferences = UpdatePreferencesUseCase();
   late final PermissionsBloc _permissionsBloc;
 
@@ -83,8 +87,17 @@ class _OnboardingPageState extends State<OnboardingPage>
   Future<void> _finish() async {
     setState(() => _saving = true);
     try {
+      // Read the current persisted preferences and copyWith only what this
+      // wizard actually edits — building a PreferencesEntity by hand here
+      // silently reset every OTHER field (checkUpdates, mapTilesEnabled,
+      // showOnLockScreen, ...) to its constructor default. Harmless the
+      // first time onboarding runs (those already match the fresh-install
+      // DB defaults), but this path is also hit if onboarding is ever
+      // re-entered (e.g. a future "reset onboarding" support flow), where it
+      // would silently clobber preferences the user had already changed.
+      final current = await _getPreferences();
       await _updatePreferences(
-        PreferencesEntity(
+        current.copyWith(
           mapTheme: _theme,
           hasCompletedOnboarding: true,
           uiLocale: _uiLocale,
@@ -164,24 +177,19 @@ class _OnboardingPageState extends State<OnboardingPage>
                           !isLastStep || permissionsState.requiredGranted;
                       return ElevatedButton(
                         onPressed: (_saving || !canFinish) ? null : _next,
-                        child:
-                            _saving
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : Text(
-                                  isLastStep
-                                      ? AppLocalizations.of(
-                                        context,
-                                      ).btnFinish
-                                      : AppLocalizations.of(
-                                        context,
-                                      ).btnNext,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
+                              )
+                            : Text(
+                                isLastStep
+                                    ? AppLocalizations.of(context).btnFinish
+                                    : AppLocalizations.of(context).btnNext,
+                              ),
                       );
                     },
                   ),
@@ -212,10 +220,9 @@ class _ProgressIndicator extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color:
-                    filled
-                        ? AppColors.primary.background
-                        : AppColors.tertiary.background,
+                color: filled
+                    ? AppColors.primary.background
+                    : AppColors.tertiary.background,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -272,7 +279,7 @@ class _WelcomeStep extends StatelessWidget {
       subtitle: l10n.onboardWelcomeSubtitle,
       child: Center(
         child: Icon(
-          Icons.directions_run,
+          Icons.directions_run_rounded,
           size: 96,
           color: AppColors.primary.background,
         ),
@@ -312,7 +319,7 @@ class _SettingsStep extends StatelessWidget {
             LabeledDropdown<MapThemeEntity>(
               value: theme,
               items: MapThemeEntity.values,
-              labelFor: (t) => t.name.toUpperCase(),
+              labelFor: (t) => mapThemeName(AppLocalizations.of(context), t),
               onChanged: onThemeChanged,
             ),
             const SizedBox(height: 24),
@@ -324,11 +331,9 @@ class _SettingsStep extends StatelessWidget {
             LabeledDropdown<String?>(
               value: uiLocale,
               items: uiLanguageOptions,
-              labelFor:
-                  (code) =>
-                      code == null
-                          ? l10n.settingsUiLanguageSystem
-                          : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
+              labelFor: (code) => code == null
+                  ? l10n.settingsUiLanguageSystem
+                  : (uiLanguageNativeNames[code] ?? code.toUpperCase()),
               onChanged: onUiLocaleChanged,
             ),
           ],
@@ -347,7 +352,21 @@ class _PermissionsStep extends StatelessWidget {
     return _StepShell(
       title: l10n.onboardPermissionsTitle,
       subtitle: l10n.onboardPermissionsSubtitle,
-      child: BlocBuilder<PermissionsBloc, PermissionsState>(
+      child: BlocConsumer<PermissionsBloc, PermissionsState>(
+        listenWhen: (previous, current) =>
+            previous.errorMessage != current.errorMessage,
+        listener: (context, state) {
+          if (state.errorMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage!.message),
+                backgroundColor: AppColors.destructive.background,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            context.read<PermissionsBloc>().add(const ClearPermissionsError());
+          }
+        },
         builder: (context, state) {
           if (state.isLoading && state.permissions.isEmpty) {
             return const Center(child: CircularProgressIndicator());
@@ -376,6 +395,9 @@ String _localizedName(BuildContext context, PermissionEntity p) {
   if (p.permission == Permission.locationAlways) {
     return l10n.permLocationAlwaysName;
   }
+  if (p.permission == Permission.notification) {
+    return l10n.permNotificationName;
+  }
   return p.name;
 }
 
@@ -387,6 +409,9 @@ String _localizedDescription(BuildContext context, PermissionEntity p) {
   if (p.permission == Permission.locationAlways) {
     return l10n.permLocationAlwaysDesc;
   }
+  if (p.permission == Permission.notification) {
+    return l10n.permNotificationDesc;
+  }
   return p.description;
 }
 
@@ -396,8 +421,8 @@ class _PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Card(
-      color: AppColors.primary.background,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -406,49 +431,53 @@ class _PermissionCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  permission.isGranted ? Icons.check_circle : Icons.cancel,
-                  color: permission.isGranted ? Colors.green : Colors.red,
+                  permission.isGranted
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: permission.isGranted ? kMint : kTextMuted,
+                  size: 22,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _localizedName(context, permission),
-                    style: TextStyle(
-                      color: AppColors.primary.foreground,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: textTheme.titleMedium,
                   ),
                 ),
                 if (permission.isOptional)
                   Text(
                     AppLocalizations.of(context).permOptional,
-                    style: TextStyle(color: AppColors.primary.foreground),
+                    style: textTheme.labelSmall,
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              _localizedDescription(context, permission),
-              style: TextStyle(color: AppColors.primary.foreground),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed:
-                  permission.isGranted
-                      ? null
-                      : () => context.read<PermissionsBloc>().add(
-                        RequestPermission(permission.permission),
-                      ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.quaternary.background,
-                foregroundColor: AppColors.quaternary.foreground,
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 34),
+              child: Text(
+                _localizedDescription(context, permission),
+                style: textTheme.bodySmall,
               ),
-              child: Text(AppLocalizations.of(context).btnGrant),
             ),
+            if (!permission.isGranted) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 34),
+                child: OutlinedButton(
+                  onPressed: () => context.read<PermissionsBloc>().add(
+                    RequestPermission(permission.permission),
+                  ),
+                  child: Text(AppLocalizations.of(context).btnGrant),
+                ),
+              ),
+            ],
             if (permission.isPermanentlyDenied)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(AppLocalizations.of(context).permDeniedMsg),
+                padding: const EdgeInsets.only(left: 34, top: 8),
+                child: Text(
+                  AppLocalizations.of(context).permDeniedMsg,
+                  style: textTheme.bodySmall?.copyWith(color: kWarning),
+                ),
               ),
           ],
         ),

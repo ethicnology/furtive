@@ -31,18 +31,19 @@ class ActivityModel {
       createdAt: entity.createdAt,
       startedAt: entity.startedAt,
       stoppedAt: entity.stoppedAt,
-      points:
-          entity.points
-              .map(
-                (point) => ActivityPointModel(
-                  latitude: point.position.latitude,
-                  longitude: point.position.longitude,
-                  elevation: point.position.elevation,
-                  time: point.time,
-                  status: ActivityPointsStatusColumn.fromEntity(point.status),
-                ),
-              )
-              .toList(),
+      points: entity.points
+          .map(
+            (point) => ActivityPointModel(
+              latitude: point.position.latitude,
+              longitude: point.position.longitude,
+              elevation: point.position.elevation,
+              time: point.time,
+              status: ActivityPointsStatusColumn.fromEntity(point.status),
+              accuracy: point.position.accuracy,
+              verticalAccuracy: point.position.verticalAccuracy,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -54,20 +55,21 @@ class ActivityModel {
       createdAt: model.createdAt,
       startedAt: model.startedAt,
       stoppedAt: model.stoppedAt,
-      points:
-          model.points
-              .map(
-                (point) => ActivityPointEntity(
-                  position: PositionEntity(
-                    latitude: point.latitude,
-                    longitude: point.longitude,
-                    elevation: point.elevation,
-                  ),
-                  time: point.time,
-                  status: point.status.toEntity(),
-                ),
-              )
-              .toList(),
+      points: model.points
+          .map(
+            (point) => ActivityPointEntity(
+              position: PositionEntity(
+                latitude: point.latitude,
+                longitude: point.longitude,
+                elevation: point.elevation,
+                accuracy: point.accuracy,
+                verticalAccuracy: point.verticalAccuracy,
+              ),
+              time: point.time,
+              status: point.status.toEntity(),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -93,6 +95,8 @@ class ActivityPointModel {
   final double elevation;
   final DateTime time;
   final ActivityPointsStatusColumn status;
+  final double? accuracy;
+  final double? verticalAccuracy;
 
   ActivityPointModel({
     required this.latitude,
@@ -100,6 +104,8 @@ class ActivityPointModel {
     required this.elevation,
     required this.time,
     required this.status,
+    this.accuracy,
+    this.verticalAccuracy,
   });
 
   static ActivityPointModel fromEntity(ActivityPointEntity entity) {
@@ -109,6 +115,8 @@ class ActivityPointModel {
       elevation: entity.position.elevation,
       time: entity.time,
       status: ActivityPointsStatusColumn.fromEntity(entity.status),
+      accuracy: entity.position.accuracy,
+      verticalAccuracy: entity.position.verticalAccuracy,
     );
   }
 
@@ -118,6 +126,8 @@ class ActivityPointModel {
         latitude: model.latitude,
         longitude: model.longitude,
         elevation: model.elevation,
+        accuracy: model.accuracy,
+        verticalAccuracy: model.verticalAccuracy,
       ),
       time: model.time,
       status: model.status.toEntity(),
@@ -131,6 +141,8 @@ class ActivityPointModel {
       elevation: row.elevation,
       time: row.time,
       status: row.status,
+      accuracy: row.accuracy,
+      verticalAccuracy: row.verticalAccuracy,
     );
   }
 }

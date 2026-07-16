@@ -26,3 +26,21 @@ class ChangeUiLocale extends PreferencesEvent {
 
   const ChangeUiLocale(this.languageCode);
 }
+
+class ChangeCheckUpdates extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeCheckUpdates(this.enabled);
+}
+
+class ChangeMapTilesEnabled extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeMapTilesEnabled(this.enabled);
+}
+
+class ChangeShowOnLockScreen extends PreferencesEvent {
+  final bool enabled;
+
+  const ChangeShowOnLockScreen(this.enabled);
+}

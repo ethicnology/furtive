@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
@@ -30,13 +32,13 @@ class ShareCard extends StatelessWidget {
     // showed a "T" separator and the user's hour:minute:second in a fixed
     // english-friendly form.
     final localeName = Localizations.localeOf(context).toString();
-    final dateLabel = DateFormat.yMMMd(localeName)
-        .add_Hm()
-        .format(activity.startedAt.toLocal());
+    final dateLabel = DateFormat.yMMMd(
+      localeName,
+    ).add_Hm().format(activity.startedAt.toLocal());
     final activityName =
         (activity.name.isNotEmpty && activity.name != kDefaultActivityName)
-            ? activity.name
-            : dateLabel;
+        ? activity.name
+        : dateLabel;
 
     return Material(
       color: Colors.black,
@@ -107,7 +109,8 @@ class ShareCard extends StatelessWidget {
                     ),
                     _StatTile(
                       label: l10n.statElevation,
-                      value: '+${activity.activeElevationGain.toStringAsFixed(0)} m',
+                      value:
+                          '+${activity.activeElevationGain.toStringAsFixed(0)} m',
                     ),
                   ],
                 ),
@@ -171,6 +174,75 @@ class _StatTile extends StatelessWidget {
   }
 }
 
+/// Maps a route's WGS84 bounding box onto a canvas. Equirectangular with a
+/// longitude correction: one degree of longitude spans cos(latitude)× the
+/// ground distance of one degree of latitude, so without the factor a track
+/// renders stretched horizontally away from the equator (≈1.5× too wide at
+/// 48°). Longitude is scaled by cos(midLat) into latitude-equivalent degrees,
+/// then the box is fit by the tighter axis so the route keeps its real-world
+/// aspect ratio and is centred. (Antipodal / pole-spanning routes don't occur
+/// within a single activity.)
+class RouteProjection {
+  final double scale;
+  final double lonCorrection;
+  final double minLon;
+  final double maxLat;
+  final double offsetX;
+  final double offsetY;
+
+  const RouteProjection({
+    required this.scale,
+    required this.lonCorrection,
+    required this.minLon,
+    required this.maxLat,
+    required this.offsetX,
+    required this.offsetY,
+  });
+
+  Offset project(double lat, double lon) => Offset(
+    offsetX + (lon - minLon) * lonCorrection * scale,
+    // Latitude grows north (up), canvas y grows down, so flip.
+    offsetY + (maxLat - lat) * scale,
+  );
+}
+
+RouteProjection computeRouteProjection({
+  required double minLat,
+  required double maxLat,
+  required double minLon,
+  required double maxLon,
+  required Size size,
+  double padding = 0.05,
+}) {
+  // 5% interior padding so the route doesn't kiss the edge.
+  final pad = size.shortestSide * padding;
+  final drawW = size.width - pad * 2;
+  final drawH = size.height - pad * 2;
+
+  final latRange = (maxLat - minLat).abs();
+  final lonRange = (maxLon - minLon).abs();
+  final midLatRad = ((minLat + maxLat) / 2) * (math.pi / 180);
+  final lonCorrection = math.cos(midLatRad).abs().clamp(1e-6, 1.0);
+  final safeLat = latRange < 1e-9 ? 1e-9 : latRange;
+  // Longitude extent expressed in latitude-equivalent degrees.
+  final lonExtent = (lonRange < 1e-9 ? 1e-9 : lonRange) * lonCorrection;
+  final scale = (drawW / lonExtent) < (drawH / safeLat)
+      ? drawW / lonExtent
+      : drawH / safeLat;
+
+  // Centre the scaled bbox in the canvas.
+  final scaledW = lonExtent * scale;
+  final scaledH = safeLat * scale;
+  return RouteProjection(
+    scale: scale,
+    lonCorrection: lonCorrection,
+    minLon: minLon,
+    maxLat: maxLat,
+    offsetX: pad + (drawW - scaledW) / 2,
+    offsetY: pad + (drawH - scaledH) / 2,
+  );
+}
+
 class _RoutePainter extends CustomPainter {
   final List<ActivitySegment> segments;
   final Color strokeColor;
@@ -207,36 +279,14 @@ class _RoutePainter extends CustomPainter {
       if (lon > maxLon) maxLon = lon;
     }
 
-    // Use 5% interior padding so the route doesn't kiss the edge.
-    const padding = 0.05;
-    final pad = size.shortestSide * padding;
-    final drawW = size.width - pad * 2;
-    final drawH = size.height - pad * 2;
-
-    final latRange = (maxLat - minLat).abs();
-    final lonRange = (maxLon - minLon).abs();
-    // Equirectangular projection: scale lat and lon equally (close enough
-    // visually for activity tracks; antipodal cases don't happen in the
-    // single-activity context). Fit by the tighter axis so the route
-    // keeps its real-world aspect ratio.
-    final safeLat = latRange < 1e-9 ? 1e-9 : latRange;
-    final safeLon = lonRange < 1e-9 ? 1e-9 : lonRange;
-    final scale = (drawW / safeLon) < (drawH / safeLat)
-        ? drawW / safeLon
-        : drawH / safeLat;
-
-    // Centre the route inside the canvas after the bbox is scaled.
-    final scaledW = safeLon * scale;
-    final scaledH = safeLat * scale;
-    final offsetX = pad + (drawW - scaledW) / 2;
-    final offsetY = pad + (drawH - scaledH) / 2;
-
-    Offset project(double lat, double lon) {
-      final x = offsetX + (lon - minLon) * scale;
-      // Latitude grows north (up), canvas y grows down, so flip.
-      final y = offsetY + (maxLat - lat) * scale;
-      return Offset(x, y);
-    }
+    final proj = computeRouteProjection(
+      minLat: minLat,
+      maxLat: maxLat,
+      minLon: minLon,
+      maxLon: maxLon,
+      size: size,
+    );
+    Offset project(double lat, double lon) => proj.project(lat, lon);
 
     final paint = Paint()
       ..color = strokeColor

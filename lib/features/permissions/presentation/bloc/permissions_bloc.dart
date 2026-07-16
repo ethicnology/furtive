@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/features/permissions/domain/usecases/check_permissions_use_case.dart';
@@ -18,6 +20,14 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
     on<LoadPermissions>(_onLoadPermissions);
     on<RequestPermission>(_onRequestPermission);
     on<CheckAllPermissions>(_onCheckAllPermissions);
+    on<ClearPermissionsError>(_onClearPermissionsError);
+  }
+
+  void _onClearPermissionsError(
+    ClearPermissionsError event,
+    Emitter<PermissionsState> emit,
+  ) {
+    emit(state.copyWith(errorMessage: null));
   }
 
   Future<void> _onLoadPermissions(
@@ -58,12 +68,24 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
     Emitter<PermissionsState> emit,
   ) async {
     try {
-      switch (event.permission) {
-        case Permission.locationAlways:
-          await _openAppSettingsUseCase();
-          break;
-        default:
-          await _requestPermissionUseCase(event.permission);
+      // Route to the OS settings screen when an in-app request() would be a
+      // silent no-op, otherwise request inline:
+      //  - permanently denied / restricted: request() does nothing.
+      //  - Android background location ("Allow all the time"): Android 11+
+      //    forbids granting it from an in-app dialog and does NOT flip the
+      //    status to permanentlyDenied, so request() loops forever — it must
+      //    go through settings. (iOS can escalate to Always via request().)
+      // This keeps a permanently-denied *required* permission reachable
+      // (the old code only opened settings for locationAlways).
+      final status = await event.permission.status;
+      final needsSettings =
+          status.isPermanentlyDenied ||
+          status.isRestricted ||
+          (event.permission == Permission.locationAlways && Platform.isAndroid);
+      if (needsSettings) {
+        await _openAppSettingsUseCase();
+      } else {
+        await _requestPermissionUseCase(event.permission);
       }
       add(const LoadPermissions());
     } catch (e) {

@@ -16,6 +16,36 @@ Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 
 </div>
 
+## Build-time flags
+
+- `PROTOMAPS_KEY` / `PROTOMAPS_URL` — map tiles, see "Reproducible builds"
+  below.
+- `DISABLE_UPDATE_CHECK=true` — disables the opt-out GitHub release check
+  entirely at compile time (no code path, no network call ever made),
+  independent of the in-app preference. Off by default. Intended for
+  distribution channels that already manage updates themselves (e.g.
+  F-Droid), where an app also phoning GitHub — even opt-out — is typically
+  flagged as an anti-feature.
+
+## GPS signal loss
+
+GPS stops working indoors (store, tunnel, deep urban canyon) while a
+recording stays active. Furtive detects these outages from the fix cadence:
+when the time since the last fix exceeds ~10× the recent median interval
+(clamped to 30 s – 6 min), the gap is bracketed as a **signal lost** span —
+
+- elapsed time is never rewritten; active duration, distance and pace
+  simply exclude the outage,
+- the map draws a dashed line across the unknown stretch instead of a
+  solid straight line through buildings,
+- the outage duration is reported on the activity detail screen,
+- GPX files represent the gap as separate `<trkseg>` blocks (the GPX 1.1
+  semantics for lost reception), both on export and import.
+
+The path travelled during an outage is unknowable after the fact — for long
+indoor breaks, pausing the recording manually remains the most accurate
+option.
+
 ## Releases
 
 Release artifacts are produced unsigned by Flutter (`signingConfig = null`

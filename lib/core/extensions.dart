@@ -14,9 +14,12 @@ extension NumFormatting on num {
 extension DurationExtension on Duration {
   String toHHMMSS() {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = inHours;
-    final minutes = inMinutes.remainder(60);
-    final seconds = inSeconds.remainder(60);
+    // Clamp negatives to zero: a clock-skewed stoppedAt before startedAt yields
+    // a negative Duration, and remainder() keeps the sign, rendering "-1m-30s".
+    final d = isNegative ? Duration.zero : this;
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60);
+    final seconds = d.inSeconds.remainder(60);
 
     if (hours > 0) {
       return '${twoDigits(hours)}h${twoDigits(minutes)}m${twoDigits(seconds)}s';

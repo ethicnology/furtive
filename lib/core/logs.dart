@@ -12,11 +12,13 @@ class MyLogs {
   final Directory dir;
   final dep.LoggerColorful logger;
   static const _logFilename = 'logs.tsv';
-  /// Hard cap for the log file. SEVERE/WARNING-only writes mean realistic
-  /// growth is slow, but with no rotation a long-lived install would
-  /// accumulate indefinitely — bad for disk usage AND privacy (older
-  /// session data sitting on disk forever). Trimmed on startup from
-  /// `ensureLogsExist`.
+
+  /// Hard cap for the log file. Every level, including INFO, is persisted
+  /// (see the listener below) so a session can be fully reconstructed from
+  /// the in-app Logs page without a computer/adb attached. With no rotation
+  /// a long-lived install would still accumulate indefinitely — bad for disk
+  /// usage AND privacy (older session data sitting on disk forever).
+  /// Trimmed on startup from `ensureLogsExist`.
   static const _maxLogBytes = 1024 * 1024; // 1 MB
   File get logsFile => File('${dir.path}/$_logFilename');
 
@@ -42,7 +44,7 @@ class MyLogs {
       final sanitizedContent = content.map((e) => logger.sanitize(e)).toList();
       final tsvLine = sanitizedContent.join('\t');
 
-      if (record.level != dep.Level.INFO) _queueWrite(tsvLine);
+      _queueWrite(tsvLine);
 
       if (kDebugMode) {
         final debug = content.sublist(1, 3);
@@ -51,13 +53,25 @@ class MyLogs {
     });
   }
 
-  void _queueWrite(String log) {
-    final write = () async {
-      await _currentWrite;
-      await logsFile.writeAsString('$log\n', mode: FileMode.append);
+  /// Serialise every mutation of the log file (appends, trim, delete) on a
+  /// single chain so they can't interleave and tear a record. Each step
+  /// swallows its own error so one failed write doesn't poison the chain and
+  /// silently drop all later log lines.
+  Future<void> _enqueue(Future<void> Function() op) {
+    final next = () async {
+      try {
+        await _currentWrite;
+      } catch (_) {}
+      try {
+        await op();
+      } catch (_) {}
     }();
+    _currentWrite = next;
+    return next;
+  }
 
-    _currentWrite = write;
+  void _queueWrite(String log) {
+    _enqueue(() => logsFile.writeAsString('$log\n', mode: FileMode.append));
   }
 
   MyLogs.init({String name = 'MyLogs', Directory? directory})
@@ -90,7 +104,9 @@ class MyLogs {
   /// [_maxLogBytes]. Keeps roughly the most recent 75% of the cap so we
   /// don't trim again on the very next launch.
   Future<void> _trimIfOversized() async {
-    try {
+    // Run on the write queue so a concurrent append can't interleave with the
+    // truncate and lose or tear a line.
+    await _enqueue(() async {
       final length = await logsFile.length();
       if (length <= _maxLogBytes) return;
 
@@ -107,10 +123,7 @@ class MyLogs {
       } finally {
         await raf.close();
       }
-    } catch (e) {
-      // Logging in here would just append to the file we just trimmed —
-      // do nothing rather than risk a recursive failure loop.
-    }
+    });
   }
 
   void addContextInfos() {
@@ -128,7 +141,8 @@ class MyLogs {
       final ios = Global.ios!;
       config('Model: ${ios.model}');
       config('Model Name: ${ios.modelName}');
-      config('Name: ${ios.name}');
+      // ios.name is the user-assigned device name ("Jane's iPhone") — personal
+      // data. Deliberately not logged so exported logs carry no PII.
       config('System Name: ${ios.systemName}');
       config('System Version: ${ios.systemVersion}');
       config('UTS Version: ${ios.utsname.version}');
@@ -198,7 +212,9 @@ class MyLogs {
   }
 
   Future<void> deleteLogs() async {
-    await logsFile.writeAsString('');
+    // Clear on the write queue so a queued append can't land between the
+    // truncate and the context re-write below.
+    await _enqueue(() => logsFile.writeAsString(''));
     logs.shout('Logs deleted');
     addContextInfos();
   }

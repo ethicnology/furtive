@@ -44,21 +44,15 @@ class LabeledDropdown<T> extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: AppColors.primary.background,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: AppColors.primary.background, width: 2),
         ),
       ),
-      items:
-          items
-              .map(
-                (item) => DropdownMenuItem<T>(
-                  value: item,
-                  child: Text(labelFor(item)),
-                ),
-              )
-              .toList(),
+      items: items
+          .map(
+            (item) =>
+                DropdownMenuItem<T>(value: item, child: Text(labelFor(item))),
+          )
+          .toList(),
       onChanged: (v) {
         // `null is T` is true when T is nullable (e.g. String?), allowing
         // null through as a valid selection (e.g. "System default" option).

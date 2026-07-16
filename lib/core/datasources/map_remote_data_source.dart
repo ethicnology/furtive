@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:furtive/core/database/tables/preferences_table.dart';
+import 'package:furtive/core/logs.dart';
 import 'package:http/http.dart' as http;
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
@@ -77,19 +78,34 @@ String resolveMapLabelLanguage(String? userLocaleTag) {
 }
 
 class MapRemoteDataSource {
-  Future<Style> getMapConfig({
+  Future<Style?> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
     String? userLocaleTag,
+    bool tilesEnabled = true,
   }) async {
-    if (_protomapsKey.isEmpty) {
-      throw Exception(
-        'Missing PROTOMAPS_KEY. Build with --dart-define=PROTOMAPS_KEY=...',
+    // No key → the FOSS / reproducible build. Return null instead of throwing
+    // so the app degrades to a functional, tileless map (record activities,
+    // see your track on a blank canvas) rather than getting stuck on a spinner.
+    //
+    // tilesEnabled == false → the user opted out (Preferences) even though a
+    // key was compiled in. Every map-tile request reveals the current
+    // viewport — and therefore an approximation of the live position, and
+    // past activity locations via the detail page — to the tile host. This
+    // makes a keyed build behave exactly like the keyless one: same
+    // tileless map, zero network calls to Protomaps. See
+    // AUDIT-2026-07.md §5.
+    if (_protomapsKey.isEmpty || !tilesEnabled) {
+      logs.warning(
+        'getMapConfig: tileless map '
+        '(keyEmpty: ${_protomapsKey.isEmpty}, tilesEnabled: $tilesEnabled)',
       );
+      return null;
     }
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl =
         '$_protomapsUrl/${theme.name}/$lang.json?key=$_protomapsKey';
+    logs.info('getMapConfig: fetching style ${_redactKey(styleUrl)}');
 
     // We don't use StyleReader.read() directly because the Protomaps v5
     // style JSON encodes localised labels with a MapLibre `format`
@@ -101,11 +117,16 @@ class MapRemoteDataSource {
     final styleText = await _httpGet(styleUrl);
     final styleJson = await compute(jsonDecode, styleText);
     if (styleJson is! Map<String, dynamic>) {
-      throw 'Protomaps style is not a JSON object: $styleUrl';
+      throw 'Protomaps style is not a JSON object: ${_redactKey(styleUrl)}';
     }
     _patchTextFields(styleJson, lang);
 
-    return _buildStyle(styleJson);
+    final builtStyle = await _buildStyle(styleJson);
+    logs.info(
+      'getMapConfig: style built (name: ${builtStyle.name}, '
+      'providers: ${builtStyle.providers.tileProviderBySource.keys.toList()})',
+    );
+    return builtStyle;
   }
 
   /// Walk every layer and replace its `text-field` (which Protomaps emits
@@ -142,10 +163,9 @@ class MapRemoteDataSource {
       final value = entry.value;
       if (value is! Map) continue;
       final sourceType = value['type'];
-      final type =
-          TileProviderType.values
-              .where((e) => e.name.replaceAll('_', '-') == sourceType)
-              .firstOrNull;
+      final type = TileProviderType.values
+          .where((e) => e.name.replaceAll('_', '-') == sourceType)
+          .firstOrNull;
       if (type == null) continue;
 
       dynamic source = value;
@@ -198,25 +218,78 @@ class MapRemoteDataSource {
 
   /// Protomaps gates every resource (tiles, sprites, TileJSON) on the
   /// same API key; URIs in the v5 style JSON are emitted without one.
+  // Strip the API key before a URL goes into a thrown/logged error string.
+  static String _redactKey(String url) =>
+      url.replaceAll(RegExp(r'key=[^&]*'), 'key=***');
+
+  /// Host the API key may be appended to. Only URLs on the configured
+  /// Protomaps host receive the key, so a compromised/MITM'd style JSON that
+  /// smuggles in a third-party `url`/`sprite`/`tiles` host can't exfiltrate
+  /// the key (or turn our tile requests, which leak the viewport, toward an
+  /// attacker). Parsed once from _protomapsUrl.
+  static final String _keyHost = Uri.parse(_protomapsUrl).host;
+
   String _withKey(String url) {
-    if (url.contains('key=')) return url;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return url;
+    // Exact query-parameter check (not a substring) and host allowlist.
+    if (uri.queryParameters.containsKey('key')) return url;
+    if (uri.host != _keyHost) return url;
+    // Textual concatenation, NOT uri.replace(queryParameters: ...): a tile
+    // URL template contains literal placeholders like {z}/{x}/{y}, and
+    // Uri.replace re-encodes the whole query/path component, turning them
+    // into %7Bz%7D/%7Bx%7D/%7By%7D — NetworkVectorTileProvider substitutes
+    // placeholders via a regex that only matches the unencoded braces, so
+    // every tile request would 404. Currently masked because Protomaps'
+    // TileJSON responses already embed `?key=` in their own tile templates
+    // (the early return above), but this path is hit directly for `sprite`/
+    // style-level `url` fields, and would be hit for tiles too if Protomaps
+    // ever stopped pre-baking the key.
     final separator = url.contains('?') ? '&' : '?';
-    return '$url${separator}key=$_protomapsKey';
+    return '$url$separator'
+        'key=$_protomapsKey';
   }
 
-  Future<String> _httpGet(String url) async {
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching $url';
+  // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung
+  // Protomaps connection can't leave the map-setup future pending forever.
+  // Matches the trace source's timeout.
+  static const _httpTimeout = Duration(seconds: 30);
+
+  /// Metadata fetches (style JSON, TileJSON, sprite atlas) are small; bound
+  /// them so a hostile/misbehaving response can't exhaust memory. Tiles proper
+  /// go through NetworkVectorTileProvider and aren't covered here.
+  static const _maxResponseBytes = 16 * 1024 * 1024;
+
+  Future<Uint8List> _httpGetBytesCapped(String url) async {
+    final client = http.Client();
+    try {
+      final request = http.Request('GET', Uri.parse(url));
+      final response = await client.send(request).timeout(_httpTimeout);
+      if (response.statusCode != 200) {
+        throw 'HTTP ${response.statusCode} fetching ${_redactKey(url)}';
+      }
+      final declared = response.contentLength;
+      if (declared != null && declared > _maxResponseBytes) {
+        throw 'Response too large ($declared B) fetching ${_redactKey(url)}';
+      }
+      final chunks = <List<int>>[];
+      var total = 0;
+      await for (final chunk in response.stream.timeout(_httpTimeout)) {
+        total += chunk.length;
+        if (total > _maxResponseBytes) {
+          throw 'Response too large (> $_maxResponseBytes B) fetching '
+              '${_redactKey(url)}';
+        }
+        chunks.add(chunk);
+      }
+      return Uint8List.fromList(chunks.expand((c) => c).toList());
+    } finally {
+      client.close();
     }
-    return res.body;
   }
 
-  Future<Uint8List> _httpGetBytes(String url) async {
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode != 200) {
-      throw 'HTTP ${res.statusCode} fetching $url';
-    }
-    return res.bodyBytes;
-  }
+  Future<String> _httpGet(String url) async =>
+      utf8.decode(await _httpGetBytesCapped(url));
+
+  Future<Uint8List> _httpGetBytes(String url) => _httpGetBytesCapped(url);
 }

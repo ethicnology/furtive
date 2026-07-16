@@ -5,9 +5,19 @@
   GPS points, preferences) to the user's Google Drive backup transparently.
 -->
 <full-backup-content>
-    <exclude domain="root" />
-    <exclude domain="file" />
-    <exclude domain="database" />
-    <exclude domain="sharedpref" />
-    <exclude domain="external" />
+    <!--
+      path="." (not omitted): every documented Android <include>/<exclude>
+      example specifies path, using "." to mean "the entire domain" (see
+      developer.android.com/guide/topics/data/autobackup, the sharedpref
+      include/exclude sample). A bare domain-only exclude with no path
+      attribute is unverified/undocumented behaviour. This is defense in
+      depth only — android:allowBackup="false" in AndroidManifest.xml
+      already disables Auto Backup outright, so these rules are inert
+      today; they only matter if allowBackup is ever flipped back on.
+    -->
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
 </full-backup-content>

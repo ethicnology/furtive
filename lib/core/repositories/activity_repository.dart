@@ -1,4 +1,5 @@
 import 'package:furtive/core/datasources/activity_local_data_source.dart';
+import 'package:furtive/core/entities/activity_summary.dart';
 import 'package:furtive/core/models/activity_model.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 
@@ -12,13 +13,20 @@ class ActivityRepository {
     await localActivities.store(model);
   }
 
-  Future<List<ActivityEntity>> fetch() async {
-    final models = await localActivities.fetch();
-    return models.map(ActivityModel.toEntity).toList();
+  Future<List<ActivitySummary>> fetchSummaries() async {
+    return await localActivities.fetchSummaries();
   }
 
   Future<ActivityEntity> fetchSingle(String activityId) async {
     final model = await localActivities.fetchSingle(activityId);
+    return ActivityModel.toEntity(model);
+  }
+
+  /// The ongoing (never-ceased) activity with its points, or null. See
+  /// ActivityLocalDataSource.fetchOngoing.
+  Future<ActivityEntity?> fetchOngoing() async {
+    final model = await localActivities.fetchOngoing();
+    if (model == null) return null;
     return ActivityModel.toEntity(model);
   }
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:furtive/core/logs.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
@@ -32,12 +33,20 @@ class _LogsPageState extends State<LogsPage> {
       final loadedLogs = await logs.readLogs();
       // Compute size once on load, not on every rebuild
       final sizeKb = utf8.encode(loadedLogs.join('\n')).length ~/ 1000;
+      // Sort newest-first once here, not on every rebuild in _filteredLogs.
+      loadedLogs.sort((a, b) {
+        final tsA = a.split('\t').first;
+        final tsB = b.split('\t').first;
+        return tsB.compareTo(tsA);
+      });
+      if (!mounted) return;
       setState(() {
         _logs = loadedLogs;
         _logsSizeKb = sizeKb;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,16 +61,10 @@ class _LogsPageState extends State<LogsPage> {
   }
 
   List<String> get _filteredLogs {
-    final result = _logs.toList();
-    result.sort((a, b) {
-      final partsA = a.split('\t');
-      final partsB = b.split('\t');
-      return partsB[0].compareTo(partsA[0]);
-    });
+    // _logs is already sorted newest-first in _loadLogs.
+    if (_startDate == null && _endDate == null) return _logs;
 
-    if (_startDate == null && _endDate == null) return result;
-
-    return result.where((log) {
+    return _logs.where((log) {
       final parts = log.split('\t');
       if (parts.isEmpty) return false;
 
@@ -94,7 +97,7 @@ class _LogsPageState extends State<LogsPage> {
       lastDate: DateTime.now(),
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _startDate = picked.start;
         _endDate = picked.end;
@@ -131,9 +134,9 @@ class _LogsPageState extends State<LogsPage> {
       },
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await logs.deleteLogs();
-      await _loadLogs();
+      if (mounted) await _loadLogs();
     }
   }
 
@@ -147,9 +150,7 @@ class _LogsPageState extends State<LogsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(
-              context,
-            ).logsCopiedMsg(_filteredLogs.length),
+            AppLocalizations.of(context).logsCopiedMsg(_filteredLogs.length),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -176,156 +177,147 @@ class _LogsPageState extends State<LogsPage> {
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
+            icon: const Icon(Icons.delete_outline_rounded, color: kDestructive),
             onPressed: _logs.isEmpty ? null : _deleteLogs,
             tooltip: l10n.logsTooltipClear,
           ),
           IconButton(
-            icon: const Icon(Icons.date_range, color: Colors.white),
+            icon: const Icon(Icons.date_range_rounded),
             onPressed: _selectDateRange,
             tooltip: l10n.logsTooltipFilterDate,
           ),
           if (_startDate != null || _endDate != null)
             IconButton(
-              icon: const Icon(Icons.clear),
+              icon: const Icon(Icons.clear_rounded),
               onPressed: _clearDateRange,
               tooltip: l10n.logsTooltipClearFilter,
             ),
           IconButton(
-            icon: const Icon(Icons.share),
+            icon: const Icon(Icons.share_rounded),
             onPressed: _logs.isEmpty ? null : _shareLogs,
             tooltip: l10n.logsTooltipShare,
           ),
         ],
       ),
-      body:
-          _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Container(
-                color: Colors.black,
-                child: Column(
-                  children: [
-                    if (_startDate != null && _endDate != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              l10n.logsFiltered(
-                                _formatDate(context, _startDate!),
-                                _formatDate(context, _endDate!),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Container(
+              color: Colors.black,
+              child: Column(
+                children: [
+                  if (_startDate != null && _endDate != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            l10n.logsFiltered(
+                              _formatDate(context, _startDate!),
+                              _formatDate(context, _endDate!),
                             ),
-                            const Spacer(),
-                            Text(
-                              l10n.logsShowingCount(
-                                filteredLogs.length,
-                                _logs.length,
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
                             ),
-                          ],
-                        ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            l10n.logsShowingCount(
+                              filteredLogs.length,
+                              _logs.length,
+                            ),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    Expanded(
-                      child:
-                          filteredLogs.isEmpty
-                              ? Center(
-                                child: Text(
-                                  AppLocalizations.of(context).logsEmpty,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              )
-                              : Scrollbar(
-                                thumbVisibility: true,
-                                child: ListView.builder(
-                                  itemCount: filteredLogs.length,
-                                  itemBuilder: (context, index) {
-                                    final logLine = filteredLogs[index];
-                                    final parts = logLine.split('\t');
-                                    Color textColor = Colors.white;
+                    ),
+                  Expanded(
+                    child: filteredLogs.isEmpty
+                        ? Center(
+                            child: Text(
+                              AppLocalizations.of(context).logsEmpty,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          )
+                        : Scrollbar(
+                            thumbVisibility: true,
+                            child: ListView.builder(
+                              itemCount: filteredLogs.length,
+                              itemBuilder: (context, index) {
+                                final logLine = filteredLogs[index];
+                                final parts = logLine.split('\t');
+                                Color textColor = Colors.white;
 
-                                    if (parts.length > 1) {
-                                      textColor = switch (parts[1]) {
-                                        'FINEST' => Colors.lightGreenAccent,
-                                        'FINER' => Colors.lightGreen,
-                                        'FINE' => Colors.green,
-                                        'CONFIG' => Colors.brown,
-                                        'INFO' => Colors.blue,
-                                        'WARNING' => Colors.orange,
-                                        'SEVERE' => Colors.red,
-                                        'SHOUT' => Colors.purple,
-                                        _ => Colors.white,
-                                      };
-                                    }
+                                if (parts.length > 1) {
+                                  textColor = switch (parts[1]) {
+                                    'FINEST' => Colors.lightGreenAccent,
+                                    'FINER' => Colors.lightGreen,
+                                    'FINE' => Colors.green,
+                                    'CONFIG' => Colors.brown,
+                                    'INFO' => Colors.blue,
+                                    'WARNING' => Colors.orange,
+                                    'SEVERE' => Colors.red,
+                                    'SHOUT' => Colors.purple,
+                                    _ => Colors.white,
+                                  };
+                                }
 
-                                    final displayParts = parts.toList();
-                                    if (displayParts.isNotEmpty &&
-                                        displayParts[0].length > 7) {
-                                      try {
-                                        displayParts[0] = displayParts[0]
-                                            .substring(
-                                              0,
-                                              displayParts[0].length - 7,
-                                            );
-                                      } catch (_) {}
-                                    }
+                                final displayParts = parts.toList();
+                                if (displayParts.isNotEmpty &&
+                                    displayParts[0].length > 7) {
+                                  try {
+                                    displayParts[0] = displayParts[0].substring(
+                                      0,
+                                      displayParts[0].length - 7,
+                                    );
+                                  } catch (_) {}
+                                }
 
-                                    final displayText = displayParts
-                                        .where((part) => part.isNotEmpty)
-                                        .join(' | ');
+                                final displayText = displayParts
+                                    .where((part) => part.isNotEmpty)
+                                    .join(' | ');
 
-                                    return GestureDetector(
-                                      onLongPress: () {
-                                        Clipboard.setData(
-                                          ClipboardData(text: logLine),
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              AppLocalizations.of(
-                                                context,
-                                              ).logCopiedMsg,
-                                            ),
-                                            duration: const Duration(
-                                              seconds: 1,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 1,
-                                          horizontal: 8,
+                                return GestureDetector(
+                                  onLongPress: () {
+                                    Clipboard.setData(
+                                      ClipboardData(text: logLine),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          ).logCopiedMsg,
                                         ),
-                                        child: SelectableText(
-                                          displayText,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontFamily: 'monospace',
-                                            fontSize: 13,
-                                          ),
-                                        ),
+                                        duration: const Duration(seconds: 1),
                                       ),
                                     );
                                   },
-                                ),
-                              ),
-                    ),
-                  ],
-                ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 1,
+                                      horizontal: 8,
+                                    ),
+                                    child: SelectableText(
+                                      displayText,
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontFamily: 'monospace',
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                ],
               ),
+            ),
     );
   }
 }

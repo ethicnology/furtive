@@ -18,7 +18,16 @@ import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/core/entities/trace_entity.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
+
+String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
+    switch (status) {
+      LoadingStatus.localizing => l10n.mapLoadingLocalizing,
+      LoadingStatus.loadingMap => l10n.mapLoadingMap,
+      LoadingStatus.loadingTraces => l10n.mapLoadingTraces,
+      LoadingStatus.startingActivity => l10n.mapStartingActivity,
+    };
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -27,15 +36,13 @@ class MapPage extends StatefulWidget {
   State<MapPage> createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage>
-    with AutomaticKeepAliveClientMixin {
+class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   final _mapController = MapController();
   static const _kFloatingActionButtonWidth = 115.0;
 
   // Stay alive across BottomNavigation tab switches so the F6 cease →
   // stats listener keeps firing even when the user is on Activities or
-  // Settings. Otherwise PageView disposes us and a watchdog cease while
-  // off-tab would silently end the activity with no redirect.
+  // Settings.
   @override
   bool get wantKeepAlive => true;
   StreamSubscription<MapState>? _ceaseSub;
@@ -44,22 +51,29 @@ class _MapPageState extends State<MapPage>
   void initState() {
     super.initState();
     // F6: route to the activity stats page when the running activity ends
-    // (Stop tap, notification swipe, or watchdog cease). We track the
+    // (the user holds Stop). We track the
     // previous activity manually since BlocListener's listener can't see
     // the pre-transition state and side-effecting listenWhen is fragile.
     final bloc = context.read<MapBloc>();
     // Trigger location/map init the first time the page mounts. Safe to
-    // call repeatedly — _onInitMap cancels any prior position stream — but
-    // AutomaticKeepAliveClientMixin keeps this State alive across tab
+    // call repeatedly — _onInitMap leaves an already-open position stream
+    // untouched (re-opening it would drop in-flight fixes) and guards
+    // concurrent opens against each other (see MapBloc._ensurePositionStreamOpen) —
+    // but AutomaticKeepAliveClientMixin keeps this State alive across tab
     // switches so it only fires once per cold start. The onboarded
     // cold-start path lands here; the wizard-finish path fires InitMap
     // explicitly before navigating.
     if (bloc.state.style == null) bloc.add(const InitMap());
     ActivityEntity? prev = bloc.state.activity;
     _ceaseSub = bloc.stream.listen((state) {
-      if (prev != null && state.activity == null) {
+      if (prev != null && state.activity == null && mounted) {
         final ceased = prev!;
-        if (mounted) {
+        // Only push when this page's route is actually on top. The State is
+        // kept alive across tab switches, so `mounted` alone would let a cease
+        // push the detail page on top of whatever the user is currently
+        // looking at.
+        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        if (isCurrent) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ActivityDetailPage(activity: ceased),
@@ -91,11 +105,8 @@ class _MapPageState extends State<MapPage>
             if (state.error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    state.error!.message,
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  backgroundColor: Colors.red,
+                  content: Text(state.error!.message),
+                  backgroundColor: kDestructive,
                   duration: const Duration(seconds: 3),
                 ),
               );
@@ -104,10 +115,36 @@ class _MapPageState extends State<MapPage>
           },
         ),
         BlocListener<MapBloc, MapState>(
-          listenWhen:
-              (previous, current) =>
-                  previous.loadingStatus == LoadingStatus.startingActivity &&
-                  current.loadingStatus == null,
+          listenWhen: (previous, current) =>
+              previous.trackingGap != current.trackingGap &&
+              current.trackingGap != null,
+          listener: (context, state) {
+            final gap = state.trackingGap!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).mapTrackingGapMsg(gap.inSeconds),
+                  style: const TextStyle(color: Colors.black, fontSize: 14),
+                ),
+                backgroundColor: kWarning,
+                duration: const Duration(seconds: 6),
+              ),
+            );
+            context.read<MapBloc>().add(const ClearTrackingGap());
+          },
+        ),
+        BlocListener<MapBloc, MapState>(
+          // current.activity != null excludes the failure path: on a failed
+          // StartActivity, the catch block emits an error (loadingStatus
+          // stays startingActivity) and the finally block then clears it to
+          // null WITHOUT an activity ever having been set — without this
+          // check, that transition matched too and showed a big "Activity
+          // started" toast on top of the error snackbar. See M11 in
+          // REVIEW-2026-07-FULL-APP.md.
+          listenWhen: (previous, current) =>
+              previous.loadingStatus == LoadingStatus.startingActivity &&
+              current.loadingStatus == null &&
+              current.activity != null,
           listener: (context, state) {
             final screenSize = MediaQuery.of(context).size;
             ScaffoldMessenger.of(context).showSnackBar(
@@ -132,12 +169,19 @@ class _MapPageState extends State<MapPage>
           },
         ),
         BlocListener<MapBloc, MapState>(
-          listenWhen:
-              (previous, current) =>
-                  (previous.activity == null ||
-                      previous.activity!.points.isEmpty) &&
-                  current.activity != null &&
-                  current.activity!.points.isNotEmpty,
+          // Fire ONLY on a fresh start: an activity that already existed with
+          // no points just got its first one. Requiring previous.activity to be
+          // non-null deliberately excludes the cold-start resume path (where
+          // the activity appears already populated) — resuming must NOT call
+          // _mapController.move, because the resumed activity is emitted while
+          // the map is still loading/unmounted and move() throws on an
+          // unattached controller. On resume the camera stays on the user's
+          // current location instead of jumping to the old track start.
+          listenWhen: (previous, current) =>
+              previous.activity != null &&
+              previous.activity!.points.isEmpty &&
+              current.activity != null &&
+              current.activity!.points.isNotEmpty,
           listener: (context, state) {
             final firstPoint = state.activity!.points.first;
             // Belt-and-suspenders: LocationRepository already drops
@@ -154,11 +198,10 @@ class _MapPageState extends State<MapPage>
           },
         ),
         BlocListener<MapBloc, MapState>(
-          listenWhen:
-              (previous, current) =>
-                  current.isFollowingUser &&
-                  current.userLocation != null &&
-                  previous.userLocation != current.userLocation,
+          listenWhen: (previous, current) =>
+              current.isFollowingUser &&
+              current.userLocation != null &&
+              previous.userLocation != current.userLocation,
           listener: (context, state) {
             final loc = state.userLocation!;
             if (!loc.latitude.isFinite || !loc.longitude.isFinite) {
@@ -170,6 +213,29 @@ class _MapPageState extends State<MapPage>
         ),
       ],
       child: BlocBuilder<MapBloc, MapState>(
+        // Everything below (the map, its layers, the FABs) must NOT rebuild
+        // on the 1s elapsedTime tick — only the ActivityStatsWidget overlay
+        // needs that cadence, and it's wrapped in its own nested BlocBuilder
+        // further down. Without this, the whole FlutterMap subtree (vector
+        // tile layer, polyline remapped from every point, km milestones
+        // recomputed from scratch) rebuilt every second during a
+        // recording — the one workload that must stay smooth and
+        // battery-light for potentially hours. See H4 in
+        // REVIEW-2026-07-FULL-APP.md. Every MapState field except
+        // elapsedTime is listed explicitly (rather than excluding just
+        // elapsedTime) so a future field addition doesn't silently start
+        // being ignored here.
+        buildWhen: (previous, current) =>
+            previous.style != current.style ||
+            previous.userLocation != current.userLocation ||
+            previous.searchCenter != current.searchCenter ||
+            previous.error != current.error ||
+            previous.traces != current.traces ||
+            previous.loadingStatus != current.loadingStatus ||
+            previous.activity != current.activity ||
+            previous.isPaused != current.isPaused ||
+            previous.isFollowingUser != current.isFollowingUser ||
+            previous.trackingGap != current.trackingGap,
         builder: (context, state) {
           // Treat a non-finite userLocation as if it weren't there at all.
           // LocationRepository drops these at source, but if any path ever
@@ -178,7 +244,12 @@ class _MapPageState extends State<MapPage>
           final loc = state.userLocation;
           final hasFiniteLocation =
               loc != null && loc.latitude.isFinite && loc.longitude.isFinite;
-          if (state.style == null || !hasFiniteLocation) {
+          // Wait for a location to centre on. A null style only blocks while
+          // the tile config is still loading; once init has finished with no
+          // style (keyless FOSS build) we render a functional tileless map.
+          final stillLoadingStyle =
+              state.style == null && state.loadingStatus != null;
+          if (!hasFiniteLocation || stillLoadingStyle) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -187,7 +258,10 @@ class _MapPageState extends State<MapPage>
                   if (state.loadingStatus != null) ...[
                     const SizedBox(height: 16),
                     Text(
-                      state.loadingStatus!.message,
+                      _loadingMessage(
+                        AppLocalizations.of(context),
+                        state.loadingStatus!,
+                      ),
                       style: const TextStyle(fontSize: 16),
                     ),
                   ],
@@ -214,12 +288,13 @@ class _MapPageState extends State<MapPage>
                       },
                     ),
                     children: [
-                      VectorTileLayer(
-                        maximumZoom: Global.maxZoom,
-                        theme: state.style!.theme,
-                        tileProviders: state.style!.providers,
-                        sprites: state.style!.sprites,
-                      ),
+                      if (state.style != null)
+                        VectorTileLayer(
+                          maximumZoom: Global.maxZoom,
+                          theme: state.style!.theme,
+                          tileProviders: state.style!.providers,
+                          sprites: state.style!.sprites,
+                        ),
                       if (state.traces.isNotEmpty)
                         _buildTracesLayer(state.traces),
                       if (state.activity != null &&
@@ -237,7 +312,7 @@ class _MapPageState extends State<MapPage>
                           marker: DefaultLocationMarker(
                             color: AppColors.primary.background,
                             child: Icon(
-                              Icons.navigation,
+                              Icons.navigation_rounded,
                               color: AppColors.primary.foreground,
                               size: 18,
                             ),
@@ -254,6 +329,32 @@ class _MapPageState extends State<MapPage>
                       if (state.searchCenter != null &&
                           state.loadingStatus == LoadingStatus.loadingTraces)
                         _buildSquareOverlay(),
+                      // Tile attribution is legally required when tiles are
+                      // shown: the basemap is Protomaps rendering OpenStreetMap
+                      // data (ODbL §4.3 and Protomaps' ToS both require visible
+                      // credit). Omitted on the keyless tileless map.
+                      if (state.style != null)
+                        RichAttributionWidget(
+                          alignment: AttributionAlignment.bottomLeft,
+                          attributions: [
+                            TextSourceAttribution(
+                              'OpenStreetMap',
+                              onTap: () => launchUrl(
+                                Uri.parse(
+                                  'https://www.openstreetmap.org/copyright',
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                            ),
+                            TextSourceAttribution(
+                              'Protomaps',
+                              onTap: () => launchUrl(
+                                Uri.parse('https://protomaps.com'),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -265,10 +366,18 @@ class _MapPageState extends State<MapPage>
                     top: 50,
                     left: 0,
                     right: 0,
-                    child: ActivityStatsWidget(
-                      activity: state.activity!,
-                      elapsedTime: state.elapsedTime,
-                      opaqueBackground: true,
+                    // Nested BlocBuilder so the 1s elapsedTime tick only
+                    // rebuilds this small overlay, not the map subtree above
+                    // (gated out of the outer builder's buildWhen).
+                    child: BlocBuilder<MapBloc, MapState>(
+                      buildWhen: (previous, current) =>
+                          previous.elapsedTime != current.elapsedTime ||
+                          previous.activity != current.activity,
+                      builder: (context, innerState) => ActivityStatsWidget(
+                        activity: innerState.activity!,
+                        elapsedTime: innerState.elapsedTime,
+                        opaqueBackground: true,
+                      ),
                     ),
                   ),
               ],
@@ -290,10 +399,9 @@ class _MapPageState extends State<MapPage>
                   // ),
                   if (state.isPaused && state.activity != null) ...[
                     HoldToConfirmButton(
-                      icon: Icons.stop,
+                      icon: Icons.stop_rounded,
                       label: AppLocalizations.of(context).btnStop,
-                      shortTapHint:
-                          AppLocalizations.of(context).mapStopHint,
+                      shortTapHint: AppLocalizations.of(context).mapStopHint,
                       backgroundColor: AppColors.destructive.background,
                       foregroundColor: AppColors.destructive.foreground,
                       onConfirmed: () => bloc.add(const CeaseActivity()),
@@ -310,17 +418,15 @@ class _MapPageState extends State<MapPage>
                       );
                       bloc.add(const ToggleFollowUser());
                     },
-                    backgroundColor:
-                        state.isFollowingUser
-                            ? AppColors.secondary.background
-                            : null,
+                    backgroundColor: state.isFollowingUser
+                        ? AppColors.secondary.background
+                        : null,
                     label: Text(AppLocalizations.of(context).btnFollow),
                     icon: Icon(
-                      Icons.my_location,
-                      color:
-                          state.isFollowingUser
-                              ? AppColors.secondary.foreground
-                              : null,
+                      Icons.my_location_rounded,
+                      color: state.isFollowingUser
+                          ? AppColors.secondary.foreground
+                          : null,
                     ),
                   ),
 
@@ -330,14 +436,12 @@ class _MapPageState extends State<MapPage>
                       heroTag: 'pause',
                       onPressed: () => bloc.add(const PauseActivity()),
                       backgroundColor: AppColors.primary.background,
-                      label:
-                          state.isPaused
-                              ? Text(AppLocalizations.of(context).btnResume)
-                              : Text(AppLocalizations.of(context).btnPause),
-                      icon:
-                          state.isPaused
-                              ? const Icon(Icons.play_arrow)
-                              : const Icon(Icons.pause),
+                      label: state.isPaused
+                          ? Text(AppLocalizations.of(context).btnResume)
+                          : Text(AppLocalizations.of(context).btnPause),
+                      icon: state.isPaused
+                          ? const Icon(Icons.play_arrow_rounded)
+                          : const Icon(Icons.pause_rounded),
                     ),
                   ],
 
@@ -347,24 +451,22 @@ class _MapPageState extends State<MapPage>
                       heroTag: 'start',
                       onPressed:
                           state.loadingStatus == LoadingStatus.startingActivity
-                              ? null
-                              : () => bloc.add(const StartActivity()),
+                          ? null
+                          : () => bloc.add(const StartActivity()),
                       label:
                           state.loadingStatus == LoadingStatus.startingActivity
-                              ? Text(
-                                AppLocalizations.of(context).btnStarting,
-                              )
-                              : Text(AppLocalizations.of(context).btnStart),
+                          ? Text(AppLocalizations.of(context).btnStarting)
+                          : Text(AppLocalizations.of(context).btnStart),
                       icon:
                           state.loadingStatus == LoadingStatus.startingActivity
-                              ? SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  // strokeWidth: 2,
-                                ),
-                              )
-                              : const Icon(Icons.play_arrow),
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                // strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.play_arrow_rounded),
                     ),
                   ],
                 ],
@@ -420,21 +522,19 @@ class _MapPageState extends State<MapPage>
       maxIntensity = segments.values.reduce((a, b) => a > b ? a : b);
     }
     return PolylineLayer(
-      polylines:
-          segments.entries.map((entry) {
-            final intensity = entry.value;
-            final color =
-                Color.lerp(
-                  Colors.red.withAlpha(30),
-                  Colors.red,
-                  intensity / maxIntensity,
-                )!;
-            return Polyline(
-              points: entry.key,
-              color: color,
-              strokeWidth: 3.0 + (intensity - 1) * 2.0,
-            );
-          }).toList(),
+      polylines: segments.entries.map((entry) {
+        final intensity = entry.value;
+        final color = Color.lerp(
+          Colors.red.withAlpha(30),
+          Colors.red,
+          intensity / maxIntensity,
+        )!;
+        return Polyline(
+          points: entry.key,
+          color: color,
+          strokeWidth: 3.0 + (intensity - 1) * 2.0,
+        );
+      }).toList(),
     );
   }
 

@@ -9,6 +9,13 @@ class InitMap extends MapEvent {
   const InitMap();
 }
 
+/// Fired when the app returns to the foreground. Re-validates the position
+/// stream so a recording resumes immediately if the OS suspended the stream
+/// in deep background (Doze) without delivering onDone.
+class EnsureTracking extends MapEvent {
+  const EnsureTracking();
+}
+
 class StartActivity extends MapEvent {
   const StartActivity();
 }
@@ -39,6 +46,13 @@ class FetchTraces extends MapEvent {
 
 class ClearError extends MapEvent {
   const ClearError();
+}
+
+/// Dismisses the "tracking gap" banner (see MapState.trackingGap) after the
+/// user has acknowledged that a segment of the trace was lost while the app
+/// was suspended in the background.
+class ClearTrackingGap extends MapEvent {
+  const ClearTrackingGap();
 }
 
 class UpdateElapsedTime extends MapEvent {

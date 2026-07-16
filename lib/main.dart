@@ -1,6 +1,11 @@
 import 'dart:async';
+import 'package:executor_lib/executor_lib.dart' show CancellationException;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/facades/backup_exclusion_facade.dart';
+import 'package:furtive/core/facades/file_system_facade.dart';
+import 'package:furtive/core/facades/lock_screen_facade.dart';
+import 'package:furtive/core/facades/process_exit_facade.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/usecases/get_preferences_use_case.dart';
@@ -10,6 +15,7 @@ import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.
 import 'package:furtive/features/permissions/presentation/pages/check_permission_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'core/locator.dart';
 import 'core/logs.dart';
@@ -29,6 +35,30 @@ void main() {
       logs = MyLogs.init(directory: appDir);
       await logs.ensureLogsExist();
 
+      // Diagnostic-only: log why the previous process instance disappeared
+      // (see AUDIT-2026-07.md §1.2 [P2-e]). Cannot recover a lost recording,
+      // but turns "my run died for no reason" reports into something
+      // diagnosable — a genuine OS/OEM kill (LOW_MEMORY, SIGNALED, FREEZER,
+      // ANR) is persisted as a WARNING; anything else (user-initiated exit,
+      // clean shutdown) is left as routine INFO, unrecorded on disk.
+      unawaited(
+        ProcessExitFacade().lastExitReason().then((exit) {
+          if (exit == null) return;
+          if (exit.isUnexpectedKill) {
+            logs.warning('Previous process exit: $exit');
+          } else {
+            logs.info('Previous process exit: $exit');
+          }
+        }),
+      );
+
+      // Best-effort: purge any share-card PNG / GPX export left over from a
+      // previous session so a one-off sharer doesn't keep a location-bearing
+      // temp file sitting around indefinitely (each call site also purges
+      // its own leftovers, but only on its NEXT invocation — see
+      // FileSystemFacade.purgeStaleTempFiles).
+      unawaited(FileSystemFacade.purgeStaleTempFiles());
+
       // Register DB + blocs. LocaleCubit is registered separately below
       // because its initial state requires a DB read first.
       Locator.setup();
@@ -37,15 +67,40 @@ void main() {
       // On first launch the row doesn't exist yet (beforeOpen runs lazily on
       // first query), so fetch() may throw — fall back to system locale.
       Locale? storedLocale;
+      var showOnLockScreen = true;
       try {
         final prefs = await GetPreferencesUseCase()();
         if (prefs.uiLocale != null) {
           storedLocale = parseLocaleTag(prefs.uiLocale!);
         }
+        showOnLockScreen = prefs.showOnLockScreen;
       } catch (e, st) {
         logs.warning('Failed to read locale preference', error: e, trace: st);
       }
       getIt.registerSingleton<LocaleCubit>(LocaleCubit(storedLocale));
+
+      // Android only (no-op elsewhere): apply the stored lock-screen
+      // visibility preference. The manifest's showWhenLocked="true" is only
+      // the cold-start default, matching this preference's own true
+      // default — this call only has an observable effect once the user has
+      // actually turned the preference off. See AUDIT-2026-07.md §5.
+      unawaited(LockScreenFacade().setShowWhenLocked(showOnLockScreen));
+
+      // iOS only (no-op elsewhere): exclude the SQLite DB and the log file
+      // from the iCloud/iTunes backup, matching Android's manifest-level
+      // opt-out. Placed after the GetPreferencesUseCase() call above, which
+      // just forced LazyDatabase to open/create app.sqlite — excluding a
+      // path before the file exists would silently no-op and never be
+      // retried. See AUDIT-2026-07.md §5 and BackupExclusionFacade.
+      unawaited(
+        BackupExclusionFacade().excludeFromBackup([
+          p.join(appDir.path, 'app.sqlite'),
+          p.join(appDir.path, 'app.sqlite-wal'),
+          p.join(appDir.path, 'app.sqlite-shm'),
+          p.join(appDir.path, 'app.sqlite-journal'),
+          logs.logsFile.path,
+        ]),
+      );
 
       FlutterError.onError = (FlutterErrorDetails details) {
         logs.severe(
@@ -58,7 +113,24 @@ void main() {
       runApp(const MyApp());
     },
     (error, stack) {
-      logs.severe(error.toString(), error: error, trace: stack);
+      // logs is assigned partway through startup; if something before that
+      // throws, calling logs here would raise LateInitializationError and mask
+      // the real error. Fall back to debugPrint.
+      try {
+        if (error is CancellationException) {
+          // vector_map_tiles (via executor_lib) cancels superseded tile
+          // fetches whenever the map pans/zooms faster than tiles load —
+          // expected and harmless, not a real failure. Some of its internal
+          // code paths let this escape as an uncaught zone error instead of
+          // swallowing it, so without this it reads as a crash ("Cancelled")
+          // in the exported logs every time the map moves quickly.
+          logs.fine('Tile load cancelled (map panned/zoomed).');
+          return;
+        }
+        logs.severe(error.toString(), error: error, trace: stack);
+      } catch (_) {
+        debugPrint('Unhandled startup error: $error\n$stack');
+      }
     },
   );
 }
@@ -79,6 +151,7 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<LocaleCubit, Locale?>(
         builder: (context, locale) => MaterialApp(
+          scaffoldMessengerKey: Global.scaffoldMessengerKey,
           // onGenerateTitle ensures the title in the OS task switcher is
           // localised every time the locale changes.
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
