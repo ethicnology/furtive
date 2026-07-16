@@ -7,14 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2026-07-15
 
-Remediation pass following a full audit of location tracking, permissions,
-GPS accuracy and privacy — see `AUDIT-2026-07.md` and
-`REVIEW-2026-07-FULL-APP.md` for the detailed findings and rationale behind
-every item below. Ships as 1.3.0 rather than 1.2.0: the Android versionCode
-had stayed at 1 across every prior release (1.0.0+1, 1.1.0+1, 1.2.0+1), which
-F-Droid and Android both require to strictly increase between releases.
+Ships as 1.3.0 rather than 1.2.0: the Android versionCode had stayed at 1
+across every prior release (1.0.0+1, 1.1.0+1, 1.2.0+1), which F-Droid and
+Android both require to strictly increase between releases. 1.2.0 was never
+actually released, so its changes are folded into this version rather than
+kept as a separate entry below.
+
+This release also includes a remediation pass following a full audit of
+location tracking, permissions, GPS accuracy and privacy — see
+`AUDIT-2026-07.md` and `REVIEW-2026-07-FULL-APP.md` for the detailed findings
+and rationale behind the audit-related items below.
 
 ### Added
+- **Internationalization** — app interface in 26 languages, map labels in 41,
+  and locale-aware date formats. Override the language in Settings or the
+  first-launch wizard.
+- **First-launch wizard** — pick your defaults (map theme, language) and grant
+  location permissions in a single flow.
+- **GPX import** — import activities from other apps (Garmin, Strava, …); both
+  track points and route points are supported.
+- **Share an activity** as a card with map and stats through the system share
+  sheet.
+- **Activity stats** — per-kilometre splits chart with a pace ⇄ speed toggle,
+  and D+ elevation gain (matching the Strava/Garmin convention).
+- **Five map themes** — Light, Dark, White, Grayscale, Black.
+- **Update check (opt-out)** — a once-a-day check against GitHub releases that
+  you can turn off in Preferences; nothing is sent when it's disabled.
+- **Reproducible builds** — anyone can rebuild from source and verify the
+  published APK is byte-for-byte identical.
 - **GPS outage detection ("signal lost")** — walking into a building or a
   tunnel (or the OS killing the app) stops GPS fixes without pausing the
   activity; previously the whole outage silently counted as active time
@@ -49,6 +69,19 @@ F-Droid and Android both require to strictly increase between releases.
   stopped" reports.
 
 ### Changed
+- Activity recording: animated location marker with pulse and accuracy circle,
+  kilometre markers on the map, hold-Stop-for-3-seconds to end (no accidental
+  taps), and auto-redirect to the stats screen.
+- Background recording keeps running with the screen off (wake-locked
+  foreground service) and resumes your in-progress activity automatically if
+  the system stops the app to save battery — reopening shows the live run
+  instead of a blank map.
+- The keyless / FOSS build now shows a functional map (your track on a blank
+  canvas) instead of failing to load when no map key is configured.
+- The activities list loads faster and uses less memory, and opening an
+  activity loads its full track on demand.
+- Permission requests are handled in-app where possible and only send you to
+  system settings when that's actually required.
 - **Package name changed to `com.ethicnology.furtive`** (was
   `com.example.furtive`). This is a one-way change made ahead of the app's
   first public F-Droid submission, while the installed base is still small
@@ -81,6 +114,18 @@ F-Droid and Android both require to strictly increase between releases.
   or long GPX no longer freezes the app briefly.
 
 ### Fixed
+- Recorded points are timestamped at the moment of the GPS fix, keeping pace and
+  distance correct even when the OS delivers a backlog after the app resumes.
+- iOS no longer auto-pauses location updates, which could silently end an
+  activity when you stood still.
+- GPX import no longer counts the straight-line jump between separate track
+  segments as travelled distance.
+- Exported GPX files are written as UTF-8, so accented and non-Latin activity
+  names are preserved.
+- Shared route images keep their true shape regardless of latitude.
+- Per-kilometre split times account for time spent stationary, and pace is
+  formatted correctly.
+- In-progress activities show live stats in the list instead of zeros.
 - A rare timing issue could open the GPS position stream twice at once
   (e.g. right after finishing the setup wizard), duplicating recorded points
   and leaking a stream subscription.
@@ -136,6 +181,8 @@ F-Droid and Android both require to strictly increase between releases.
   instead of silently corrupting the schema version.
 
 ### Security & privacy
+- Added the legally required OpenStreetMap / Protomaps map attribution.
+- The device name is no longer written to diagnostic logs.
 - iOS: the local database and log file are now excluded from iCloud/iTunes
   backups, matching the opt-out Android already had.
 - Old shared activity-card images are cleaned up instead of accumulating in
@@ -156,60 +203,4 @@ F-Droid and Android both require to strictly increase between releases.
   file type, and any leftover from a previous session is also cleaned up at
   the next app launch instead of only at the next share/export.
 
-## [1.2.0] - 2026-06-06
-
-### Added
-- **Internationalization** — app interface in 26 languages, map labels in 41,
-  and locale-aware date formats. Override the language in Settings or the
-  first-launch wizard.
-- **First-launch wizard** — pick your defaults (map theme, language) and grant
-  location permissions in a single flow.
-- **GPX import** — import activities from other apps (Garmin, Strava, …); both
-  track points and route points are supported.
-- **Share an activity** as a card with map and stats through the system share
-  sheet.
-- **Activity stats** — per-kilometre splits chart with a pace ⇄ speed toggle,
-  and D+ elevation gain (matching the Strava/Garmin convention).
-- **Five map themes** — Light, Dark, White, Grayscale, Black.
-- **Update check (opt-out)** — a once-a-day check against GitHub releases that
-  you can turn off in Preferences; nothing is sent when it's disabled.
-- **Reproducible builds** — anyone can rebuild from source and verify the
-  published APK is byte-for-byte identical.
-
-### Changed
-- Activity recording: animated location marker with pulse and accuracy circle,
-  kilometre markers on the map, hold-Stop-for-3-seconds to end (no accidental
-  taps), and auto-redirect to the stats screen.
-- Background recording keeps running with the screen off (wake-locked
-  foreground service) and resumes your in-progress activity automatically if
-  the system stops the app to save battery — reopening shows the live run
-  instead of a blank map.
-- The keyless / FOSS build now shows a functional map (your track on a blank
-  canvas) instead of failing to load when no map key is configured.
-- The activities list loads faster and uses less memory, and opening an
-  activity loads its full track on demand.
-- Permission requests are handled in-app where possible and only send you to
-  system settings when that's actually required.
-
-### Fixed
-- Recorded points are timestamped at the moment of the GPS fix, keeping pace and
-  distance correct even when the OS delivers a backlog after the app resumes.
-- iOS no longer auto-pauses location updates, which could silently end an
-  activity when you stood still.
-- GPX import no longer counts the straight-line jump between separate track
-  segments as travelled distance.
-- Exported GPX files are written as UTF-8, so accented and non-Latin activity
-  names are preserved.
-- Shared route images keep their true shape regardless of latitude.
-- Per-kilometre split times account for time spent stationary, and pace is
-  formatted correctly.
-- In-progress activities show live stats in the list instead of zeros.
-
-### Security & privacy
-- Added the legally required OpenStreetMap / Protomaps map attribution.
-- The device name is no longer written to diagnostic logs.
-- Removed background storage of third-party (OSM) trace data that was never
-  read back.
-
 [1.3.0]: https://github.com/ethicnology/furtive/releases/tag/1.3.0
-[1.2.0]: https://github.com/ethicnology/furtive/releases/tag/1.2.0
