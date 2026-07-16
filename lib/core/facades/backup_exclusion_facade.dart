@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 /// level equivalent — every file under Documents is backed up by default —
 /// so without this, a "privacy-first, no cloud" tracker would still ship the
 /// full SQLite GPS history and the log file to iCloud on iOS. See
-/// AUDIT-2026-07.md §5.
+/// docs/AUDIT-2026-07.md §5.
 ///
 /// A no-op (does nothing, never throws) on every non-iOS platform: Android
 /// doesn't need it (manifest-level opt-out), and the desktop/web targets

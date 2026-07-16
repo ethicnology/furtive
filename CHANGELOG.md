@@ -5,17 +5,18 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-07-15
+## [1.2.0] - 2026-07-15
 
-Ships as 1.3.0 rather than 1.2.0: the Android versionCode had stayed at 1
-across every prior release (1.0.0+1, 1.1.0+1, 1.2.0+1), which F-Droid and
-Android both require to strictly increase between releases. 1.2.0 was never
-actually released, so its changes are folded into this version rather than
-kept as a separate entry below.
+Ships as 1.2.0+2 rather than 1.2.0+1: the Android versionCode had stayed at 1
+across every prior release (1.0.0+1, 1.1.0+1, and this one was about to ship
+as 1.2.0+1 too), which F-Droid and Android both require to strictly increase
+between releases. 1.2.0 was never actually released before this, so the
+build number is bumped in place rather than skipping ahead to a new version
+name.
 
 This release also includes a remediation pass following a full audit of
 location tracking, permissions, GPS accuracy and privacy — see
-`AUDIT-2026-07.md` and `REVIEW-2026-07-FULL-APP.md` for the detailed findings
+`docs/AUDIT-2026-07.md` and `docs/REVIEW-2026-07-FULL-APP.md` for the detailed findings
 and rationale behind the audit-related items below.
 
 ### Added
@@ -203,4 +204,4 @@ and rationale behind the audit-related items below.
   file type, and any leftover from a previous session is also cleaned up at
   the next app launch instead of only at the next share/export.
 
-[1.3.0]: https://github.com/ethicnology/furtive/releases/tag/1.3.0
+[1.2.0]: https://github.com/ethicnology/furtive/releases/tag/1.2.0

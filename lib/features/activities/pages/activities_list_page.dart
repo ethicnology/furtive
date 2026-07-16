@@ -31,7 +31,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   final _getActivity = GetActivityUseCase();
   // Guards against a double-tap on a list item pushing the detail page
   // twice while the first tap's DB fetch is still in flight. See L-U6 in
-  // REVIEW-2026-07-FULL-APP.md.
+  // docs/REVIEW-2026-07-FULL-APP.md.
   bool _openingActivity = false;
 
   @override
@@ -118,7 +118,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             // spinner (the previous condition matched both cases identically:
             // isLoading stays false and activities stays null on a failed
             // fetch, per _onFetchActivities' catch block). See M12 in
-            // REVIEW-2026-07-FULL-APP.md.
+            // docs/REVIEW-2026-07-FULL-APP.md.
             if (state.isLoading && activities == null) {
               return const Center(child: CircularProgressIndicator());
             }

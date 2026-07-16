@@ -46,14 +46,14 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
     // No BuildContext needed: checkNewVersion uses Global.scaffoldMessengerKey
     // instead, since this page's context is unmounted (pushReplacement below)
     // well before the HTTP call can settle. See M4 in
-    // REVIEW-2026-07-FULL-APP.md.
+    // docs/REVIEW-2026-07-FULL-APP.md.
     //
     // Gated on hasCompletedOnboarding: this page runs on EVERY launch,
     // including the very first, before the onboarding wizard has shown the
     // user anything (let alone the Preferences toggle that opts out of this
     // check). checkUpdates defaults to true, so an ungated call here made a
     // brand-new install phone home to GitHub before the user had any chance
-    // to see or decline that. See REVIEW-2026-07-FULL-APP.md / the privacy
+    // to see or decline that. See docs/REVIEW-2026-07-FULL-APP.md / the privacy
     // audit's "update check phones home before consent" finding.
     if (prefs.hasCompletedOnboarding) unawaited(checkNewVersion());
 

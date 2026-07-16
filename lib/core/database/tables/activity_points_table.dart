@@ -17,7 +17,7 @@ class ActivityPoints extends Table {
   // doesn't report the field — never backfilled, callers must treat null as
   // "unknown" rather than "perfect fix". See PositionEntity.accuracy /
   // .verticalAccuracy and GpsQualityFilter / the elevation-gain smoothing in
-  // activity_entity.dart. AUDIT-2026-07.md §4.
+  // activity_entity.dart. docs/AUDIT-2026-07.md §4.
   RealColumn get accuracy => real().nullable()();
   RealColumn get verticalAccuracy => real().nullable()();
 }

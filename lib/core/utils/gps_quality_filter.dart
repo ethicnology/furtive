@@ -10,7 +10,7 @@ import 'package:furtive/core/entities/position_entity.dart';
 /// actually reported the relevant field. A provider that doesn't supply
 /// accuracy is never penalised for it — the gate can only get stricter as
 /// better metadata becomes available, never block a fix outright for lack of
-/// data. See AUDIT-2026-07.md §4.2.
+/// data. See docs/AUDIT-2026-07.md §4.2.
 ///
 /// Stateful (tracks the last *accepted* fix), so use one instance per stream
 /// subscription — `LocationRepository.getPositionStream()` creates a fresh

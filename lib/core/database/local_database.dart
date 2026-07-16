@@ -136,7 +136,7 @@ class LocalDatabase extends _$LocalDatabase {
       // fully" (GpsQualityFilter only rejects on a *present* oversized
       // value; the elevation-gain smoothing in activity_entity.dart falls
       // back to the pre-v5 raw-sum algorithm whenever a segment has no
-      // quality data at all). See AUDIT-2026-07.md §4.
+      // quality data at all). See docs/AUDIT-2026-07.md §4.
       await m.addColumn(activityPoints, activityPoints.accuracy);
       await m.addColumn(activityPoints, activityPoints.verticalAccuracy);
     }

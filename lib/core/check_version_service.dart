@@ -21,7 +21,7 @@ const _checkCacheTtl = Duration(hours: 24);
 // already handles updates) can pass
 // `--dart-define=DISABLE_UPDATE_CHECK=true` to disable this feature
 // entirely, with no user-facing preference needed. See M3 in
-// REVIEW-2026-07-FULL-APP.md.
+// docs/REVIEW-2026-07-FULL-APP.md.
 const _disabledByBuild = bool.fromEnvironment('DISABLE_UPDATE_CHECK');
 
 Future<void> checkNewVersion() async {
@@ -81,7 +81,7 @@ Future<void> checkNewVersion() async {
     // fire-and-forget check, so by the time the up-to-5s HTTP call settles
     // that page's context is reliably already unmounted — the snackbar was
     // silently dropped on effectively every real launch. See M4 in
-    // REVIEW-2026-07-FULL-APP.md.
+    // docs/REVIEW-2026-07-FULL-APP.md.
     final messengerState = Global.scaffoldMessengerKey.currentState;
     final l10nContext = Global.scaffoldMessengerKey.currentContext;
     if (messengerState == null || l10nContext == null) return;

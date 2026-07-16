@@ -93,7 +93,7 @@ class MapRemoteDataSource {
     // past activity locations via the detail page — to the tile host. This
     // makes a keyed build behave exactly like the keyless one: same
     // tileless map, zero network calls to Protomaps. See
-    // AUDIT-2026-07.md §5.
+    // docs/AUDIT-2026-07.md §5.
     if (_protomapsKey.isEmpty || !tilesEnabled) {
       logs.warning(
         'getMapConfig: tileless map '

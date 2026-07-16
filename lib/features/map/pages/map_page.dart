@@ -140,7 +140,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           // null WITHOUT an activity ever having been set — without this
           // check, that transition matched too and showed a big "Activity
           // started" toast on top of the error snackbar. See M11 in
-          // REVIEW-2026-07-FULL-APP.md.
+          // docs/REVIEW-2026-07-FULL-APP.md.
           listenWhen: (previous, current) =>
               previous.loadingStatus == LoadingStatus.startingActivity &&
               current.loadingStatus == null &&
@@ -221,7 +221,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         // recomputed from scratch) rebuilt every second during a
         // recording — the one workload that must stay smooth and
         // battery-light for potentially hours. See H4 in
-        // REVIEW-2026-07-FULL-APP.md. Every MapState field except
+        // docs/REVIEW-2026-07-FULL-APP.md. Every MapState field except
         // elapsedTime is listed explicitly (rather than excluding just
         // elapsedTime) so a future field addition doesn't silently start
         // being ignored here.

@@ -20,7 +20,7 @@ class _GpxParseResult {
 /// parse and point-building — O(file size), and a multi-hour high-frequency
 /// GPX can be several MB of XML producing tens of thousands of points — run
 /// on a background isolate instead of janking the UI thread on import. See
-/// M2 in REVIEW-2026-07-FULL-APP.md. `ActivityPointEntity`/`PositionEntity`
+/// M2 in docs/REVIEW-2026-07-FULL-APP.md. `ActivityPointEntity`/`PositionEntity`
 /// are plain data classes (no closures/handles), so they transfer across the
 /// isolate boundary without issue; thrown `GpxParseError`/`GpxNoPointsError`
 /// propagate back to the caller isolate the same way `compute` propagates

@@ -287,7 +287,7 @@ extension ActivityStatisticsExtension on ActivityEntity {
   // Reject an altitude sample for gain purposes when its reported vertical
   // accuracy is worse than this. GPS vertical noise is typically 1.5-2x the
   // horizontal figure, so this is looser than GpsQualityFilter's 25 m
-  // horizontal threshold. See AUDIT-2026-07.md §4.4.
+  // horizontal threshold. See docs/AUDIT-2026-07.md §4.4.
   static const _maxElevationVerticalAccuracyMeters = 20.0;
 
   // Window (in samples) for the trailing moving-average smoothing applied

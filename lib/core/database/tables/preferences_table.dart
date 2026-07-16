@@ -28,7 +28,7 @@ class Preferences extends Table {
   // activity detail page, past activity locations — to the tile host, tied
   // to its API key and the requester's IP. Turning this off makes the app
   // behave like the keyless FOSS build (a functional, tileless map) even
-  // when a key was compiled in. See AUDIT-2026-07.md §5.
+  // when a key was compiled in. See docs/AUDIT-2026-07.md §5.
   BoolColumn get mapTilesEnabled =>
       boolean().withDefault(const Constant(true))();
   // Whether MainActivity may show on top of the Android lock screen
@@ -36,7 +36,7 @@ class Preferences extends Table {
   // showWhenLocked="true" is only the cold-start default). Defaults to true
   // (today's behaviour). Off => the live map/position is hidden while the
   // phone is locked. iOS/other platforms ignore this. See
-  // AUDIT-2026-07.md §5.
+  // docs/AUDIT-2026-07.md §5.
   BoolColumn get showOnLockScreen =>
       boolean().withDefault(const Constant(true))();
 }

@@ -19,7 +19,7 @@ class Global {
   /// whose context is likely to have been unmounted by the time an async
   /// operation settles — e.g. checkNewVersion's HTTP call outliving
   /// CheckPermissionPage's pushReplacement) can still show a SnackBar. See
-  /// M4 in REVIEW-2026-07-FULL-APP.md.
+  /// M4 in docs/REVIEW-2026-07-FULL-APP.md.
   static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   static Future<void> init() async {

@@ -10,15 +10,15 @@ import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 
-/// Regression coverage for the P0 bug diagnosed in AUDIT-2026-07.md §1: an
+/// Regression coverage for the P0 bug diagnosed in docs/AUDIT-2026-07.md §1: an
 /// in-progress activity surviving an OS process kill must be rehydrated on
 /// InitMap regardless of whether the GPS one-shot fix or the position stream
 /// fail to open — both do fail here, unavoidably, since no platform channel
 /// mocks are registered for the geolocator plugin in a plain `flutter_test`
 /// environment. That "everything GPS-related throws" is exactly the
 /// real-world failure mode this test exercises (cold GPS right after an
-/// unlock — see AAUDIT-2026-07.md §1.1) — the resume must not depend on it
-/// succeeding. Also exercises H3 (REVIEW-2026-07-FULL-APP.md): InitMap
+/// unlock — see docs/AUDIT-2026-07.md §1.1) — the resume must not depend on it
+/// succeeding. Also exercises H3 (docs/REVIEW-2026-07-FULL-APP.md): InitMap
 /// dispatched twice in quick succession must not throw or double-open.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

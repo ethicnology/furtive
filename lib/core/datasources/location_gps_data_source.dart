@@ -15,7 +15,7 @@ const int _kDistanceFilterMeters = 0;
 // when a timeLimit is actually configured. NOT applied to the continuous
 // position stream (see getLocationSettings below): a long tunnel/indoor gap
 // must not tear the stream down, only the single "centre on me" fix needs a
-// deadline. See AUDIT-2026-07.md §1.2 [P0-b].
+// deadline. See docs/AUDIT-2026-07.md §1.2 [P0-b].
 const Duration _kCurrentLocationTimeLimit = Duration(seconds: 12);
 
 class LocationGpsDataSource {

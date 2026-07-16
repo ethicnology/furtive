@@ -36,7 +36,7 @@ void main() {
       await logs.ensureLogsExist();
 
       // Diagnostic-only: log why the previous process instance disappeared
-      // (see AUDIT-2026-07.md §1.2 [P2-e]). Cannot recover a lost recording,
+      // (see docs/AUDIT-2026-07.md §1.2 [P2-e]). Cannot recover a lost recording,
       // but turns "my run died for no reason" reports into something
       // diagnosable — a genuine OS/OEM kill (LOW_MEMORY, SIGNALED, FREEZER,
       // ANR) is persisted as a WARNING; anything else (user-initiated exit,
@@ -83,7 +83,7 @@ void main() {
       // visibility preference. The manifest's showWhenLocked="true" is only
       // the cold-start default, matching this preference's own true
       // default — this call only has an observable effect once the user has
-      // actually turned the preference off. See AUDIT-2026-07.md §5.
+      // actually turned the preference off. See docs/AUDIT-2026-07.md §5.
       unawaited(LockScreenFacade().setShowWhenLocked(showOnLockScreen));
 
       // iOS only (no-op elsewhere): exclude the SQLite DB and the log file
@@ -91,7 +91,7 @@ void main() {
       // opt-out. Placed after the GetPreferencesUseCase() call above, which
       // just forced LazyDatabase to open/create app.sqlite — excluding a
       // path before the file exists would silently no-op and never be
-      // retried. See AUDIT-2026-07.md §5 and BackupExclusionFacade.
+      // retried. See docs/AUDIT-2026-07.md §5 and BackupExclusionFacade.
       unawaited(
         BackupExclusionFacade().excludeFromBackup([
           p.join(appDir.path, 'app.sqlite'),

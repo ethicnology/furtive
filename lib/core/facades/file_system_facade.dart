@@ -66,7 +66,7 @@ class FileSystemFacade {
       // The share sheet sidesteps both: the OS itself performs the write
       // (Save to Files / Drive / AirDrop / another app), through machinery
       // that already handles scoped storage correctly. See H1 in
-      // REVIEW-2026-07-FULL-APP.md.
+      // docs/REVIEW-2026-07-FULL-APP.md.
       if (Platform.isAndroid || Platform.isIOS) {
         await _saveViaShareSheet(
           content: content,
@@ -81,7 +81,7 @@ class FileSystemFacade {
     } on FileSaveCancelled {
       // Not an error — the user backed out. Let it propagate as-is so
       // callers can treat it as a silent no-op instead of a failure
-      // snackbar (see L-G3 in REVIEW-2026-07-FULL-APP.md).
+      // snackbar (see L-G3 in docs/REVIEW-2026-07-FULL-APP.md).
       rethrow;
     } catch (e) {
       throw AppError('Failed to save file: $e');

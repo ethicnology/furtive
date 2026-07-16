@@ -17,7 +17,7 @@ class PreferencesState with PreferencesStateMappable {
   /// Change* handlers already mutate as the user edits the form) always
   /// yields "unchanged" and silently skipped every live side effect (map
   /// re-init, lock-screen toggle) until the next app restart. See
-  /// REVIEW-2026-07-FULL-APP.md C1.
+  /// docs/REVIEW-2026-07-FULL-APP.md C1.
   final PreferencesEntity persisted;
 
   const PreferencesState({

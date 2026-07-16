@@ -34,7 +34,7 @@ class LocationRepository {
   /// filtering — the previous behaviour — made every one of those perfectly
   /// normal outages look identical to a dead stream: the watchdog would
   /// then tear down and reopen a healthy foreground service and show the
-  /// user a false "tracking gap" banner. See REVIEW-2026-07-FULL-APP.md M1.
+  /// user a false "tracking gap" banner. See docs/REVIEW-2026-07-FULL-APP.md M1.
   Stream<PositionEntity> getPositionStream({void Function()? onRawFix}) {
     // Drop any frames with non-finite lat/lon — they crash flutter_map's
     // LatLng constructor ("LatLng is not finite") and corrupt downstream
@@ -57,7 +57,7 @@ class LocationRepository {
     // MapBloc._openPositionStream). NOT applied to getCurrentLocation(): a
     // one-shot fix has no history to compare against, and rejecting it would
     // just make "centre on me" fail more often for no benefit. See
-    // AUDIT-2026-07.md §4.
+    // docs/AUDIT-2026-07.md §4.
     return GpsQualityFilter().apply(tapped);
   }
 

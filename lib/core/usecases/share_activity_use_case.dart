@@ -33,7 +33,7 @@ class ShareActivityUseCase {
   /// overlap meant sharing a card right after exporting a GPX purged the
   /// just-exported GPX out from under a share target that might still be
   /// asynchronously reading it (same iOS race this deferred-delete pattern
-  /// exists to avoid in the first place). See REVIEW-2026-07-FULL-APP.md M2.
+  /// exists to avoid in the first place). See docs/REVIEW-2026-07-FULL-APP.md M2.
   static const _filePrefix = 'furtive-share-';
 
   Future<void> call(BuildContext context, ActivityEntity activity) async {
@@ -136,7 +136,7 @@ class ShareActivityUseCase {
       // share-target reading it. It's cleaned up at the start of the next
       // call instead (see above) — not relying solely on the OS's own,
       // unscheduled temp-dir reaping to keep old activity-shape PNGs from
-      // accumulating on disk. See AUDIT-2026-07.md §5.
+      // accumulating on disk. See docs/AUDIT-2026-07.md §5.
     } finally {
       entry.remove();
     }

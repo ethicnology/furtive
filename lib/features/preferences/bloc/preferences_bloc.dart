@@ -107,7 +107,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // edits the form, so comparing against it here always finds "no change"
     // and every live side effect below (map re-init, lock-screen toggle)
     // would silently no-op until the next app restart. See
-    // REVIEW-2026-07-FULL-APP.md C1.
+    // docs/REVIEW-2026-07-FULL-APP.md C1.
     final previous = state.persisted;
     try {
       await _updatePreferencesUseCase(event.preferences);
@@ -116,7 +116,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
       // time this settles there is very likely no UI left to show an error
       // on. Logging at least makes a failed save discoverable in the
       // exported logs instead of vanishing into the bloc's global error
-      // handler silently. See M5 in REVIEW-2026-07-FULL-APP.md.
+      // handler silently. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
       logs.severe('$UpdatePreferences', error: e, trace: s);
       return;
     }
@@ -128,7 +128,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // isClosed. Previously the single `if (isClosed) return;` above skipped
     // them too whenever the write outlived the pop, leaving settings
     // persisted to disk but never actually applied until the next app
-    // restart. See M5 in REVIEW-2026-07-FULL-APP.md.
+    // restart. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
     if (!isClosed) {
       emit(
         state.copyWith(

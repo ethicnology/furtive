@@ -49,7 +49,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   // and both call .listen(), leaking one subscription forever and
   // double-writing every GPS fix to the DB. All callers must go through
   // _ensurePositionStreamOpen() instead of _openPositionStream() directly.
-  // See REVIEW-2026-07-FULL-APP.md H3.
+  // See docs/REVIEW-2026-07-FULL-APP.md H3.
   Future<void>? _openingPositionStream;
 
   Timer? _elapsedTimer;
@@ -88,7 +88,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     // StartActivity that arrives while one is already being handled closes
     // the race outright — a genuine second start (after the first
     // completed) is unaffected since droppable() only discards events that
-    // arrive DURING an in-flight handler. See REVIEW-2026-07-FULL-APP.md M4.
+    // arrive DURING an in-flight handler. See docs/REVIEW-2026-07-FULL-APP.md M4.
     on<StartActivity>(_onStartActivity, transformer: droppable());
     on<CeaseActivity>(_onCeaseActivity);
     // sequential(): the default bloc transformer processes events of the
@@ -98,7 +98,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     // buffered fixes right after a resume) can both capture the same
     // `activity.points.last` for gap detection and each write their own
     // signalLost boundary pair, or clobber each other's in-memory point
-    // append. See REVIEW-2026-07-FULL-APP.md M1.
+    // append. See docs/REVIEW-2026-07-FULL-APP.md M1.
     on<ScoreActivity>(_onScoreActivity, transformer: sequential());
     on<PauseActivity>(_onPauseActivity);
     on<ClearError>(_onClearError);
@@ -157,14 +157,14 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     // location and map style below. A failed first subscription leaves
     // _positionStream null, so a later InitMap retries. Isolated in its own
     // try/catch so a failure here can never prevent the resume or style load
-    // below from running (see AUDIT-2026-07.md §1: a single unguarded await
+    // below from running (see docs/AUDIT-2026-07.md §1: a single unguarded await
     // used to be able to strand an ongoing activity until it got
     // auto-ceased). _ensurePositionStreamOpen() (not _openPositionStream()
     // directly) closes the race where two concurrent InitMap calls — the
     // default bloc transformer runs different events concurrently, and
     // onboarding + MapPage.initState commonly both dispatch InitMap in quick
     // succession — would otherwise both see _positionStream == null and both
-    // open a subscription (see H3 in REVIEW-2026-07-FULL-APP.md).
+    // open a subscription (see H3 in docs/REVIEW-2026-07-FULL-APP.md).
     try {
       await _ensurePositionStreamOpen();
     } catch (e, s) {
@@ -226,7 +226,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   // racing with it) all await the SAME open instead of each independently
   // seeing _positionStream == null and calling .listen() themselves — the
   // check-then-act race that used to leak a subscription and double-write
-  // every GPS fix to the DB (see H3 in REVIEW-2026-07-FULL-APP.md). ALWAYS
+  // every GPS fix to the DB (see H3 in docs/REVIEW-2026-07-FULL-APP.md). ALWAYS
   // go through this method rather than _openPositionStream() directly.
   Future<void> _ensurePositionStreamOpen() {
     if (_positionStream != null) return Future.value();
@@ -278,7 +278,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   // idle (not recording) never got reopened for the rest of the session: no
   // later event re-triggers it, so the live "blue dot" location would stay
   // frozen at its last position until the app restarted. See
-  // REVIEW-2026-07-FULL-APP.md M3.
+  // docs/REVIEW-2026-07-FULL-APP.md M3.
   Future<void> _onEnsureTracking(
     EnsureTracking event,
     Emitter<MapState> emit,

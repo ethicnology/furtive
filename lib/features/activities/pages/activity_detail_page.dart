@@ -311,7 +311,7 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
       }
     } on FileSaveCancelled {
       // The user backed out of the share sheet / directory picker —
-      // silent no-op, not a failure (see L-G3 in REVIEW-2026-07-FULL-APP.md).
+      // silent no-op, not a failure (see L-G3 in docs/REVIEW-2026-07-FULL-APP.md).
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

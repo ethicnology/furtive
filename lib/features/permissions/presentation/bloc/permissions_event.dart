@@ -22,7 +22,7 @@ class CheckAllPermissions extends PermissionsEvent {
 /// mirrors MapBloc's ClearError. Without a way to clear it, errorMessage was
 /// set on a failed load/request but nothing ever read it, so a permission
 /// check/request failure was silently invisible to the user (see M1 in
-/// REVIEW-2026-07-FULL-APP.md).
+/// docs/REVIEW-2026-07-FULL-APP.md).
 class ClearPermissionsError extends PermissionsEvent {
   const ClearPermissionsError();
 }

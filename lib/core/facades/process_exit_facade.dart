@@ -45,7 +45,7 @@ class ProcessExitReason {
 /// memory pressure (vs. the user stopping it via the Android 13+ foreground-
 /// service Task Manager) cannot bring a lost recording back, but it turns a
 /// "my run randomly died" bug report into something diagnosable from the
-/// shared log file. See AUDIT-2026-07.md §1.2 [P2-e].
+/// shared log file. See docs/AUDIT-2026-07.md §1.2 [P2-e].
 class ProcessExitFacade {
   static const _channel = MethodChannel('app.furtive/diagnostics');
 
