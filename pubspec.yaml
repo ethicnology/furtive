@@ -35,29 +35,29 @@ dependencies:
   intl: any # version pinned by flutter_localizations
   collection: ^1.19.1 # stable mergeSort, used directly by activity_entity.dart
 
-  flutter_map: ^8.3.0
-  flutter_map_location_marker: ^10.2.0
-  vector_map_tiles: ^9.0.0-beta.8
-  vector_tile_renderer: ^6.0.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
+  flutter_map: ^8.3.1
+  flutter_map_location_marker: ^10.3.0
+  vector_map_tiles: ^9.0.0-beta.9 # 10.0.0-beta.2 available, holding off until vector_map_tiles leaves beta on the 10.x line
+  vector_tile_renderer: ^6.1.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
   executor_lib: ^1.1.2 # transitive of vector_map_tiles, imported directly to recognise its benign CancellationException
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0 # sequential()/droppable() transformers for MapBloc
   get_it: ^9.2.1
   latlong2: ^0.9.1 # pinned by vector_map_tiles 9.x
   geolocator: ^14.0.2
-  permission_handler: ^12.0.1
+  permission_handler: ^12.0.3
   http: ^1.6.0
-  xml: ^6.5.0
-  drift: ^2.33.0
-  path_provider: ^2.1.5
+  xml: ^7.0.1
+  drift: ^2.34.2
+  path_provider: ^2.1.6
   path: ^1.9.1
   dart_mappable: ^4.8.0
   logging_colorful: ^1.3.2
-  package_info_plus: ^9.0.1 # pinned by geolocator_linux transitive
+  package_info_plus: ^10.2.1
   url_launcher: ^6.3.2
-  device_info_plus: ^12.4.0 # 13.x requires win32 6 (incompatible with package_info_plus 9.x)
+  device_info_plus: ^13.2.0
   file_selector: ^1.1.0
-  share_plus: ^12.0.2 # ^13 pulls win32 ^6 which conflicts with device_info_plus 12.x's win32 ^5
+  share_plus: ^13.2.1
 
 dev_dependencies:
   flutter_test:
@@ -69,9 +69,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  build_runner: ^2.15.0
-  drift_dev: ^2.33.0
-  sqlite3: ^3.3.1 # already a drift transitive; declared for the migration test
+  build_runner: ^2.15.1
+  drift_dev: ^2.34.0
+  sqlite3: ^3.4.0 # already a drift transitive; declared for the migration test
   bloc_test: ^10.0.0
   dart_mappable_builder: ^4.8.0
   flutter_launcher_icons: "^0.14.4"

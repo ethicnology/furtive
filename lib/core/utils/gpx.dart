@@ -28,14 +28,14 @@ GpxPoint? parseTrkpt(XmlElement point) {
   if (lon == null || !lon.isFinite || lon < -180 || lon > 180) return null;
 
   final eleStr = point
-      .findElements('ele', namespace: '*')
+      .findElements('ele', namespaceUri: '*')
       .firstOrNull
       ?.innerText;
   final eleRaw = eleStr != null ? double.tryParse(eleStr) : null;
   final elevation = (eleRaw != null && eleRaw.isFinite) ? eleRaw : 0.0;
 
   final timeStr = point
-      .findElements('time', namespace: '*')
+      .findElements('time', namespaceUri: '*')
       .firstOrNull
       ?.innerText;
   final time = timeStr != null ? _parseGpxTime(timeStr) : null;
@@ -85,31 +85,31 @@ List<List<GpxPoint>> parseGpxSegments(XmlElement root) {
     if (parsed.isNotEmpty) groups.add(parsed);
   }
 
-  // `namespace: '*'` matches by LOCAL name regardless of any namespace
+  // `namespaceUri: '*'` matches by LOCAL name regardless of any namespace
   // prefix (e.g. a file using `<x:trkpt>`) — without it, findAllElements
   // matches the fully-qualified name, so a namespaced file would silently
   // find zero points and fall through to GpxNoPointsError.
-  for (final trk in root.findAllElements('trk', namespace: '*')) {
-    final segments = trk.findAllElements('trkseg', namespace: '*').toList();
+  for (final trk in root.findAllElements('trk', namespaceUri: '*')) {
+    final segments = trk.findAllElements('trkseg', namespaceUri: '*').toList();
     if (segments.isNotEmpty) {
       for (final seg in segments) {
-        collect(seg.findAllElements('trkpt', namespace: '*'));
+        collect(seg.findAllElements('trkpt', namespaceUri: '*'));
       }
     } else {
       // Malformed-but-real-world: a <trk> with <trkpt> children directly,
       // not wrapped in a <trkseg>. Previously silently dropped whenever
       // *any other* <trk> in the same file did use <trkseg> (the fallback
       // below only fires when groups is empty overall).
-      collect(trk.findAllElements('trkpt', namespace: '*'));
+      collect(trk.findAllElements('trkpt', namespaceUri: '*'));
     }
   }
-  for (final rte in root.findAllElements('rte', namespace: '*')) {
-    collect(rte.findAllElements('rtept', namespace: '*'));
+  for (final rte in root.findAllElements('rte', namespaceUri: '*')) {
+    collect(rte.findAllElements('rtept', namespaceUri: '*'));
   }
   if (groups.isEmpty) {
     collect([
-      ...root.findAllElements('trkpt', namespace: '*'),
-      ...root.findAllElements('rtept', namespace: '*'),
+      ...root.findAllElements('trkpt', namespaceUri: '*'),
+      ...root.findAllElements('rtept', namespaceUri: '*'),
     ]);
   }
   return groups;
