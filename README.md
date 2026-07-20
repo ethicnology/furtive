@@ -2,7 +2,13 @@
 
 Privacy first. No accounts. No Google services. Full access to your GPS sensor.
 
+## Install
+
 [Download the latest apk](https://github.com/ethicnology/furtive/releases/latest)
+
+[<img src="assets/readme/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/ethicnology/furtive)
+
+The Obtainium button opens on a device with [Obtainium](https://github.com/ImranR98/Obtainium) installed. Otherwise, add it manually: paste `https://github.com/ethicnology/furtive` as a GitHub source in Obtainium.
 
 ## Screenshots
 
