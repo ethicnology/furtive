@@ -19,6 +19,7 @@
   "btnRename": "Přejmenovat",
   "btnDelete": "Smazat",
   "btnApply": "Použít",
+  "prefSaveFailed": "Nastavení se nepodařilo uložit.",
   "btnStarGitHub": "Hvězda na GitHubu",
   "btnSponsor": "Podpořit",
   "linkOpenFailed": "Nelze otevřít {url}",

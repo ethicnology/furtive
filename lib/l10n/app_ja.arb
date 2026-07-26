@@ -19,6 +19,7 @@
   "btnRename": "名前を変更",
   "btnDelete": "削除",
   "btnApply": "適用",
+  "prefSaveFailed": "設定を保存できませんでした。",
   "btnStarGitHub": "GitHub でスター",
   "btnSponsor": "スポンサー",
   "linkOpenFailed": "{url} を開けませんでした",

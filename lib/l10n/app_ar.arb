@@ -19,6 +19,7 @@
   "btnRename": "إعادة تسمية",
   "btnDelete": "حذف",
   "btnApply": "تطبيق",
+  "prefSaveFailed": "تعذّر حفظ تفضيلاتك.",
   "btnStarGitHub": "نجمة على GitHub",
   "btnSponsor": "ادعم",
   "linkOpenFailed": "تعذر فتح {url}",

@@ -19,6 +19,7 @@
   "btnRename": "Umbenennen",
   "btnDelete": "Löschen",
   "btnApply": "Anwenden",
+  "prefSaveFailed": "Einstellungen konnten nicht gespeichert werden.",
   "btnStarGitHub": "Auf GitHub Sterne geben",
   "btnSponsor": "Unterstützen",
   "linkOpenFailed": "{url} konnte nicht geöffnet werden",

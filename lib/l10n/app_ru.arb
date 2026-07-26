@@ -19,6 +19,7 @@
   "btnRename": "Переименовать",
   "btnDelete": "Удалить",
   "btnApply": "Применить",
+  "prefSaveFailed": "Не удалось сохранить настройки.",
   "btnStarGitHub": "Звезда на GitHub",
   "btnSponsor": "Поддержать",
   "linkOpenFailed": "Не удалось открыть {url}",

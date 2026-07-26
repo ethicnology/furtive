@@ -19,6 +19,7 @@
   "btnRename": "이름 변경",
   "btnDelete": "삭제",
   "btnApply": "적용",
+  "prefSaveFailed": "환경설정을 저장할 수 없습니다.",
   "btnStarGitHub": "GitHub에서 별 주기",
   "btnSponsor": "후원",
   "linkOpenFailed": "{url}을(를) 열 수 없습니다",

@@ -19,6 +19,7 @@
   "btnRename": "Перейменувати",
   "btnDelete": "Видалити",
   "btnApply": "Застосувати",
+  "prefSaveFailed": "Не вдалося зберегти налаштування.",
   "btnStarGitHub": "Зірка на GitHub",
   "btnSponsor": "Підтримати",
   "linkOpenFailed": "Не вдалося відкрити {url}",

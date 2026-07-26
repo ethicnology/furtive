@@ -120,23 +120,33 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // would silently no-op until the next app restart. See
     // docs/REVIEW-2026-07-FULL-APP.md C1.
     final previous = state.persisted;
+    emit(state.copyWith(isSaving: true, error: null, saveCompleted: null));
     try {
       await _preferences.store(event.preferences);
     } catch (e, s) {
-      // PreferencesPage pops immediately after dispatching Apply, so by the
-      // time this settles there is very likely no UI left to show an error on.
+      // The page now STAYS MOUNTED until saveCompleted flips (it no longer pops
+      // in the same frame as dispatching Apply), so a failed write is actually
+      // reportable instead of being logged into the void while the user believes
+      // their settings were stored.
       logs.severe('$UpdatePreferences', error: e, trace: s);
+      emit(
+        state.copyWith(
+          isSaving: false,
+          saveCompleted: false,
+          error: e is AppError ? e : AppError(e.toString()),
+        ),
+      );
       return;
     }
 
-    if (!isClosed) {
-      emit(
-        state.copyWith(
-          preferences: event.preferences,
-          persisted: event.preferences,
-        ),
-      );
-    }
+    emit(
+      state.copyWith(
+        preferences: event.preferences,
+        persisted: event.preferences,
+        isSaving: false,
+        saveCompleted: true,
+      ),
+    );
 
     // Re-init the map only when something the map style actually depends on
     // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for

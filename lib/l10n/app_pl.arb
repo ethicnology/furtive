@@ -19,6 +19,7 @@
   "btnRename": "Zmień nazwę",
   "btnDelete": "Usuń",
   "btnApply": "Zastosuj",
+  "prefSaveFailed": "Nie udało się zapisać preferencji.",
   "btnStarGitHub": "Gwiazdka na GitHub",
   "btnSponsor": "Wesprzyj",
   "linkOpenFailed": "Nie można otworzyć {url}",

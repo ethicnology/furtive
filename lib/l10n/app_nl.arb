@@ -19,6 +19,7 @@
   "btnRename": "Hernoemen",
   "btnDelete": "Verwijderen",
   "btnApply": "Toepassen",
+  "prefSaveFailed": "Kan je voorkeuren niet opslaan.",
   "btnStarGitHub": "Ster geven op GitHub",
   "btnSponsor": "Sponsor",
   "linkOpenFailed": "Kon {url} niet openen",

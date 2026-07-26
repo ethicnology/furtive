@@ -19,6 +19,7 @@
   "btnRename": "重命名",
   "btnDelete": "删除",
   "btnApply": "应用",
+  "prefSaveFailed": "无法保存您的偏好设置。",
   "btnStarGitHub": "在 GitHub 上加星",
   "btnSponsor": "赞助",
   "linkOpenFailed": "无法打开 {url}",
