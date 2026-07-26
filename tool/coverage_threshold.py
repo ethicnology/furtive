@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 # Ratchet. Raise this — never lower it — as coverage improves.
-MIN_LINE_COVERAGE = 68.0
+MIN_LINE_COVERAGE = 78.0
 
 LCOV = Path("coverage/lcov.info")
 

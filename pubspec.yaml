@@ -128,6 +128,12 @@ dev_dependencies:
   # tests in test/database_test.dart.
   drift_dev: ^2.34.0
   sqlite3: ^3.5.0 # already a drift transitive; declared for the migration test
+  # Both are already path_provider transitives; declared explicitly because
+  # test/file_system_facade_test.dart imports them directly to substitute a fake
+  # temp directory, which is what makes the location-bearing-temp-file purge
+  # testable at all.
+  path_provider_platform_interface: ^2.1.3
+  plugin_platform_interface: ^2.1.8
   bloc_test: ^10.0.0
   dart_mappable_builder: ^4.8.0 # blocked by the analyzer-13 wall above
   flutter_launcher_icons: "^0.14.4"
