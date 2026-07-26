@@ -72,7 +72,7 @@ class _ReleaseCard extends StatelessWidget {
               style: TextStyle(
                 color: AppColors.primary.background,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: Theme.of(context).textTheme.titleLarge?.fontSize,
               ),
             ),
             const SizedBox(height: 8),

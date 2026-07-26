@@ -44,10 +44,7 @@ class ActivityStatsWidget extends StatelessWidget {
               // white/muted.
               Text(
                 elapsedTime.toHHMMSS(),
-                style: textTheme.displayMedium?.copyWith(
-                  fontSize: 28,
-                  color: kMint,
-                ),
+                style: textTheme.displayMedium?.copyWith(color: kMint),
               ),
             ],
           ),

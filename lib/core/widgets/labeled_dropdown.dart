@@ -27,7 +27,9 @@ class LabeledDropdown<T> extends StatelessWidget {
       isExpanded: true,
       dropdownColor: Colors.black,
       iconEnabledColor: AppColors.primary.background,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(color: Colors.white),
       decoration: InputDecoration(
         filled: false,
         contentPadding: const EdgeInsets.symmetric(

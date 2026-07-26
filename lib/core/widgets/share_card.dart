@@ -40,94 +40,105 @@ class ShareCard extends StatelessWidget {
         ? activity.name
         : dateLabel;
 
-    return Material(
-      color: Colors.black,
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                activityName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 56,
-                  fontWeight: FontWeight.bold,
+    // TextScaler.noScaling is load-bearing, not cosmetic. This card is a FIXED
+    // 1080x1350 canvas captured straight to a PNG, but it is mounted inside the
+    // app's Overlay and therefore inherits the user's system font scale. With a
+    // large accessibility font the hardcoded sizes below get multiplied, the text
+    // overflows its fixed boxes, and the exported image is visibly broken — for a
+    // user who never sees the card on screen before sharing it. Pinning the scale
+    // makes the output byte-comparable for everyone; the sizes here are design
+    // constants of the canvas, not scalable UI text.
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+      child: Material(
+        color: Colors.black,
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activityName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 56,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                dateLabel,
-                style: TextStyle(
-                  color: AppColors.tertiary.foreground,
-                  fontSize: 28,
+                const SizedBox(height: 8),
+                Text(
+                  dateLabel,
+                  style: TextStyle(
+                    color: AppColors.tertiary.foreground,
+                    fontSize: 28,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                flex: 5,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: double.infinity,
-                    color: AppColors.quaternary.background,
-                    child: CustomPaint(
-                      painter: _RoutePainter(
-                        segments: activeSegments,
-                        strokeColor: AppColors.primary.background,
+                const SizedBox(height: 24),
+                Expanded(
+                  flex: 5,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: double.infinity,
+                      color: AppColors.quaternary.background,
+                      child: CustomPaint(
+                        painter: _RoutePainter(
+                          segments: activeSegments,
+                          strokeColor: AppColors.primary.background,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                flex: 3,
-                child: GridView.count(
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 2.6,
-                  children: [
-                    _StatTile(
-                      label: l10n.statDistance,
-                      value: '${activity.activeDistanceInKm.fmt2} km',
-                    ),
-                    _StatTile(
-                      label: l10n.statDuration,
-                      value: activity.activeDuration.toHHMMSS(),
-                    ),
-                    _StatTile(
-                      label: l10n.statPace,
-                      value: '${activity.activePaceMinPerKm} /km',
-                    ),
-                    _StatTile(
-                      label: l10n.statElevation,
-                      value:
-                          '+${activity.activeElevationGain.toStringAsFixed(0)} m',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  l10n.appTitle,
-                  style: TextStyle(
-                    color: AppColors.primary.background,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
+                const SizedBox(height: 24),
+                Expanded(
+                  flex: 3,
+                  child: GridView.count(
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 2.6,
+                    children: [
+                      _StatTile(
+                        label: l10n.statDistance,
+                        value: '${activity.activeDistanceInKm.fmt2} km',
+                      ),
+                      _StatTile(
+                        label: l10n.statDuration,
+                        value: activity.activeDuration.toHHMMSS(),
+                      ),
+                      _StatTile(
+                        label: l10n.statPace,
+                        value: '${activity.activePaceMinPerKm} /km',
+                      ),
+                      _StatTile(
+                        label: l10n.statElevation,
+                        value:
+                            '+${activity.activeElevationGain.toStringAsFixed(0)} m',
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    l10n.appTitle,
+                    style: TextStyle(
+                      color: AppColors.primary.background,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

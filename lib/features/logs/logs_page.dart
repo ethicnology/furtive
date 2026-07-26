@@ -174,7 +174,9 @@ class _LogsPageState extends State<LogsPage> {
         actions: [
           Text(
             '$_logsSizeKb kB',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: Colors.white70),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, color: kDestructive),
@@ -215,9 +217,11 @@ class _LogsPageState extends State<LogsPage> {
                               _formatDate(context, _startDate!),
                               _formatDate(context, _endDate!),
                             ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 12,
+                              fontSize: Theme.of(
+                                context,
+                              ).textTheme.labelSmall?.fontSize,
                             ),
                           ),
                           const Spacer(),
@@ -226,9 +230,11 @@ class _LogsPageState extends State<LogsPage> {
                               filteredLogs.length,
                               _logs.length,
                             ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 12,
+                              fontSize: Theme.of(
+                                context,
+                              ).textTheme.labelSmall?.fontSize,
                             ),
                           ),
                         ],
@@ -306,7 +312,9 @@ class _LogsPageState extends State<LogsPage> {
                                       style: TextStyle(
                                         color: textColor,
                                         fontFamily: 'monospace',
-                                        fontSize: 13,
+                                        fontSize: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.fontSize,
                                       ),
                                     ),
                                   ),
