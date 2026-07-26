@@ -296,6 +296,67 @@ void main() {
       },
     );
 
+    test(
+      'the resumed pause state is read from the LAST recorded point, not from '
+      'whichever point happens to share the maximum timestamp',
+      () async {
+        // SQLite truncates DateTime to whole seconds, so the +/-1us signalLost
+        // boundary pair bracketing a GPS outage ties with the fix beside it.
+        // Selecting the point by max(time) then returns the EARLIEST of the tie
+        // — a signalLost boundary — and misreads the recording state. Here the
+        // run was paused when the process died; picking the boundary instead
+        // would resume it unpaused and count the dead time as active.
+        final tied = start.add(const Duration(minutes: 4));
+        await ActivityLocalDataSource(db: db, clock: clock).store(
+          ActivityModel(
+            id: 'tie1',
+            name: 'Track',
+            description: '',
+            createdAt: start,
+            startedAt: start,
+            stoppedAt: null,
+            points: [
+              ActivityPointModel(
+                latitude: 48.85,
+                longitude: 2.35,
+                elevation: 0,
+                time: start,
+                status: ActivityPointsStatusColumn.active,
+              ),
+              // Same second as the real last fix below.
+              ActivityPointModel(
+                latitude: 48.85,
+                longitude: 2.35,
+                elevation: 0,
+                time: tied,
+                status: ActivityPointsStatusColumn.signalLost,
+              ),
+              ActivityPointModel(
+                latitude: 48.86,
+                longitude: 2.36,
+                elevation: 0,
+                time: tied,
+                status: ActivityPointsStatusColumn.paused,
+              ),
+            ],
+          ),
+        );
+
+        final bloc = buildBloc();
+        addTearDown(bloc.close);
+        clock.advance(const Duration(hours: 2));
+        bloc.add(const ResumeOngoingRecording());
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+
+        expect(bloc.state.isPaused, isTrue);
+        expect(
+          bloc.state.elapsedTime,
+          const Duration(minutes: 4),
+          reason: 'the 2 h the process was dead must stay out of elapsed',
+        );
+      },
+    );
+
     blocTest<RecordingBloc, RecordingState>(
       'resuming when a recording is already live is a no-op',
       build: buildBloc,

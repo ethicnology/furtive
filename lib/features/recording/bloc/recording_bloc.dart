@@ -120,28 +120,35 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
       // last recorded point. Staying paused keeps the dead gap out of active
       // elapsed time; if it was active, the gap counts as elapsed (the run was
       // notionally still going, just with no GPS) which is the honest reading.
-      final lastTime = ongoing.points.isEmpty
-          ? null
-          : ongoing.points
-                .map((p) => p.time)
-                .reduce((a, b) => a.isAfter(b) ? a : b);
-      final wasPaused =
-          lastTime != null &&
-          ongoing.points.firstWhere((p) => p.time == lastTime).status ==
-              ActivityPointStatusEntity.paused;
+      //
+      // `points.last`, NOT `firstWhere(time == max(time))`. fetchOngoing orders
+      // by `id ASC`, i.e. insertion order, so the last element IS the last fix
+      // recorded. Selecting by maximum timestamp instead is wrong whenever the
+      // final points share a timestamp — and they routinely do: SQLite truncates
+      // DateTime to whole seconds, so the ±1µs signalLost boundary pair that
+      // brackets a GPS outage collapses into an exact tie with the fix beside it
+      // (the same truncation that forces the stable mergeSort in
+      // activity_entity.dart). firstWhere would then return the *earliest* point
+      // of the tie — typically a signalLost boundary — and read its status
+      // instead of the real last fix's. A run killed while paused right after an
+      // outage would resume UNPAUSED, restarting the timer and counting the dead
+      // time as active.
+      final lastPoint = ongoing.points.isEmpty ? null : ongoing.points.last;
 
       final Duration elapsed;
-      if (wasPaused) {
+      if (lastPoint != null &&
+          lastPoint.status == ActivityPointStatusEntity.paused) {
         // Continue the ongoing pause from the last fix. _completedPauses already
         // covers up to that fix, so resuming adds (now - lastFix) without double
         // counting. Freeze elapsed at the pause moment; no timer while paused.
-        _pauseStartedAt = lastTime;
-        elapsed = lastTime.difference(_startedAt!) - _completedPauses;
+        _pauseStartedAt = lastPoint.time;
+        elapsed = lastPoint.time.difference(_startedAt!) - _completedPauses;
       } else {
         _startTicking();
         elapsed = _clock.nowUtc().difference(_startedAt!) - _completedPauses;
       }
 
+      final wasPaused = _pauseStartedAt != null;
       logs.fine(
         'Resumed ongoing activity ${ongoing.id} from storage '
         '(paused: $wasPaused).',
