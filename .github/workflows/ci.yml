@@ -52,5 +52,11 @@ jobs:
       - name: flutter analyze
         run: flutter analyze
 
-      - name: flutter test
-        run: flutter test
+      # --coverage rather than a bare `flutter test`: the threshold check below
+      # is what stops the suite from silently rotting. Without a measured floor
+      # in CI, coverage only ever moves in one direction.
+      - name: flutter test (with coverage)
+        run: flutter test --coverage
+
+      - name: Coverage floor
+        run: python3 tool/coverage_threshold.py --report
