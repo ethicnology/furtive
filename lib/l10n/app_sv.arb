@@ -19,6 +19,7 @@
   "btnRename": "Byt namn",
   "btnDelete": "Ta bort",
   "btnApply": "Tillämpa",
+  "prefSaveFailed": "Kunde inte spara dina inställningar.",
   "btnStarGitHub": "Stjärna på GitHub",
   "btnSponsor": "Stötta",
   "linkOpenFailed": "Kunde inte öppna {url}",

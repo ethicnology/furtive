@@ -19,6 +19,7 @@
   "btnRename": "Μετονομασία",
   "btnDelete": "Διαγραφή",
   "btnApply": "Εφαρμογή",
+  "prefSaveFailed": "Δεν ήταν δυνατή η αποθήκευση των προτιμήσεών σας.",
   "btnStarGitHub": "Αστέρι στο GitHub",
   "btnSponsor": "Υποστήριξη",
   "linkOpenFailed": "Αδυναμία ανοίγματος του {url}",

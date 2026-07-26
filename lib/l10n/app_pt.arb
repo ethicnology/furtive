@@ -19,6 +19,7 @@
   "btnRename": "Renomear",
   "btnDelete": "Excluir",
   "btnApply": "Aplicar",
+  "prefSaveFailed": "Não foi possível salvar suas preferências.",
   "btnStarGitHub": "Dar estrela no GitHub",
   "btnSponsor": "Apoiar",
   "linkOpenFailed": "Não foi possível abrir {url}",

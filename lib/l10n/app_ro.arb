@@ -19,6 +19,7 @@
   "btnRename": "Redenumește",
   "btnDelete": "Șterge",
   "btnApply": "Aplică",
+  "prefSaveFailed": "Preferințele nu au putut fi salvate.",
   "btnStarGitHub": "Stea pe GitHub",
   "btnSponsor": "Susține",
   "linkOpenFailed": "Nu s-a putut deschide {url}",

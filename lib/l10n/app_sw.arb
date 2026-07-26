@@ -19,6 +19,7 @@
   "btnRename": "Badilisha jina",
   "btnDelete": "Futa",
   "btnApply": "Tumia",
+  "prefSaveFailed": "Imeshindwa kuhifadhi mapendeleo yako.",
   "btnStarGitHub": "Mpe nyota GitHub",
   "btnSponsor": "Saidia",
   "linkOpenFailed": "Imeshindwa kufungua {url}",

@@ -19,6 +19,7 @@
   "btnRename": "नाम बदलें",
   "btnDelete": "हटाएँ",
   "btnApply": "लागू करें",
+  "prefSaveFailed": "आपकी प्राथमिकताएँ सहेजी नहीं जा सकीं।",
   "btnStarGitHub": "GitHub पर स्टार दें",
   "btnSponsor": "सहायता करें",
   "linkOpenFailed": "{url} खोला नहीं जा सका",

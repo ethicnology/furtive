@@ -19,6 +19,7 @@
   "btnRename": "পুনর্নামকরণ",
   "btnDelete": "মুছুন",
   "btnApply": "প্রয়োগ করুন",
+  "prefSaveFailed": "আপনার পছন্দ সংরক্ষণ করা যায়নি।",
   "btnStarGitHub": "GitHub-এ স্টার দিন",
   "btnSponsor": "সহায়তা করুন",
   "linkOpenFailed": "{url} খোলা যায়নি",

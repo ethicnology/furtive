@@ -19,6 +19,7 @@
   "btnRename": "Nimeä uudelleen",
   "btnDelete": "Poista",
   "btnApply": "Käytä",
+  "prefSaveFailed": "Asetusten tallentaminen ei onnistunut.",
   "btnStarGitHub": "Tähti GitHubissa",
   "btnSponsor": "Tue",
   "linkOpenFailed": "Linkin {url} avaaminen epäonnistui",

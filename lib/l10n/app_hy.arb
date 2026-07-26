@@ -19,6 +19,7 @@
   "btnRename": "Վերանվանել",
   "btnDelete": "Ջնջել",
   "btnApply": "Կիրառել",
+  "prefSaveFailed": "Հնարավոր չէ պահել ձեր նախընտրությունները։",
   "btnStarGitHub": "Աստղ տալ GitHub-ում",
   "btnSponsor": "Աջակցել",
   "linkOpenFailed": "Չհաջողվեց բացել {url}",

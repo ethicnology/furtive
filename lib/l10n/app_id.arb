@@ -19,6 +19,7 @@
   "btnRename": "Ganti nama",
   "btnDelete": "Hapus",
   "btnApply": "Terapkan",
+  "prefSaveFailed": "Tidak dapat menyimpan preferensi Anda.",
   "btnStarGitHub": "Bintangi di GitHub",
   "btnSponsor": "Dukung",
   "linkOpenFailed": "Tidak dapat membuka {url}",

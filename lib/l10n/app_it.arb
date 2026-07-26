@@ -19,6 +19,7 @@
   "btnRename": "Rinomina",
   "btnDelete": "Elimina",
   "btnApply": "Applica",
+  "prefSaveFailed": "Impossibile salvare le preferenze.",
   "btnStarGitHub": "Stella su GitHub",
   "btnSponsor": "Sponsorizza",
   "linkOpenFailed": "Impossibile aprire {url}",

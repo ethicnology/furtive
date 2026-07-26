@@ -19,6 +19,7 @@
   "btnRename": "Yeniden adlandır",
   "btnDelete": "Sil",
   "btnApply": "Uygula",
+  "prefSaveFailed": "Tercihleriniz kaydedilemedi.",
   "btnStarGitHub": "GitHub'da yıldız ver",
   "btnSponsor": "Sponsor ol",
   "linkOpenFailed": "{url} açılamadı",
