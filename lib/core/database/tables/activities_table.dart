@@ -5,6 +5,11 @@ import 'package:drift/drift.dart';
 // every fetch; without the index the table scans the whole activities
 // table on every refresh.
 @TableIndex(name: 'idx_activities_started_at', columns: {#startedAt})
+// Indexed on stoppedAt because fetchOngoing() filters on `stoppedAt IS NULL` on
+// every cold start (and again for each orphan it reconciles). Without it that is
+// a full table scan; a partial index is not expressible here, but SQLite uses
+// this one for the IS NULL probe.
+@TableIndex(name: 'idx_activities_stopped_at', columns: {#stoppedAt})
 class Activities extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();

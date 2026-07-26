@@ -5,9 +5,12 @@ import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/locator.dart';
 
 class PreferencesLocalDataSource {
-  final db = getIt.get<LocalDatabase>();
+  /// [db] defaults to the app-wide singleton so production call sites stay
+  /// `PreferencesLocalDataSource()`; tests inject an in-memory database.
+  PreferencesLocalDataSource({LocalDatabase? db})
+    : db = db ?? getIt.get<LocalDatabase>();
 
-  PreferencesLocalDataSource();
+  final LocalDatabase db;
 
   Future<void> store(PreferencesModel preferences) async {
     await db
@@ -16,7 +19,6 @@ class PreferencesLocalDataSource {
           PreferencesCompanion(
             id: const Value(1),
             mapTheme: Value(preferences.mapTheme),
-            mapLanguage: Value(preferences.mapLanguage),
             accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
             uiLocale: Value(preferences.uiLocale),
@@ -45,7 +47,6 @@ class PreferencesLocalDataSource {
             const PreferencesCompanion(
               id: Value(1),
               mapTheme: Value(MapThemeColumn.dark),
-              mapLanguage: Value(MapLanguageColumn.en),
               accuracyInMeters: Value(0),
             ),
           );
@@ -56,7 +57,6 @@ class PreferencesLocalDataSource {
 
     return PreferencesModel(
       mapTheme: preferences.mapTheme,
-      mapLanguage: preferences.mapLanguage,
       accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,

@@ -4,7 +4,6 @@ import 'package:drift/drift.dart';
 class Preferences extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get mapTheme => textEnum<MapThemeColumn>()();
-  TextColumn get mapLanguage => textEnum<MapLanguageColumn>()();
   IntColumn get accuracyInMeters => integer()();
   // false on a freshly created DB (-> wizard shows); true after migration
   // for existing users (-> wizard does not show).
@@ -42,9 +41,3 @@ class Preferences extends Table {
 }
 
 enum MapThemeColumn { light, dark, white, grayscale, black }
-
-/// Legacy column: map-label language is now derived from the UI locale at
-/// fetch time (see `resolveMapLabelLanguage` in `map_remote_data_source`).
-/// The enum + column are kept to avoid a SQLite schema change; new rows
-/// always write `en` and the value is never read back into UI flows.
-enum MapLanguageColumn { en, fr, ru, uk }
