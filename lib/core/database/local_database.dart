@@ -17,7 +17,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -68,7 +68,6 @@ class LocalDatabase extends _$LocalDatabase {
         await into(preferences).insert(
           PreferencesCompanion.insert(
             mapTheme: MapThemeColumn.dark,
-            mapLanguage: MapLanguageColumn.en,
             accuracyInMeters: 0,
           ),
         );
@@ -164,6 +163,39 @@ class LocalDatabase extends _$LocalDatabase {
       // metadata.
       await m.deleteTable('trace_points');
       await m.deleteTable('trace_metadatas');
+    }
+    if (from < 9) {
+      // v9: drop the dead `map_language` column. Map-label language has been
+      // derived from the UI locale at fetch time for several versions
+      // (resolveMapLabelLanguage in map_remote_data_source.dart); the column
+      // was only still written so the NOT NULL constraint stayed satisfiable,
+      // and never read back.
+      //
+      // alterTable + TableMigration (drift's copy-into-a-new-table strategy),
+      // NOT `ALTER TABLE ... DROP COLUMN`: DROP COLUMN needs SQLite >= 3.35
+      // (2021), and this app links the SYSTEM SQLite (no
+      // sqlite3_flutter_libs) with minSdk 24 — an Android 7 device can ship
+      // SQLite 3.9, where DROP COLUMN does not exist and the migration would
+      // hard-fail. Table recreation works on every version we support.
+      //
+      // Safe with respect to foreign keys: `preferences` is referenced by
+      // nothing, and drift runs onUpgrade before beforeOpen turns
+      // `PRAGMA foreign_keys` on, so enforcement is off during the rebuild
+      // regardless.
+      await m.alterTable(TableMigration(preferences));
+    }
+    if (from < 10) {
+      // v10: make the activity_points -> activities foreign key actually
+      // enforce ON DELETE CASCADE, and index activities.stopped_at.
+      //
+      // The FK change needs the same table-recreation treatment as v9 (SQLite
+      // cannot alter a constraint in place at any version), so activity_points
+      // is rebuilt and its rows copied. That is the one migration here that
+      // touches a potentially large table — a few tens of thousands of rows for
+      // a heavy user — but it runs once, inside the transaction wrapping the
+      // whole upgrade.
+      await m.alterTable(TableMigration(activityPoints));
+      await m.createIndex(idxActivitiesStoppedAt);
     }
   }
 }

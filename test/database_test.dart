@@ -83,7 +83,7 @@ void main() {
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
 
-        expect(db.schemaVersion, 8);
+        expect(db.schemaVersion, 10);
         // Existing preferences survive untouched.
         expect(prefs.mapTheme, MapThemeColumn.white);
         expect(prefs.hasCompletedOnboarding, isTrue);
@@ -116,6 +116,17 @@ void main() {
 
         // v7 lock-screen-visibility toggle, same true-default treatment.
         expect(prefs.showOnLockScreen, isTrue);
+
+        // v9 rebuilt the preferences table without map_language. Every
+        // assertion above already ran against the post-v9 row, so they double
+        // as proof the rebuild copied the data across rather than reseeding
+        // defaults; this checks the column itself is actually gone.
+        final columns = raw
+            .select("SELECT name FROM pragma_table_info('preferences')")
+            .map((r) => r['name'] as String)
+            .toSet();
+        expect(columns, isNot(contains('map_language')));
+        expect(columns, contains('map_theme'));
       },
     );
 
@@ -209,7 +220,7 @@ void main() {
         await (db.select(
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
-        expect(db.schemaVersion, 8);
+        expect(db.schemaVersion, 10);
 
         final remainingTables = raw
             .select(
@@ -277,7 +288,7 @@ void main() {
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
 
-        expect(db.schemaVersion, 8);
+        expect(db.schemaVersion, 10);
         // v2 backfill: existing users skip onboarding and get the changelog
         // sentinel; fresh installs (not this path) get the column defaults.
         expect(prefs.hasCompletedOnboarding, isTrue);
@@ -838,7 +849,6 @@ void main() {
         await ds.store(
           PreferencesModel(
             mapTheme: MapThemeColumn.white,
-            mapLanguage: MapLanguageColumn.en,
             accuracyInMeters: 0,
             hasCompletedOnboarding: true,
             uiLocale: 'de',
@@ -855,6 +865,67 @@ void main() {
         expect(read.checkUpdates, isFalse);
       },
     );
+
+    test('the v10 foreign key cascades: deleting an activity row directly (not '
+        'through delete()) no longer leaves orphan points behind', () async {
+      final ds = ActivityLocalDataSource();
+      final t = DateTime.utc(2026, 1, 1, 12);
+      await ds.store(
+        ActivityModel(
+          id: 'cascade1',
+          name: 'Track',
+          description: '',
+          createdAt: t,
+          startedAt: t,
+          stoppedAt: t,
+          points: [
+            ActivityPointModel(
+              latitude: 48,
+              longitude: 2,
+              elevation: 0,
+              time: t,
+              status: ActivityPointsStatusColumn.active,
+            ),
+          ],
+        ),
+      );
+      expect(await db.select(db.activityPoints).get(), isNotEmpty);
+
+      // Bypass delete()'s transaction entirely — before v10 the FK was inert
+      // metadata and this left an orphan point row pointing at nothing.
+      await (db.delete(
+        db.activities,
+      )..where((t) => t.id.equals('cascade1'))).go();
+
+      expect(await db.select(db.activityPoints).get(), isEmpty);
+    });
+
+    test('fetchSummaries paginates', () async {
+      final ds = ActivityLocalDataSource();
+      final base = DateTime.utc(2026, 1, 1, 12);
+      for (var i = 0; i < 5; i++) {
+        await ds.store(
+          ActivityModel(
+            id: 'p$i',
+            name: 'Track',
+            description: '',
+            createdAt: base.add(Duration(days: i)),
+            startedAt: base.add(Duration(days: i)),
+            stoppedAt: base.add(Duration(days: i, minutes: 10)),
+            points: const [],
+          ),
+        );
+      }
+
+      expect((await ds.fetchSummaries()).length, 5, reason: 'unbounded');
+      expect((await ds.fetchSummaries(limit: 2)).length, 2);
+
+      // Newest first, so offset walks backwards in time.
+      final page1 = await ds.fetchSummaries(limit: 2);
+      final page2 = await ds.fetchSummaries(limit: 2, offset: 2);
+      expect(page1.map((s) => s.id), ['p4', 'p3']);
+      expect(page2.map((s) => s.id), ['p2', 'p1']);
+    });
 
     test('delete removes the activity and its points', () async {
       final ds = ActivityLocalDataSource();

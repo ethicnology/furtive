@@ -145,7 +145,6 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // idempotent on it), so a live recording is never disturbed.
     final mapChanged =
         previous.mapTheme != event.preferences.mapTheme ||
-        previous.mapLanguage != event.preferences.mapLanguage ||
         previous.mapTilesEnabled != event.preferences.mapTilesEnabled;
     if (mapChanged) getIt<MapBloc>().add(InitMap());
 

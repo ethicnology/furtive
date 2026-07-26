@@ -2,14 +2,22 @@ import 'package:drift/drift.dart';
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/activity_summary.dart';
+import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/models/activity_model.dart';
 
 class ActivityLocalDataSource {
-  final db = getIt.get<LocalDatabase>();
+  /// [db] and [clock] default to the app-wide singleton / real clock, so
+  /// production call sites stay `ActivityLocalDataSource()`. Tests inject an
+  /// in-memory database and a [FixedClock] to drive the stale-activity window
+  /// (see [ongoingStaleAfter]) without waiting 12 real hours.
+  ActivityLocalDataSource({LocalDatabase? db, Clock? clock})
+    : db = db ?? getIt.get<LocalDatabase>(),
+      _clock = clock ?? const SystemClock();
 
-  ActivityLocalDataSource();
+  final LocalDatabase db;
+  final Clock _clock;
 
   // Compute the denormalised aggregates the way the entity does (active
   // segments only, non-finite points filtered), so the list's stored values
@@ -213,7 +221,7 @@ class ActivityLocalDataSource {
         db.activities,
       )..where((t) => t.id.equals(activityId))).write(
         ActivitiesCompanion(
-          stoppedAt: Value(stoppedAt ?? DateTime.now().toUtc()),
+          stoppedAt: Value(stoppedAt ?? _clock.nowUtc()),
           distanceMeters: Value(agg.distanceMeters),
           activeDurationMs: Value(agg.durationMs),
         ),
@@ -226,7 +234,7 @@ class ActivityLocalDataSource {
   /// crashed, or a kill so old the user has moved on. Resuming it would show a
   /// bogus multi-hour/day "live" run with a runaway timer. Such activities are
   /// auto-ceased (finalised with real aggregates) instead of resumed.
-  static const _ongoingStaleAfter = Duration(hours: 12);
+  static const ongoingStaleAfter = Duration(hours: 12);
 
   /// The most recently started activity that was never ceased
   /// (`stoppedAt == null`), with its points — or null if none resumable. Used
@@ -240,7 +248,7 @@ class ActivityLocalDataSource {
   /// auto-ceased so it stops being "in progress" forever (and stops forcing
   /// fetchSummaries to recompute its aggregates on every list open). The
   /// newest candidate is itself auto-ceased (and null returned) when its last
-  /// fix is older than [_ongoingStaleAfter].
+  /// fix is older than [ongoingStaleAfter].
   Future<ActivityModel?> fetchOngoing() async {
     final ongoing =
         await (db.select(db.activities)
@@ -279,8 +287,7 @@ class ActivityLocalDataSource {
     final lastFix = points.isEmpty
         ? candidate.startedAt
         : points.map((p) => p.time).reduce((a, b) => a.isAfter(b) ? a : b);
-    if (DateTime.now().toUtc().difference(lastFix.toUtc()) >
-        _ongoingStaleAfter) {
+    if (_clock.nowUtc().difference(lastFix.toUtc()) > ongoingStaleAfter) {
       await cease(candidate.id, stoppedAt: lastFix);
       return null;
     }
@@ -309,10 +316,21 @@ class ActivityLocalDataSource {
   /// pre-v4 activities, or an in-progress activity) it computes from points
   /// once and — for ceased activities — persists the result so later loads
   /// stay cheap.
-  Future<List<ActivitySummary>> fetchSummaries() async {
-    final rows = await (db.select(
-      db.activities,
-    )..orderBy([(t) => OrderingTerm.desc(t.startedAt)])).get();
+  ///
+  /// [limit]/[offset] page the query. Unbounded by default for callers that
+  /// genuinely want everything, but the activities list passes a page size:
+  /// without one, every open of that screen read EVERY activity row, and
+  /// re-materialised every point of any row still on the sentinel — for an
+  /// in-progress 24 h recording that is ~17k rows rebuilt on each visit,
+  /// because an in-progress row deliberately never persists its aggregates.
+  Future<List<ActivitySummary>> fetchSummaries({
+    int? limit,
+    int offset = 0,
+  }) async {
+    final query = db.select(db.activities)
+      ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]);
+    if (limit != null) query.limit(limit, offset: offset);
+    final rows = await query.get();
 
     final summaries = <ActivitySummary>[];
     for (final row in rows) {

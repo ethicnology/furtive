@@ -1,9 +1,10 @@
 /// Native language names for the UI-language dropdown. Kept untranslated so
 /// a user landing in a wrong locale can still recognise their language.
 ///
-/// UI locales are decoupled from map-label languages (MapLanguageEntity).
-/// Map tile names come from Protomaps and are only available in
-/// en/fr/ru/uk; the UI itself can be localised independently.
+/// UI locales are decoupled from map-label languages: the label language is
+/// derived from the UI locale at fetch time and narrowed to whatever Protomaps
+/// actually supports (see `resolveMapLabelLanguage` in
+/// map_remote_data_source.dart), so the UI can be localised independently.
 const uiLanguageNativeNames = <String, String>{
   'en': 'English',
   'fr': 'Français',
