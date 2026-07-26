@@ -78,6 +78,38 @@ String resolveMapLabelLanguage(String? userLocaleTag) {
 }
 
 class MapRemoteDataSource {
+  /// [clientFactory], [apiKey] and [styleUrlBase] default to the real HTTP
+  /// client and the compile-time `--dart-define` values, so production call
+  /// sites stay `MapRemoteDataSource()`.
+  ///
+  /// They exist because this class parses a THIRD-PARTY document — the Protomaps
+  /// style JSON and its TileJSON — and every field it reads is a place a schema
+  /// change can break the map for every user at once. Without a seam, none of
+  /// that parsing was reachable from a test: under `flutter test` there is no
+  /// compiled-in key, so getMapConfig returned null on its first line and the
+  /// remaining ~100 lines never ran.
+  ///
+  /// A factory rather than a client instance: each request closes its client
+  /// when done, so a single injected instance would be unusable after the first
+  /// call.
+  MapRemoteDataSource({
+    http.Client Function()? clientFactory,
+    String? apiKey,
+    String? styleUrlBase,
+  }) : _newClient = clientFactory ?? http.Client.new,
+       _apiKey = apiKey ?? _protomapsKey,
+       _styleUrlBase = styleUrlBase ?? _protomapsUrl;
+
+  final http.Client Function() _newClient;
+  final String _apiKey;
+  final String _styleUrlBase;
+
+  /// Host the API key may be appended to. Only URLs on the configured host
+  /// receive it, so a compromised/MITM'd style JSON that smuggles in a
+  /// third-party `url`/`sprite`/`tiles` host cannot exfiltrate the key (or aim
+  /// our viewport-revealing tile requests at an attacker).
+  String get _keyHost => Uri.parse(_styleUrlBase).host;
+
   Future<Style?> getMapConfig({
     MapThemeColumn theme = MapThemeColumn.light,
     String? userLocaleTag,
@@ -94,17 +126,16 @@ class MapRemoteDataSource {
     // makes a keyed build behave exactly like the keyless one: same
     // tileless map, zero network calls to Protomaps. See
     // docs/AUDIT-2026-07.md §5.
-    if (_protomapsKey.isEmpty || !tilesEnabled) {
+    if (_apiKey.isEmpty || !tilesEnabled) {
       logs.warning(
         'getMapConfig: tileless map '
-        '(keyEmpty: ${_protomapsKey.isEmpty}, tilesEnabled: $tilesEnabled)',
+        '(keyEmpty: ${_apiKey.isEmpty}, tilesEnabled: $tilesEnabled)',
       );
       return null;
     }
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
-    final styleUrl =
-        '$_protomapsUrl/${theme.name}/$lang.json?key=$_protomapsKey';
+    final styleUrl = '$_styleUrlBase/${theme.name}/$lang.json?key=$_apiKey';
     logs.info('getMapConfig: fetching style ${_redactKey(styleUrl)}');
 
     // We don't use StyleReader.read() directly because the Protomaps v5
@@ -240,13 +271,6 @@ class MapRemoteDataSource {
   static String _redactKey(String url) =>
       url.replaceAll(RegExp(r'key=[^&]*'), 'key=***');
 
-  /// Host the API key may be appended to. Only URLs on the configured
-  /// Protomaps host receive the key, so a compromised/MITM'd style JSON that
-  /// smuggles in a third-party `url`/`sprite`/`tiles` host can't exfiltrate
-  /// the key (or turn our tile requests, which leak the viewport, toward an
-  /// attacker). Parsed once from _protomapsUrl.
-  static final String _keyHost = Uri.parse(_protomapsUrl).host;
-
   String _withKey(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) return url;
@@ -265,7 +289,7 @@ class MapRemoteDataSource {
     // ever stopped pre-baking the key.
     final separator = url.contains('?') ? '&' : '?';
     return '$url$separator'
-        'key=$_protomapsKey';
+        'key=$_apiKey';
   }
 
   // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung
@@ -279,7 +303,7 @@ class MapRemoteDataSource {
   static const _maxResponseBytes = 16 * 1024 * 1024;
 
   Future<Uint8List> _httpGetBytesCapped(String url) async {
-    final client = http.Client();
+    final client = _newClient();
     try {
       final request = http.Request('GET', Uri.parse(url));
       final response = await client.send(request).timeout(_httpTimeout);
