@@ -74,7 +74,7 @@ not add a `key.properties` or wire signing into Gradle.
 host. The toolchain is pinned end-to-end:
 
 - `debian:trixie@sha256:…` (multi-arch index digest, in `Containerfile.tools`)
-- Flutter `3.44.6` via `.fvmrc`
+- Flutter `3.44.8` via `.fvmrc`
 - Android NDK / SDK / build-tools / JVM in `android/gradle.properties`
 - `pubspec.lock` enforced via `flutter pub get --enforce-lockfile`
 - `SOURCE_DATE_EPOCH = $(git log -1 --format=%ct)` passed to the container

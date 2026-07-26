@@ -37,13 +37,44 @@ dependencies:
 
   flutter_map: ^8.3.1
   flutter_map_location_marker: ^10.3.0
-  vector_map_tiles: ^9.0.0-beta.9 # 10.0.0-beta.2 available, holding off until vector_map_tiles leaves beta on the 10.x line
-  vector_tile_renderer: ^6.1.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
+  # Two deliberate "no" decisions here, both re-verified 2026-07-26.
+  #
+  # 1. NOT 10.0.0-beta.2, despite the higher number:
+  #    - 9.x is the actively maintained line. Upstream's `9.0.0` branch got
+  #      commits on 2026-07-23; the `main` branch carrying 10.x has had no
+  #      commit since 2025-10-19, and both 10.0.0 betas date from that same
+  #      October 2025 burst.
+  #    - upstream issue #271 ("Fill layers not rendering at zoom levels below
+  #      source maxzoom (v10)") is an open v10-specific rendering defect,
+  #      still unfixed 8 months on.
+  #    - 10.x requires `vector_tile_renderer ^7.0.0-beta.1` (itself a beta,
+  #      untouched since 2025-10-18), whereas 6.1.0 below is the current
+  #      STABLE renderer — and we consume its API directly (next line), so a
+  #      renderer major would break the hand-rolled style pipeline in
+  #      map_remote_data_source.dart.
+  #
+  # 2. NOT 9.0.0-beta.10/11 either, even though they are newer. They raise the
+  #    `latlong2` floor to ^0.10.1, which flutter_map_location_marker 10.3.0
+  #    (its newest release) does not allow (^0.9.1) — an unsatisfiable
+  #    conflict that can only be forced with a `dependency_overrides` entry.
+  #    That override buys nothing: diffing the published beta.9 and beta.11
+  #    archives shows the ONLY code changes are lint fixes with no runtime
+  #    effect — `_renderJob(job)` -> `_renderJob(dynamic job)` and
+  #    `_updateLabels(job)` -> `(dynamic job)` (an untyped Dart parameter is
+  #    already `dynamic`), an added `bool` return type, and dropping a
+  #    `library` directive. Upstream's "fix typecast error" commit reverts an
+  #    over-tightened annotation introduced after beta.9 shipped; beta.9 never
+  #    had the defect. So: no behavioural gain, real solver liability — stay.
+  #    Revisit once flutter_map_location_marker#167 ("Bump latlong2 from 0.9.1
+  #    to 0.10.1", open since 2026-07-01) lands, which removes the conflict
+  #    without an override.
+  vector_map_tiles: ^9.0.0-beta.9
+  vector_tile_renderer: ^6.1.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader. 6.1.0 is the latest stable (7.0.0-beta.1 is a stale beta, see above).
   executor_lib: ^1.1.2 # transitive of vector_map_tiles, imported directly to recognise its benign CancellationException
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0 # sequential()/droppable() transformers for MapBloc
   get_it: ^9.2.1
-  latlong2: ^0.9.1 # pinned by vector_map_tiles 9.x
+  latlong2: ^0.9.1 # capped by flutter_map_location_marker 10.3.0 (^0.9.1), not by vector_map_tiles — see the note on vector_map_tiles above. 0.10.x holds nothing we need (improved LatLng.hashCode, added LatLng.isValid).
   geolocator: ^14.0.2
   permission_handler: ^12.0.3
   http: ^1.6.0
@@ -57,7 +88,7 @@ dependencies:
   url_launcher: ^6.3.2
   device_info_plus: ^13.2.0
   file_selector: ^1.1.0
-  share_plus: ^13.2.1
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:
@@ -69,11 +100,36 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  # ---------------------------------------------------------------------
+  # THE ANALYZER-13 WALL — why the three codegen packages below are pinned
+  # to older versions even though newer ones exist.
+  #
+  # Every newer release of build_runner (>=2.15.2), drift_dev (>2.34.0) and
+  # dart_mappable_builder (>=4.9.0) requires analyzer ^13.0.0 (build_runner
+  # additionally needs meta ^1.18.3). Flutter 3.44.8 ships Dart 3.12.2, which
+  # caps analyzer at 12.1.0 and pins meta 1.18.0; flutter_test additionally
+  # pins test_api 0.7.11 and matcher 0.12.19, so pulling analyzer 13 drags in
+  # a `test` version that conflicts with bloc_test.
+  #
+  # These bumps resolve cleanly in a bare Dart project — they fail HERE
+  # specifically because of the Flutter SDK's own pins. Nothing to fix on our
+  # side: re-attempt all three together the first time a Flutter stable ships
+  # analyzer >= 13 / meta >= 1.18.3.
+  # ---------------------------------------------------------------------
   build_runner: ^2.15.1
+  # Blocked by the analyzer-13 wall above — and this pin has a visible cost:
+  # against drift 2.34.2, drift_dev 2.34.0's CLI does not compile, so
+  # `dart run drift_dev schema <dump|export|generate|steps>` dies on
+  # `allSchemaEntities` (removed from drift3_preview's GeneratedDatabase).
+  # The whole schema-migration verification toolchain (SchemaVerifier,
+  # step-by-step migration tests) is therefore unavailable. build_runner
+  # codegen is unaffected, which is why it goes unnoticed day to day.
+  # Until the wall lifts, migrations are covered only by the hand-written
+  # tests in test/database_test.dart.
   drift_dev: ^2.34.0
-  sqlite3: ^3.4.0 # already a drift transitive; declared for the migration test
+  sqlite3: ^3.5.0 # already a drift transitive; declared for the migration test
   bloc_test: ^10.0.0
-  dart_mappable_builder: ^4.8.0
+  dart_mappable_builder: ^4.8.0 # blocked by the analyzer-13 wall above
   flutter_launcher_icons: "^0.14.4"
 
 flutter_launcher_icons:
