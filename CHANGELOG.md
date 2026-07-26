@@ -5,6 +5,82 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Toolchain** — Flutter 3.44.8; dependencies refreshed to their newest
+  resolvable versions. `vector_map_tiles` deliberately stays on the 9.x line
+  rather than 10.0.0-beta.2: 9.x is the actively maintained branch upstream,
+  10.x has an open rendering defect (upstream #271) and depends on a stale beta
+  renderer. `build_runner` / `drift_dev` / `dart_mappable_builder` are pinned
+  behind their latest because every newer release requires `analyzer ^13`, which
+  no Flutter stable ships yet — see the note in `pubspec.yaml`.
+- **Architecture** — dependencies are now injected through constructors (with
+  real defaults) instead of being constructed in place, and `get_it` is confined
+  to the composition root. The four-layer bloc → use case → repository →
+  datasource chain had no injection point anywhere, which is why most of the app
+  was untestable; 11 pass-through use cases and 2 alias repositories were
+  removed, and the `permissions` feature was flattened to match the structure
+  every other feature uses.
+- **Recording** — the recording state machine moved out of `MapBloc` into a
+  dedicated `RecordingBloc`, and the GPS stream lifecycle into
+  `PositionStreamController`. `MapBloc` is now map presentation only. Behaviour
+  is unchanged; the map subtree no longer rebuilds on the 1 s elapsed tick by
+  construction rather than by a `buildWhen` allowlist.
+- **Time** — every wall-clock read goes through an injectable `Clock`, making the
+  12 h abandoned-recording window, the 20 s stale-stream threshold and the
+  pause/elapsed bookkeeping directly testable.
+
+### Fixed
+- **Preferences could silently fail to save.** The page dispatched Apply and
+  popped in the same frame, so a failed write had no UI left to report to and was
+  only logged — the user believed their settings were stored. Apply now waits for
+  the write, reports failures, and only then closes.
+- **The Preferences page overflowed** on a short viewport (and at large system
+  font sizes), pushing the Apply button off screen and making the settings
+  impossible to save. The page now scrolls.
+- **The share card ignored the system font scale**, so a user with large
+  accessibility text exported a visibly broken PNG they never saw before sharing.
+  The card is pinned to `TextScaler.noScaling` and covered by golden tests.
+- **`activity_points` → `activities` foreign key now cascades** (schema v10). It
+  previously declared a reference with no `ON DELETE` action, so nothing at the
+  SQLite level prevented orphan point rows; only the app's own transaction did.
+- Indexed `activities.stopped_at`, used by the resume-after-kill lookup on every
+  cold start.
+- The GPX import size cap was lowered from 50 MB to 10 MB, which is what actually
+  bounds peak memory (the file is read to a String and then copied to the parse
+  isolate). The old comment justified it as billion-laughs/XXE mitigation; both
+  claims were wrong and are now pinned by tests instead.
+
+### Removed
+- **The dead OpenStreetMap public-traces stack** (~600 lines). Its only trigger
+  had been commented out and its tables dropped in schema v8, but the code — and
+  its call to `api.openstreetmap.org` carrying the user's map viewport — was
+  still compiled in. For an app whose premise is "no network calls beyond what
+  you can see in the source", that was the worst possible place to keep dead
+  code.
+- The dead `map_language` preferences column (schema v9) and the unused
+  `KmMilestone.time` field, which was also the only non-UTC timestamp in the app.
+
+### Accessibility
+- `HoldToConfirmButton` — the only way to stop a recording — now exposes a button
+  role, label, hint and tap/long-press actions, and announces its countdown. It
+  was a bare `GestureDetector`, i.e. invisible to screen readers.
+- Hardcoded font sizes across the UI now derive from the theme's text scale, so
+  the app honours the system font size. Fixed sizes are retained only where the
+  canvas itself is fixed (share card, map markers) and pinned explicitly.
+- Contrast, tap-target size and label presence are now verified by tests using
+  Flutter's accessibility guidelines. The palette already documented its WCAG
+  ratios; nothing checked them.
+
+### Internal
+- Test suite grown from 118 to 184; line coverage of hand-written code from
+  ~19% to ~57%, with a floor enforced in CI (`tool/coverage_threshold.py`).
+- Stricter analysis: `strict-casts`, `strict-raw-types`, `avoid_dynamic_calls`,
+  `cancel_subscriptions`, `close_sinks` and others. These immediately surfaced
+  unchecked `dynamic` casts in the third-party Protomaps style parsing, where a
+  schema change would have broken the map for every user at once.
+
 ## [1.2.0] - 2026-07-15
 
 Ships as 1.2.0+2 rather than 1.2.0+1: the Android versionCode had stayed at 1
