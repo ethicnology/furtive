@@ -37,8 +37,21 @@ android {
 
     buildTypes {
         release {
+            // Both deliberately off, and this is the only unexplained choice
+            // that used to be in this file.
+            //
+            // R8 is deterministic, so minification would not by itself break
+            // `make verify-reproducible`. It is off because it buys nothing this
+            // project wants and costs something it does: obfuscation is not a
+            // security property for a FOSS app whose source anyone can read, and
+            // an unminified APK is far easier for a third party to audit against
+            // this repository — which is the whole point of the reproducible
+            // build. The cost is a larger APK, accepted knowingly.
             isShrinkResources = false
             isMinifyEnabled = false
+            // Release artifacts are produced UNSIGNED and signed out-of-band
+            // with apksigner/zipalign. Keystores never enter this repository —
+            // do not add a key.properties or wire signing in here. See README.
             signingConfig = null
         }
     }
