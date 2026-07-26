@@ -5,27 +5,72 @@
 # IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
 # invoked from the command line by running `flutter analyze`.
 
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  language:
+    # Reject implicit downcasts from dynamic and implicit `dynamic` type
+    # arguments. Both were how the unchecked casts in map_remote_data_source
+    # (parsing third-party Protomaps style JSON) stayed invisible: `style['x']`
+    # is dynamic, and assigning it to a typed variable silently inserted a
+    # runtime cast that could only fail in production, on a schema change, for
+    # every user at once.
+    strict-casts: true
+    strict-raw-types: true
+  errors:
+    # Generated sources are gitignored and regenerated in CI; nothing here is
+    # hand-written, so lints against them are noise.
+    todo: ignore
+
 linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
+  # The lint rules applied to this project can be customized in the section
+  # below to disable rules from `package:flutter_lints/flutter.yaml` above, or
+  # to activate additional ones. A list of all available lints is published at
+  # https://dart.dev/lints.
   rules:
-    # Catches fire-and-forget futures inside async functions
-    # (the discarded_futures lint is intentionally not enabled —
-    # it's well-known to false-positive on Flutter widget callbacks
-    # like `onPressed: () => launchUrl(...)`)
+    # Catches fire-and-forget futures inside async functions.
+    # (the discarded_futures lint is intentionally NOT enabled — it is
+    # well-known to false-positive on Flutter widget callbacks like
+    # `onPressed: () => launchUrl(...)`)
     unawaited_futures: true
+
+    # A dropped StreamSubscription or an unclosed sink is the single most
+    # common leak class in this app's shape (a long-lived GPS stream plus
+    # several blocs). These two would have flagged the position-stream leak
+    # that the double-open race used to cause.
+    cancel_subscriptions: true
+    close_sinks: true
+
+    # Make the intended-immutable actually immutable, and surface unintended
+    # mutation of locals.
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+
+    # `dynamic` calls bypass every static guarantee. Paired with strict-casts
+    # above, this is what keeps third-party JSON parsing honest.
+    avoid_dynamic_calls: true
+
+    # Return types are load-bearing documentation on a codebase this
+    # comment-dense; an omitted one reads as `dynamic`.
+    always_declare_return_types: true
+
+    # Keeps diffs to the lines that actually changed — valuable on a project
+    # that reviews its own history closely.
+    require_trailing_commas: true
+
+    # Modern constructor syntax; also removes a class of forwarding mistakes.
+    use_super_parameters: true
+
+    # Catches `if (x == null) x = y` style and other avoidable null churn.
+    prefer_null_aware_operators: true
+
+    # An unnecessary `await` on a non-future, or a missing one, both change
+    # ordering in ways that are hard to see by eye in async bloc handlers.
+    avoid_void_async: true
+
+    # Documents intent at the class level; cheap, and useful given how much of
+    # this codebase is deliberately non-extensible value types.
+    unnecessary_lambdas: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

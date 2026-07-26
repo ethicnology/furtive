@@ -162,15 +162,23 @@ class MapRemoteDataSource {
     for (final entry in sources.entries) {
       final value = entry.value;
       if (value is! Map) continue;
+      final sourceKey = entry.key;
+      if (sourceKey is! String) continue;
       final sourceType = value['type'];
       final type = TileProviderType.values
           .where((e) => e.name.replaceAll('_', '-') == sourceType)
           .firstOrNull;
       if (type == null) continue;
 
-      dynamic source = value;
-      final entryUrl = value['url'] as String?;
-      if (entryUrl != null) {
+      // Typed as Map rather than `dynamic`: this whole block parses a
+      // third-party document, so every access below is a place a Protomaps
+      // schema change can break the map for every user at once. With
+      // `dynamic source` the analyser could not see any of it (which is what
+      // strict-casts / avoid_dynamic_calls now forbid) and each read compiled to
+      // an unchecked runtime cast.
+      Map<Object?, Object?> source = value;
+      final entryUrl = value['url'];
+      if (entryUrl is String) {
         final tileJsonText = await _httpGet(_withKey(entryUrl));
         final decoded = await compute(jsonDecode, tileJsonText);
         if (decoded is! Map) throw 'Invalid TileJSON at $entryUrl';
@@ -179,16 +187,19 @@ class MapRemoteDataSource {
 
       final tiles = source['tiles'];
       if (tiles is! List || tiles.isEmpty) continue;
-      // Don't unchecked-cast the first entry — a future Protomaps schema
-      // change shipping a non-string would throw ClassCastError and break
-      // the map for everyone until we ship a patch.
+      // Don't unchecked-cast the first entry — a future Protomaps schema change
+      // shipping a non-string would throw and break the map for everyone until
+      // we ship a patch. Same reasoning for the zoom bounds below: a
+      // non-integer there used to be an unchecked `as int?`.
       final first = tiles.first;
       if (first is! String) continue;
-      providers[entry.key] = NetworkVectorTileProvider(
+      final maxZoom = source['maxzoom'];
+      final minZoom = source['minzoom'];
+      providers[sourceKey] = NetworkVectorTileProvider(
         type: type,
         urlTemplate: _withKey(first),
-        maximumZoom: source['maxzoom'] as int? ?? 14,
-        minimumZoom: source['minzoom'] as int? ?? 1,
+        maximumZoom: maxZoom is int ? maxZoom : 14,
+        minimumZoom: minZoom is int ? minZoom : 1,
       );
     }
     if (providers.isEmpty) throw 'No tile providers in Protomaps style';
@@ -199,6 +210,13 @@ class MapRemoteDataSource {
       try {
         final jsonText = await _httpGet(_withKey('$spriteUri.json'));
         final spritesJson = await compute(jsonDecode, jsonText);
+        // SpriteIndexReader.read wants a Map<String, dynamic>; jsonDecode
+        // returns Object?, so check rather than cast — a malformed sprite index
+        // must fall through to the catch below (sprites are non-fatal) instead
+        // of throwing a ClassCastError.
+        if (spritesJson is! Map<String, dynamic>) {
+          throw 'Invalid sprite index at $spriteUri.json';
+        }
         sprites = SpriteStyle(
           atlasProvider: () => _httpGetBytes(_withKey('$spriteUri.png')),
           index: SpriteIndexReader().read(spritesJson),
