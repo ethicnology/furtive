@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "रिकॉर्डिंग के दौरान लॉक स्क्रीन के ऊपर मानचित्र/स्थिति दृश्यमान रखता है (केवल Android)। अपने लॉक किए गए फ़ोन को देखने वाले किसी से इसे छिपाने के लिए बंद करें।",
   "mapLoadingLocalizing": "GPS शुरू हो रहा है…",
   "mapLoadingMap": "मानचित्र लोड हो रहा है…",
-  "mapLoadingTraces": "ट्रेस लोड हो रहे हैं…",
   "mapStartingActivity": "गतिविधि शुरू हो रही है…",
   "activitiesLoadError": "यह गतिविधि नहीं खोली जा सकी"
 }

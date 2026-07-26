@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Garde la carte/position visible par-dessus l'écran verrouillé pendant l'enregistrement (Android uniquement). Désactive pour la cacher aux regards sur ton téléphone verrouillé.",
   "mapLoadingLocalizing": "Initialisation du GPS…",
   "mapLoadingMap": "Chargement de la carte…",
-  "mapLoadingTraces": "Chargement des traces…",
   "mapStartingActivity": "Démarrage de l'activité…",
   "activitiesLoadError": "Impossible d'ouvrir cette activité"
 }

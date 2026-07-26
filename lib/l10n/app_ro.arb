@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Păstrează harta/poziția vizibilă peste ecranul blocat în timpul înregistrării (doar Android). Dezactivează pentru a o ascunde de oricine se uită la telefonul tău blocat.",
   "mapLoadingLocalizing": "Se inițializează GPS…",
   "mapLoadingMap": "Se încarcă harta…",
-  "mapLoadingTraces": "Se încarcă traseele…",
   "mapStartingActivity": "Se pornește activitatea…",
   "activitiesLoadError": "Această activitate nu a putut fi deschisă"
 }

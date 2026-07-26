@@ -4,12 +4,13 @@ import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
 
 class ExportActivityToGpxUseCase {
-  final activityRepository = ActivityRepository();
+  ExportActivityToGpxUseCase({ActivityRepository? activities})
+    : _activities = activities ?? ActivityRepository();
 
-  ExportActivityToGpxUseCase();
+  final ActivityRepository _activities;
 
   Future<void> call(String activityId) async {
-    final activity = await activityRepository.fetchSingle(activityId);
+    final activity = await _activities.fetchSingle(activityId);
     final gpx = generateGpx(activity);
 
     final fileName =

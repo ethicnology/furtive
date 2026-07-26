@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "يحافظ على ظهور الخريطة/الموقع فوق الشاشة المقفلة أثناء التسجيل (أندرويد فقط). عطّله لإخفائه عن أي شخص ينظر إلى هاتفك المقفل.",
   "mapLoadingLocalizing": "جارٍ تهيئة GPS…",
   "mapLoadingMap": "جارٍ تحميل الخريطة…",
-  "mapLoadingTraces": "جارٍ تحميل المسارات…",
   "mapStartingActivity": "جارٍ بدء النشاط…",
   "activitiesLoadError": "تعذّر فتح هذا النشاط"
 }

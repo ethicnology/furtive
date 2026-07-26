@@ -8,11 +8,12 @@ import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/facades/process_exit_facade.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/locale_cubit.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
-import 'package:furtive/features/permissions/presentation/pages/check_permission_page.dart';
+import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
+import 'package:furtive/features/permissions/pages/check_permission_page.dart';
+import 'package:furtive/features/recording/bloc/recording_bloc.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:path/path.dart' as p;
@@ -69,7 +70,7 @@ void main() {
       Locale? storedLocale;
       var showOnLockScreen = true;
       try {
-        final prefs = await GetPreferencesUseCase()();
+        final prefs = await PreferencesRepository().fetch();
         if (prefs.uiLocale != null) {
           storedLocale = parseLocaleTag(prefs.uiLocale!);
         }
@@ -145,6 +146,7 @@ class MyApp extends StatelessWidget {
         // .value because the locator owns the bloc lifetimes — BlocProvider
         // must not close them on widget disposal.
         BlocProvider<LocaleCubit>.value(value: getIt<LocaleCubit>()),
+        BlocProvider<RecordingBloc>.value(value: getIt<RecordingBloc>()),
         BlocProvider<MapBloc>.value(value: getIt<MapBloc>()),
         BlocProvider<ActivitiesBloc>.value(value: getIt<ActivitiesBloc>()),
         BlocProvider<PermissionsBloc>.value(value: getIt<PermissionsBloc>()),

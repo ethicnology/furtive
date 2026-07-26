@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/locator.dart';
@@ -55,6 +56,27 @@ void main() {
       isTrue,
     );
     expect(activity.activeDistanceMeters, closeTo(111.32, 2));
+  });
+
+  test('missing times are synthesized from the injected clock', () async {
+    final file = await writeGpx('''
+<?xml version="1.0"?>
+<gpx version="1.1" creator="t" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="0" lon="0"/>
+    <trkpt lat="0" lon="0.001"/>
+  </trkseg></trk>
+</gpx>''');
+    final now = DateTime.utc(2026, 7, 29, 12);
+
+    final activity = await ImportActivityFromGpxUseCase(clock: FixedClock(now))(
+      file,
+    );
+
+    expect(activity.points.map((p) => p.time), [
+      now,
+      now.add(const Duration(seconds: 1)),
+    ]);
   });
 
   test('multi-segment import does not bridge the gap between segments', () async {

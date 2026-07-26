@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Houdt de kaart/positie zichtbaar boven het vergrendelscherm tijdens het opnemen (alleen Android). Zet uit om het te verbergen voor iemand die naar je vergrendelde telefoon kijkt.",
   "mapLoadingLocalizing": "GPS initialiseren…",
   "mapLoadingMap": "Kaart laden…",
-  "mapLoadingTraces": "Sporen laden…",
   "mapStartingActivity": "Activiteit starten…",
   "activitiesLoadError": "Kan deze activiteit niet openen"
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/widgets/activity_polyline_layer.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:furtive/core/widgets/km_splits_chart.dart';
@@ -385,10 +386,26 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
       if (result != null && result.isNotEmpty && result != _currentName) {
         if (!mounted) return;
+        final completion = Completer<void>();
         context.read<ActivitiesBloc>().add(
-          UpdateActivityName(activityId: widget.activity.id, newName: result),
+          UpdateActivityName(
+            activityId: widget.activity.id,
+            newName: result,
+            completion: completion,
+          ),
         );
-        setState(() => _currentName = result);
+        try {
+          await completion.future;
+          if (mounted) setState(() => _currentName = result);
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: kDestructive,
+            ),
+          );
+        }
       }
     } finally {
       textController.dispose();
@@ -427,15 +444,25 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     );
 
     if (result == true && mounted) {
+      final completion = Completer<void>();
       context.read<ActivitiesBloc>().add(
-        DeleteActivity(activityId: widget.activity.id),
+        DeleteActivity(activityId: widget.activity.id, completion: completion),
       );
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).activityDeleteSuccess),
-        ),
-      );
+      try {
+        await completion.future;
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        final message = AppLocalizations.of(context).activityDeleteSuccess;
+        Navigator.pop(context);
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: kDestructive),
+        );
+      }
     }
   }
 }

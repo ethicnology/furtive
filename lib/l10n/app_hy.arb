@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Պահում է քարտեզը/դիրքը տեսանելի կողպված էկրանի վրայով գրանցման ընթացքում (միայն Android)։ Անջատիր, որպեսզի թաքցնես այն կողպված հեռախոսին նայող որևիցե մեկից։",
   "mapLoadingLocalizing": "GPS-ի սկզբնավորում…",
   "mapLoadingMap": "Քարտեզի բեռնում…",
-  "mapLoadingTraces": "Հետքերի բեռնում…",
   "mapStartingActivity": "Գործունեության մեկնարկ…",
   "activitiesLoadError": "Չհաջողվեց բացել այս գործունեությունը"
 }

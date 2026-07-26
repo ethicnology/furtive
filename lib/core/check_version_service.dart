@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -33,7 +33,7 @@ Future<void> checkNewVersion() async {
 
   // Respect the user's opt-out: no network call at all when disabled.
   try {
-    final prefs = await GetPreferencesUseCase()();
+    final prefs = await PreferencesRepository().fetch();
     if (!prefs.checkUpdates) return;
   } catch (e) {
     logs.warning('Update check: failed to read preference: $e');

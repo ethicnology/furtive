@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Utrzymuje mapę/pozycję widoczną nad zablokowanym ekranem podczas nagrywania (tylko Android). Wyłącz, aby ukryć ją przed kimkolwiek zerkającym na twój zablokowany telefon.",
   "mapLoadingLocalizing": "Inicjowanie GPS…",
   "mapLoadingMap": "Ładowanie mapy…",
-  "mapLoadingTraces": "Ładowanie śladów…",
   "mapStartingActivity": "Rozpoczynanie aktywności…",
   "activitiesLoadError": "Nie można otworzyć tej aktywności"
 }

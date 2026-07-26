@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Hält die Karte/Position während der Aufzeichnung über dem Sperrbildschirm sichtbar (nur Android). Deaktivieren, um sie vor neugierigen Blicken auf dein gesperrtes Telefon zu verbergen.",
   "mapLoadingLocalizing": "GPS wird initialisiert…",
   "mapLoadingMap": "Karte wird geladen…",
-  "mapLoadingTraces": "Spuren werden geladen…",
   "mapStartingActivity": "Aktivität wird gestartet…",
   "activitiesLoadError": "Diese Aktivität konnte nicht geöffnet werden"
 }

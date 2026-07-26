@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Udržuje mapu/pozici viditelnou nad uzamčenou obrazovkou během nahrávání (jen Android). Vypni, abys to skryl před kýmkoli, kdo se podívá na tvůj uzamčený telefon.",
   "mapLoadingLocalizing": "Inicializace GPS…",
   "mapLoadingMap": "Načítání mapy…",
-  "mapLoadingTraces": "Načítání tras…",
   "mapStartingActivity": "Spouštění aktivity…",
   "activitiesLoadError": "Tuto aktivitu nelze otevřít"
 }

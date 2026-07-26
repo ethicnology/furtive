@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "記録中、ロック画面の上に地図/位置を表示したままにします(Androidのみ)。ロックされたスマホを見た人に見えないようにするにはオフにしてください。",
   "mapLoadingLocalizing": "GPSを初期化中…",
   "mapLoadingMap": "地図を読み込み中…",
-  "mapLoadingTraces": "トレースを読み込み中…",
   "mapStartingActivity": "アクティビティを開始中…",
   "activitiesLoadError": "このアクティビティを開けませんでした"
 }

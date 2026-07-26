@@ -5,17 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/check_version_service.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/logs.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
-import 'package:furtive/core/usecases/update_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/features/changelog/changelog_entries.dart';
 import 'package:furtive/features/changelog/pages/changelog_page.dart';
 import 'package:furtive/features/onboarding/onboarding_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
-import 'package:furtive/features/permissions/presentation/pages/permissions_page.dart';
+import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
+import 'package:furtive/features/permissions/bloc/permissions_event.dart';
+import 'package:furtive/features/permissions/bloc/permissions_state.dart';
+import 'package:furtive/features/permissions/pages/permissions_page.dart';
 
 class CheckPermissionPage extends StatefulWidget {
   const CheckPermissionPage({super.key});
@@ -26,8 +25,7 @@ class CheckPermissionPage extends StatefulWidget {
 
 class _PermissionCheckPageState extends State<CheckPermissionPage> {
   bool _hasNavigated = false;
-  final _getPreferences = GetPreferencesUseCase();
-  final _updatePreferences = UpdatePreferencesUseCase();
+  final _preferences = PreferencesRepository();
 
   @override
   void initState() {
@@ -39,7 +37,7 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
 
-    final prefs = await _getPreferences();
+    final prefs = await _preferences.fetch();
     if (!mounted) return;
 
     // Fire-and-forget — version check is informational, not gating.
@@ -79,7 +77,7 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
       try {
         // Persist the current version regardless, so the gate doesn't
         // re-evaluate on every launch once we've considered this upgrade.
-        await _updatePreferences(
+        await _preferences.store(
           prefs.copyWith(lastShownChangelogVersion: Global.app.version),
         );
       } catch (e, st) {

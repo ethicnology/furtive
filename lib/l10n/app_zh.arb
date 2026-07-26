@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "录制时让地图/位置保持显示在锁屏之上(仅限 Android)。关闭后可对查看你锁屏手机的任何人隐藏该内容。",
   "mapLoadingLocalizing": "正在初始化 GPS…",
   "mapLoadingMap": "正在加载地图…",
-  "mapLoadingTraces": "正在加载轨迹…",
   "mapStartingActivity": "正在开始活动…",
   "activitiesLoadError": "无法打开此活动"
 }

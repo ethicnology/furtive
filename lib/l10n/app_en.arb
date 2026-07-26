@@ -15,7 +15,7 @@
   "btnGrantToContinue": "Grant Required Permissions to Continue",
   "btnViewStats": "View Statistics",
   "btnCancel": "Cancel",
-"btnRetry": "Retry",
+  "btnRetry": "Retry",
   "btnRename": "Rename",
   "btnDelete": "Delete",
   "btnApply": "Apply",
@@ -219,7 +219,6 @@
   "prefShowOnLockScreenSubtitle": "Keep the map/position visible over a locked screen while recording (Android only). Turn off to hide it from anyone glancing at your locked phone.",
   "mapLoadingLocalizing": "Initializing GPS…",
   "mapLoadingMap": "Loading map…",
-  "mapLoadingTraces": "Loading traces…",
   "mapStartingActivity": "Starting activity…",
   "activitiesLoadError": "Could not open this activity"
 }

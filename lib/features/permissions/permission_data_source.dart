@@ -1,5 +1,5 @@
 import 'package:permission_handler/permission_handler.dart';
-import 'package:furtive/features/permissions/data/models/permission_model.dart';
+import 'package:furtive/features/permissions/permission_model.dart';
 
 class PermissionDataSource {
   Future<List<PermissionModel>> getPermissions() async {
