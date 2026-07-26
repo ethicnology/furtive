@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/usecases/get_activities_use_case.dart';
+import 'package:furtive/core/repositories/activity_repository.dart';
 import 'package:furtive/core/widgets/stat_block.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
@@ -28,7 +28,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   // other isLoading=true→false transition (e.g. FetchActivities). Cleared
   // when the listener fires.
   bool _importPending = false;
-  final _getActivity = GetActivityUseCase();
+  final _activities = ActivityRepository();
   // Guards against a double-tap on a list item pushing the detail page
   // twice while the first tap's DB fetch is still in flight. See L-U6 in
   // docs/REVIEW-2026-07-FULL-APP.md.
@@ -78,7 +78,9 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             SnackBar(
               content: Text(
                 state.error!.message,
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white),
               ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
@@ -108,9 +110,18 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
           ],
         ),
         body: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+          // Only rebuild the list when something it actually renders changed.
+          // Without this the whole ListView was rebuilt on every emit, including
+          // ones that touched neither the activities nor the loading/error
+          // state — an omission rather than a choice, since the rest of the app
+          // applies buildWhen rigorously.
+          buildWhen: (previous, current) =>
+              previous.activities != current.activities ||
+              previous.isLoading != current.isLoading ||
+              previous.error != current.error,
           builder: (context, state) {
-            // B31: read state from the builder param, not via context.watch
-            // (which would cause a second rebuild on every emit).
+            // Read state from the builder param, not via context.watch (which
+            // would cause a second rebuild on every emit).
             final activities = state.activities;
 
             // Loading state ONLY when there's nothing to show yet — an error
@@ -150,7 +161,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                 child: Text(
                   AppLocalizations.of(context).activitiesEmpty,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: Theme.of(context).textTheme.titleLarge?.fontSize,
                     color: AppColors.tertiary.foreground,
                   ),
                 ),
@@ -235,7 +246,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
     try {
-      final activity = await _getActivity(id);
+      final activity = await _activities.fetchSingle(id);
       if (!mounted) return;
       unawaited(
         navigator.push(

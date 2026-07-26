@@ -1,13 +1,15 @@
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
+import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
-import 'package:furtive/core/repositories/location_repository.dart';
 
 class ScoreActivityUseCase {
-  final activityRepository = ActivityRepository();
-  final locationRepository = LocationRepository();
+  ScoreActivityUseCase({ActivityRepository? activities, Clock? clock})
+    : _activities = activities ?? ActivityRepository(clock: clock),
+      _clock = clock ?? const SystemClock();
 
-  ScoreActivityUseCase();
+  final ActivityRepository _activities;
+  final Clock _clock;
 
   /// Persists the new fix and returns every point written (in order). When
   /// [gapFrom] is set — the last recorded point before a detected GPS outage
@@ -29,7 +31,7 @@ class ScoreActivityUseCase {
       status: status,
       // Prefer the GPS fix time; fall back to now() for synthesised positions
       // or platforms that don't report a fix timestamp.
-      time: position.time ?? DateTime.now().toUtc(),
+      time: position.time ?? _clock.nowUtc(),
     );
 
     final points = <ActivityPointEntity>[
@@ -53,7 +55,7 @@ class ScoreActivityUseCase {
     // no write amplification to optimise away, and writing each fix as it
     // arrives means a crash / FGS kill never loses buffered points — the right
     // durability tradeoff for a tracker.
-    await activityRepository.score(activityId, points);
+    await _activities.score(activityId, points);
 
     return points;
   }

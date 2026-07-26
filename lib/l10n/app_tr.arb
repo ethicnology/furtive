@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Kayıt sırasında haritayı/konumu kilitli ekranın üzerinde görünür tutar (yalnızca Android). Kilitli telefonuna göz atan birinden gizlemek için kapat.",
   "mapLoadingLocalizing": "GPS başlatılıyor…",
   "mapLoadingMap": "Harita yükleniyor…",
-  "mapLoadingTraces": "İzler yükleniyor…",
   "mapStartingActivity": "Etkinlik başlatılıyor…",
   "activitiesLoadError": "Bu etkinlik açılamadı"
 }

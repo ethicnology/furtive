@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "রেকর্ডিংয়ের সময় লক স্ক্রিনের উপরে মানচিত্র/অবস্থান দৃশ্যমান রাখে (শুধু অ্যান্ড্রয়েড)। আপনার লক করা ফোনের দিকে তাকানো কারো কাছ থেকে এটি আড়াল করতে বন্ধ করুন।",
   "mapLoadingLocalizing": "GPS শুরু হচ্ছে…",
   "mapLoadingMap": "মানচিত্র লোড হচ্ছে…",
-  "mapLoadingTraces": "ট্রেস লোড হচ্ছে…",
   "mapStartingActivity": "কার্যকলাপ শুরু হচ্ছে…",
   "activitiesLoadError": "এই কার্যকলাপ খোলা যায়নি"
 }

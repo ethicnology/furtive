@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "녹화 중 잠금 화면 위에 지도/위치를 계속 표시합니다(Android만 해당). 잠긴 휴대폰을 보는 사람에게 숨기려면 꺼두세요.",
   "mapLoadingLocalizing": "GPS 초기화 중…",
   "mapLoadingMap": "지도 불러오는 중…",
-  "mapLoadingTraces": "트레이스 불러오는 중…",
   "mapStartingActivity": "활동 시작 중…",
   "activitiesLoadError": "이 활동을 열 수 없습니다"
 }

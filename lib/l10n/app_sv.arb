@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Håller kartan/positionen synlig ovanpå den låsta skärmen under inspelning (endast Android). Stäng av för att dölja den för alla som tittar på din låsta telefon.",
   "mapLoadingLocalizing": "Initierar GPS…",
   "mapLoadingMap": "Laddar karta…",
-  "mapLoadingTraces": "Laddar spår…",
   "mapStartingActivity": "Startar aktivitet…",
   "activitiesLoadError": "Det gick inte att öppna aktiviteten"
 }

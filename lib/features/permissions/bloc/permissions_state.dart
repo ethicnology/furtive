@@ -1,6 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:furtive/core/errors.dart';
-import 'package:furtive/features/permissions/domain/entities/permission_entity.dart';
+import 'package:furtive/features/permissions/permission_entity.dart';
 
 part 'permissions_state.mapper.dart';
 

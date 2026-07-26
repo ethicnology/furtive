@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show compute;
+import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/errors.dart';
@@ -166,15 +167,30 @@ _GpxParseResult _parseGpxContent(String content) {
 /// nor as active time, and its duration is reported as signal lost. Same
 /// mechanic as live recording's gap detection (SignalGapDetector).
 class ImportActivityFromGpxUseCase {
-  final activityRepository = ActivityRepository();
+  ImportActivityFromGpxUseCase({ActivityRepository? activities, Clock? clock})
+    : _activities = activities ?? ActivityRepository(clock: clock),
+      _clock = clock ?? const SystemClock();
 
-  ImportActivityFromGpxUseCase();
+  final ActivityRepository _activities;
+  final Clock _clock;
 
-  /// Files larger than this are rejected before parsing. A typical 2-hour
-  /// GPX with 1 Hz sampling is ~300-400 KB. 50 MB is a generous ceiling
-  /// that still defends against billion-laughs / quadratic-blowup XML
-  /// payloads (the xml package doesn't disable DTD entity expansion).
-  static const _maxFileBytes = 50 * 1024 * 1024;
+  /// Files larger than this are rejected before parsing.
+  ///
+  /// This bounds PEAK MEMORY, nothing else. A previous version of this comment
+  /// claimed the ceiling defended against billion-laughs / quadratic-blowup XML
+  /// "because the xml package doesn't disable DTD entity expansion". Both halves
+  /// were wrong, and the claim is now pinned by tests in gpx_xml_safety_test.dart:
+  /// package:xml does NOT expand custom DTD entities (a billion-laughs payload
+  /// parses to the literal `&d;`) and does NOT resolve external ones (no XXE) —
+  /// and a size cap could never have stopped billion-laughs anyway, whose whole
+  /// point is that ~1 KB of input expands to gigabytes.
+  ///
+  /// What the cap does buy: [call] reads the file into a String and `compute`
+  /// then COPIES it to the parse isolate, so the real peak is roughly 2-3x the
+  /// file size. 10 MB already covers a 24 h recording at 1 Hz (a typical 2 h GPX
+  /// is ~300-400 KB), so the old 50 MB ceiling only bought a ~150 MB peak and an
+  /// OOM risk on entry-level Android.
+  static const _maxFileBytes = 10 * 1024 * 1024;
 
   Future<ActivityEntity> call(File file) async {
     final size = await file.length();
@@ -219,7 +235,7 @@ class ImportActivityFromGpxUseCase {
     final stoppedAt = activeTimes
         .reduce((a, b) => a.isAfter(b) ? a : b)
         .toUtc();
-    final createdAt = DateTime.now().toUtc();
+    final createdAt = _clock.nowUtc();
     // Reuse the StartActivityUseCase id convention — millisecond-precise
     // ISO8601 from createdAt rather than startedAt so importing an old
     // GPX twice produces distinct ids.
@@ -235,7 +251,7 @@ class ImportActivityFromGpxUseCase {
       points: points,
     );
 
-    await activityRepository.store(activity);
+    await _activities.store(activity);
     return activity;
   }
 }

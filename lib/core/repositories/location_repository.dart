@@ -12,12 +12,17 @@ import '../datasources/location_gps_data_source.dart';
 const double kUntrustedElevationAccuracyMeters = 1000000.0;
 
 class LocationRepository {
-  final remoteDataSource = LocationGpsDataSource();
+  /// [gps] defaults to the real Geolocator-backed datasource so production
+  /// call sites stay `LocationRepository()`. [LocationGpsDataSource] is the
+  /// single seam over the platform GPS: tests pass a fake implementing it and
+  /// get full control of the fix stream without a platform channel.
+  LocationRepository({LocationGpsDataSource? gps})
+    : gps = gps ?? LocationGpsDataSource();
 
-  LocationRepository();
+  final LocationGpsDataSource gps;
 
   Future<PositionEntity> getCurrentLocation() async {
-    final position = await remoteDataSource.getCurrentLocation();
+    final position = await gps.getCurrentLocation();
     return _toEntity(position) ??
         (throw StateError(
           'Geolocator returned a position with non-finite coordinates',
@@ -40,7 +45,7 @@ class LocationRepository {
     // LatLng constructor ("LatLng is not finite") and corrupt downstream
     // distance / interpolation maths (NaN poisons cumulativeMeters and
     // every km-milestone derived from it).
-    final raw = remoteDataSource
+    final raw = gps
         .getPositionStream()
         .map(_toEntity)
         .where((p) => p != null)
@@ -112,18 +117,18 @@ class LocationRepository {
   }
 
   Future<bool> requestLocationPermission() async {
-    return await remoteDataSource.requestLocationPermission();
+    return await gps.requestLocationPermission();
   }
 
   Future<bool> checkLocationPermission() async {
-    return await remoteDataSource.checkLocationPermission();
+    return await gps.checkLocationPermission();
   }
 
   Future<bool> isBatteryOptimizationDisabled() async {
-    return await remoteDataSource.isBatteryOptimizationDisabled();
+    return await gps.isBatteryOptimizationDisabled();
   }
 
   Future<bool> requestDisableBatteryOptimization() async {
-    return await remoteDataSource.requestDisableBatteryOptimization();
+    return await gps.requestDisableBatteryOptimization();
   }
 }

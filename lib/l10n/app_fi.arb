@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Pitää kartan/sijainnin näkyvissä lukitun näytön päällä tallennuksen aikana (vain Android). Poista käytöstä piilottaaksesi sen lukitun puhelimesi vilkaisijoilta.",
   "mapLoadingLocalizing": "Alustetaan GPS…",
   "mapLoadingMap": "Ladataan karttaa…",
-  "mapLoadingTraces": "Ladataan jälkiä…",
   "mapStartingActivity": "Aloitetaan aktiviteetti…",
   "activitiesLoadError": "Tätä aktiviteettia ei voitu avata"
 }

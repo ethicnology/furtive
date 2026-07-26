@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/features/onboarding/onboarding_page.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
+import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
+import 'package:furtive/features/permissions/bloc/permissions_event.dart';
+import 'package:furtive/features/permissions/bloc/permissions_state.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -43,7 +43,7 @@ class PermissionsPage extends StatefulWidget {
 
 class _PermissionsPageState extends State<PermissionsPage>
     with WidgetsBindingObserver {
-  final _getPreferences = GetPreferencesUseCase();
+  final _preferences = PreferencesRepository();
 
   @override
   void initState() {
@@ -58,7 +58,7 @@ class _PermissionsPageState extends State<PermissionsPage>
     // B39: Continue must honor the onboarding flag — otherwise a fresh
     // install that lands on this page (because permissions were denied)
     // skips the wizard once permissions are granted.
-    final prefs = await _getPreferences();
+    final prefs = await _preferences.fetch();
     if (!mounted) return;
     final destination = prefs.hasCompletedOnboarding
         ? const BottomNavigationWidget()

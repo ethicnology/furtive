@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Membuat peta/posisi tetap terlihat di atas layar terkunci saat merekam (hanya Android). Matikan untuk menyembunyikannya dari siapa pun yang melihat ponsel terkuncimu.",
   "mapLoadingLocalizing": "Menginisialisasi GPS…",
   "mapLoadingMap": "Memuat peta…",
-  "mapLoadingTraces": "Memuat jejak…",
   "mapStartingActivity": "Memulai aktivitas…",
   "activitiesLoadError": "Tidak dapat membuka aktivitas ini"
 }

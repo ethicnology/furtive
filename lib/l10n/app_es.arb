@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Mantiene el mapa/posición visible sobre la pantalla bloqueada durante la grabación (solo Android). Desactívalo para ocultarlo de cualquiera que mire tu teléfono bloqueado.",
   "mapLoadingLocalizing": "Inicializando GPS…",
   "mapLoadingMap": "Cargando mapa…",
-  "mapLoadingTraces": "Cargando trazas…",
   "mapStartingActivity": "Iniciando actividad…",
   "activitiesLoadError": "No se pudo abrir esta actividad"
 }

@@ -4,20 +4,20 @@ import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/logs.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
-import 'package:furtive/core/usecases/update_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_state.dart';
 
 class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
-  final _getPreferencesUseCase = GetPreferencesUseCase();
-  final _updatePreferencesUseCase = UpdatePreferencesUseCase();
-  final _lockScreenFacade = LockScreenFacade();
-
-  PreferencesBloc._({required PreferencesState initialState})
-    : super(initialState) {
+  PreferencesBloc._({
+    required PreferencesState initialState,
+    PreferencesRepository? preferences,
+    LockScreenFacade? lockScreen,
+  }) : _preferences = preferences ?? PreferencesRepository(),
+       _lockScreenFacade = lockScreen ?? LockScreenFacade(),
+       super(initialState) {
     on<LoadPreferences>(_onLoadPreferences);
     on<UpdatePreferences>(_onUpdatePreferences);
     on<ChangeMapTheme>(_onChangeMapTheme);
@@ -27,14 +27,25 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<ChangeShowOnLockScreen>(_onChangeShowOnLockScreen);
   }
 
-  static Future<PreferencesBloc> create() async {
-    final getPreferencesUseCase = GetPreferencesUseCase();
-    final preferences = await getPreferencesUseCase();
-    final initialState = PreferencesState(
-      preferences: preferences,
-      persisted: preferences,
+  final PreferencesRepository _preferences;
+  final LockScreenFacade _lockScreenFacade;
+
+  /// Async factory: the initial state needs a storage read, which a constructor
+  /// cannot await. [repository]/[lockScreen] are injectable for tests.
+  static Future<PreferencesBloc> create({
+    PreferencesRepository? repository,
+    LockScreenFacade? lockScreen,
+  }) async {
+    final repo = repository ?? PreferencesRepository();
+    final preferences = await repo.fetch();
+    return PreferencesBloc._(
+      initialState: PreferencesState(
+        preferences: preferences,
+        persisted: preferences,
+      ),
+      preferences: repo,
+      lockScreen: lockScreen,
     );
-    return PreferencesBloc._(initialState: initialState);
   }
 
   Future<void> _onLoadPreferences(
@@ -43,7 +54,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
   ) async {
     emit(state.copyWith(isLoading: true));
     try {
-      final preferences = await _getPreferencesUseCase();
+      final preferences = await _preferences.fetch();
       emit(
         state.copyWith(
           preferences: preferences,
@@ -110,25 +121,14 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // docs/REVIEW-2026-07-FULL-APP.md C1.
     final previous = state.persisted;
     try {
-      await _updatePreferencesUseCase(event.preferences);
+      await _preferences.store(event.preferences);
     } catch (e, s) {
       // PreferencesPage pops immediately after dispatching Apply, so by the
-      // time this settles there is very likely no UI left to show an error
-      // on. Logging at least makes a failed save discoverable in the
-      // exported logs instead of vanishing into the bloc's global error
-      // handler silently. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
+      // time this settles there is very likely no UI left to show an error on.
       logs.severe('$UpdatePreferences', error: e, trace: s);
       return;
     }
 
-    // The page pops (and closes this bloc) right after dispatching Apply; the
-    // DB write above can outlive it. emit() would throw on a closed bloc, so
-    // it alone is guarded — but the side effects below (locale, map re-init,
-    // lock-screen) don't touch bloc state at all and must run regardless of
-    // isClosed. Previously the single `if (isClosed) return;` above skipped
-    // them too whenever the write outlived the pop, leaving settings
-    // persisted to disk but never actually applied until the next app
-    // restart. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
     if (!isClosed) {
       emit(
         state.copyWith(

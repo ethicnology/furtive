@@ -7,16 +7,17 @@ import 'package:furtive/core/repositories/location_repository.dart';
 /// track. Fired when a recording starts. A denial is not fatal — tracking
 /// still relies on the foreground service + wake lock — so this never throws.
 class EnsureBackgroundTrackingUseCase {
-  final locationRepository = LocationRepository();
+  EnsureBackgroundTrackingUseCase({LocationRepository? location})
+    : _location = location ?? LocationRepository();
 
-  EnsureBackgroundTrackingUseCase();
+  final LocationRepository _location;
 
   /// Returns true if the exemption is granted (or the platform doesn't need
   /// one), false if the user declined. Never throws.
   Future<bool> call() async {
     try {
-      if (await locationRepository.isBatteryOptimizationDisabled()) return true;
-      return await locationRepository.requestDisableBatteryOptimization();
+      if (await _location.isBatteryOptimizationDisabled()) return true;
+      return await _location.requestDisableBatteryOptimization();
     } catch (_) {
       return false;
     }

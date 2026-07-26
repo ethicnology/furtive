@@ -122,7 +122,6 @@
   "prefShowOnLockScreenSubtitle": "Оставляет карту/позицию видимой над заблокированным экраном во время записи (только Android). Отключи, чтобы скрыть это от тех, кто смотрит на твой заблокированный телефон.",
   "mapLoadingLocalizing": "Инициализация GPS…",
   "mapLoadingMap": "Загрузка карты…",
-  "mapLoadingTraces": "Загрузка треков…",
   "mapStartingActivity": "Запуск активности…",
   "activitiesLoadError": "Не удалось открыть эту активность"
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/widgets/activity_polyline_layer.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:furtive/core/widgets/km_splits_chart.dart';
@@ -427,15 +428,20 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
     );
 
     if (result == true && mounted) {
+      // Capture the messenger and the localised string BEFORE popping. Reading
+      // `ScaffoldMessenger.of(context)` after Navigator.pop happens to work
+      // today only because the element is not unmounted until the frame ends —
+      // it is a defunct-element lookup waiting to break.
+      final messenger = ScaffoldMessenger.of(context);
+      final message = AppLocalizations.of(context).activityDeleteSuccess;
+
       context.read<ActivitiesBloc>().add(
         DeleteActivity(activityId: widget.activity.id),
       );
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).activityDeleteSuccess),
-        ),
-      );
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
     }
   }
 }
