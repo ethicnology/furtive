@@ -44,12 +44,19 @@ class _Chip extends StatelessWidget {
         border: Border.all(color: Colors.black, width: 2),
       ),
       alignment: Alignment.center,
-      child: Text(
-        label,
-        style: TextStyle(
-          color: AppColors.primary.foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+      // noScaling: the marker is a fixed-diameter circle on the map, so a
+      // scaled-up system font would spill the "5" outside its own badge rather
+      // than making anything more readable. Map furniture is sized in map
+      // pixels, not text pixels.
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: AppColors.primary.foreground,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

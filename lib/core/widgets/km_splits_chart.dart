@@ -107,7 +107,7 @@ class _KmSplitsChartState extends State<KmSplitsChart> {
                 l10n.splitsTitle,
                 style: TextStyle(
                   color: AppColors.tertiary.foreground,
-                  fontSize: 16,
+                  fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -206,7 +206,7 @@ class _SplitRow extends StatelessWidget {
               indexLabel,
               style: TextStyle(
                 color: AppColors.tertiary.foreground,
-                fontSize: 14,
+                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -251,7 +251,7 @@ class _SplitRow extends StatelessWidget {
                     : isSlowest
                     ? kDangerText
                     : AppColors.tertiary.foreground,
-                fontSize: 13,
+                fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
                 fontWeight: isFastest || isSlowest
                     ? FontWeight.bold
                     : FontWeight.normal,
