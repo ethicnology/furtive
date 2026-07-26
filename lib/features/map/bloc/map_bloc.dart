@@ -28,12 +28,27 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
     GetMapConfigUseCase? getMapConfig,
     LocationRepository? location,
     PositionStreamController? positionStream,
+  }) : this._(
+         recording: recording,
+         getMapConfig: getMapConfig ?? GetMapConfigUseCase(),
+         // Resolved ONCE and shared with the stream controller below. Writing
+         // `location ?? LocationRepository()` in both initialisers built two
+         // independent repositories — each with its own LocationGpsDataSource —
+         // where one was intended.
+         location: location ?? LocationRepository(),
+         positionStream: positionStream,
+       );
+
+  MapBloc._({
+    required RecordingBloc recording,
+    required GetMapConfigUseCase getMapConfig,
+    required LocationRepository location,
+    required PositionStreamController? positionStream,
   }) : _recording = recording,
-       _getMapConfigUseCase = getMapConfig ?? GetMapConfigUseCase(),
-       _location = location ?? LocationRepository(),
+       _getMapConfigUseCase = getMapConfig,
+       _location = location,
        _positions =
-           positionStream ??
-           PositionStreamController(location: location ?? LocationRepository()),
+           positionStream ?? PositionStreamController(location: location),
        super(const MapState()) {
     on<InitMap>(_onInitMap);
     on<EnsureTracking>(_onEnsureTracking);
