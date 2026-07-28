@@ -26,6 +26,33 @@ android {
         jvmTarget = androidJvmTarget.toString()
     }
 
+    // Only on aarch64 Linux hosts. Flutter injects a dummy CMakeLists whose sole
+    // purpose is to make AGP download the NDK (it needs it to strip debug
+    // symbols). CMake then runs its compiler sanity check with the NDK's
+    // x86_64 clang++, which an arm64 host cannot execute — Rosetta reports
+    // "Failed to map AOT header: 22" and every APK build fails, debug included.
+    // No NDK ships an aarch64-linux toolchain.
+    //
+    // Declaring our own CMake project makes Flutter skip its injection
+    // (forceNdkDownload returns early when cmake.path is already set), and ours
+    // sets CMAKE_CXX_COMPILER_WORKS so the check never runs. Nothing is compiled
+    // either way.
+    //
+    // Gated on the host so x86_64 machines — CI, and the container that produces
+    // release artifacts — keep Flutter's stock behaviour untouched. That matters:
+    // skipping the NDK download there could change symbol stripping and break
+    // `make verify-reproducible`.
+    val isArm64LinuxHost =
+        System.getProperty("os.name") == "Linux" &&
+            System.getProperty("os.arch") == "aarch64"
+    if (isArm64LinuxHost) {
+        externalNativeBuild {
+            cmake {
+                path = file("src/main/cpp/CMakeLists.txt")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.ethicnology.furtive"
         minSdk = androidMinSdk
@@ -67,4 +94,5 @@ dependencies {
 
 configurations.all {
     exclude(group = "com.google.android.gms")
+
 }
