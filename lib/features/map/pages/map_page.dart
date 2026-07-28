@@ -3,16 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:furtive/core/map/map_view.dart';
+import 'package:furtive/core/map/maplibre_map_view.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/widgets/activity_polyline_layer.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
 import 'package:furtive/core/widgets/hold_to_confirm_button.dart';
-import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
-import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
@@ -24,8 +21,6 @@ import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
     switch (status) {
@@ -45,7 +40,7 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
-  final _mapController = MapController();
+  final MapView _mapView = MapLibreMapView();
   static const _kFloatingActionButtonWidth = 115.0;
 
   // Stay alive across BottomNavigation tab switches so the stop -> stats
@@ -68,7 +63,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     // alive across tab switches, so it fires once per cold start. The onboarded
     // cold-start path lands here; the wizard-finish path fires InitMap
     // explicitly before navigating.
-    if (map.state.style == null) map.add(const InitMap());
+    if (map.state.styleUrl == null) map.add(const InitMap());
 
     // Route to the activity detail page when the running activity ends (the
     // user holds Stop). The previous activity is tracked manually because
@@ -100,7 +95,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   @override
   void dispose() {
     _stopSub?.cancel();
-    _mapController.dispose();
+    unawaited(_mapView.dispose());
     super.dispose();
   }
 
@@ -236,7 +231,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 !firstPoint.position.longitude.isFinite) {
               return;
             }
-            _mapController.move(firstPoint.position.toLatLng(), Global.maxZoom);
+            _mapView.moveTo(firstPoint.position, Global.maxZoom);
           },
         ),
         BlocListener<MapBloc, MapState>(
@@ -247,7 +242,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           listener: (context, state) {
             final loc = state.userLocation!;
             if (!loc.latitude.isFinite || !loc.longitude.isFinite) return;
-            _mapController.move(loc.toLatLng(), _mapController.camera.zoom);
+            // Keep whatever zoom the user chose; only the centre follows.
+            _mapView.moveTo(loc, _mapView.currentZoom ?? Global.defaultZoom);
           },
         ),
       ],
@@ -258,7 +254,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         // tick now only ever touches RecordingState, which this builder does not
         // watch at all.
         buildWhen: (previous, current) =>
-            previous.style != current.style ||
+            previous.styleUrl != current.styleUrl ||
             previous.userLocation != current.userLocation ||
             previous.loadingStatus != current.loadingStatus ||
             previous.isFollowingUser != current.isFollowingUser,
@@ -274,7 +270,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           // tile config is still loading; once init has finished with no style
           // (keyless FOSS build) render a functional tileless map.
           final stillLoadingStyle =
-              state.style == null && state.loadingStatus != null;
+              state.styleUrl == null && state.loadingStatus != null;
           if (!hasFiniteLocation || stillLoadingStyle) {
             return Center(
               child: Column(
@@ -301,95 +297,36 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               children: [
                 Container(
                   color: AppColors.tertiary.background,
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: state.userLocation!.toLatLng(),
-                      initialZoom: Global.defaultZoom,
-                      maxZoom: Global.maxZoom,
-                      onPositionChanged: (position, hasGesture) {
-                        if (hasGesture && state.isFollowingUser) {
-                          map.add(const StopFollowingUser());
-                        }
-                      },
-                    ),
-                    children: [
-                      if (state.style != null)
-                        VectorTileLayer(
-                          maximumZoom: Global.maxZoom,
-                          theme: state.style!.theme,
-                          tileProviders: state.style!.providers,
-                          sprites: state.style!.sprites,
-                        ),
-                      // The recorded track and its km markers depend on
-                      // RecordingState, so they live behind their own builder —
-                      // the outer one deliberately doesn't watch it.
-                      BlocBuilder<RecordingBloc, RecordingState>(
-                        buildWhen: (previous, current) =>
-                            previous.activity != current.activity,
-                        builder: (context, rec) {
-                          final activity = rec.activity;
-                          if (activity == null || activity.points.isEmpty) {
-                            return const SizedBox.shrink();
+                  // The track sits behind its own builder so the 1 s elapsed
+                  // tick never reaches the map. This is as deep as the isolation
+                  // can go: MapLibre's layers are immutable value objects rather
+                  // than widgets, so the track cannot be handed in by a builder
+                  // nested inside the map itself. Cheap regardless — rebuilding
+                  // does not recreate the native view, and the benchmark
+                  // measured this exact path at ~2 ms/frame with no jank.
+                  child: BlocBuilder<RecordingBloc, RecordingState>(
+                    buildWhen: (previous, current) =>
+                        previous.activity != current.activity,
+                    builder: (context, rec) {
+                      final activity = rec.activity;
+                      return _mapView.build(
+                        styleUrl: state.styleUrl,
+                        track: activity == null || activity.points.isEmpty
+                            ? null
+                            : activity,
+                        initialCentre: state.userLocation,
+                        initialZoom: Global.defaultZoom,
+                        maxZoom: Global.maxZoom,
+                        showUserLocation: true,
+                        // Panning by hand means the user wants to look somewhere
+                        // else, so stop dragging the camera back.
+                        onUserGesture: () {
+                          if (state.isFollowingUser) {
+                            map.add(const StopFollowingUser());
                           }
-                          return Stack(
-                            children: [
-                              activity.toPolylineLayer(),
-                              KmMilestonesLayer(activity: activity),
-                            ],
-                          );
                         },
-                      ),
-                      // Animated pulse marker + heading indicator + accuracy
-                      // circle. Deliberately uses its own internal geolocator
-                      // subscription (no distance filter) for smooth visuals,
-                      // separate from the filtered stream used for scoring.
-                      CurrentLocationLayer(
-                        style: LocationMarkerStyle(
-                          marker: DefaultLocationMarker(
-                            color: AppColors.primary.background,
-                            child: Icon(
-                              Icons.navigation_rounded,
-                              color: AppColors.primary.foreground,
-                              size: 18,
-                            ),
-                          ),
-                          markerSize: const Size.square(36),
-                          markerDirection: MarkerDirection.heading,
-                          accuracyCircleColor: AppColors.primary.background
-                              .withAlpha(40),
-                          headingSectorColor: AppColors.primary.background
-                              .withAlpha(80),
-                          headingSectorRadius: 64,
-                        ),
-                      ),
-                      // Tile attribution is legally required when tiles are
-                      // shown: the basemap is Protomaps rendering OpenStreetMap
-                      // data (ODbL §4.3 and Protomaps' ToS both require visible
-                      // credit). Omitted on the keyless tileless map.
-                      if (state.style != null)
-                        RichAttributionWidget(
-                          alignment: AttributionAlignment.bottomLeft,
-                          attributions: [
-                            TextSourceAttribution(
-                              'OpenStreetMap',
-                              onTap: () => launchUrl(
-                                Uri.parse(
-                                  'https://www.openstreetmap.org/copyright',
-                                ),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                            ),
-                            TextSourceAttribution(
-                              'Protomaps',
-                              onTap: () => launchUrl(
-                                Uri.parse('https://protomaps.com'),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+                      );
+                    },
                   ),
                 ),
                 if (state.loadingStatus != null)
@@ -445,10 +382,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                         onPressed: () {
                           final current = map.state.userLocation;
                           if (current == null) return;
-                          _mapController.move(
-                            current.toLatLng(),
-                            Global.maxZoom,
-                          );
+                          _mapView.moveTo(current, Global.maxZoom);
                           map.add(const ToggleFollowUser());
                         },
                         backgroundColor: state.isFollowingUser

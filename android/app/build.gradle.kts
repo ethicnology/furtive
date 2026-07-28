@@ -95,4 +95,17 @@ dependencies {
 configurations.all {
     exclude(group = "com.google.android.gms")
 
+    // maplibre_android declares `org.maplibre.gl:android-sdk-opengl:13.0.+`.
+    // A Gradle dynamic version is resolved when you build, not when you commit,
+    // and `+` does not exclude pre-releases: today it lands on 13.0.3-pre0. Two
+    // builds of the same commit on different days can therefore produce
+    // different APKs, which is precisely what `make verify-reproducible` exists
+    // to rule out — and it would NOT catch it, because it builds twice in one
+    // session and resolves the same version both times. A third party verifying
+    // months later would get a different hash.
+    //
+    // Pinned to the highest STABLE release inside the range upstream declares.
+    // Revisit deliberately, together with a fresh verify-reproducible run, and
+    // re-check after any `flutter pub upgrade` that moves maplibre_android.
+    resolutionStrategy.force("org.maplibre.gl:android-sdk-opengl:13.0.2")
 }

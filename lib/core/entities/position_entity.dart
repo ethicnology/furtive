@@ -1,4 +1,3 @@
-import 'package:latlong2/latlong.dart' show LatLng;
 
 class PositionEntity {
   final double latitude;
@@ -42,5 +41,4 @@ class PositionEntity {
 }
 
 extension PositionEntityExtension on PositionEntity {
-  LatLng toLatLng() => LatLng(latitude, longitude);
 }

@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/repositories/location_repository.dart';
-import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
+import 'package:furtive/core/usecases/get_map_style_url_use_case.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/features/map/position_stream_controller.dart';
@@ -25,12 +25,12 @@ enum LoadingStatus { localizing, loadingMap }
 class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   MapBloc({
     required RecordingBloc recording,
-    GetMapConfigUseCase? getMapConfig,
+    GetMapStyleUrlUseCase? getMapStyleUrl,
     LocationRepository? location,
     PositionStreamController? positionStream,
   }) : this._(
          recording: recording,
-         getMapConfig: getMapConfig ?? GetMapConfigUseCase(),
+         getMapStyleUrl: getMapStyleUrl ?? GetMapStyleUrlUseCase(),
          // Resolved ONCE and shared with the stream controller below. Writing
          // `location ?? LocationRepository()` in both initialisers built two
          // independent repositories — each with its own LocationGpsDataSource —
@@ -41,11 +41,11 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
 
   MapBloc._({
     required RecordingBloc recording,
-    required GetMapConfigUseCase getMapConfig,
+    required GetMapStyleUrlUseCase getMapStyleUrl,
     required LocationRepository location,
     required PositionStreamController? positionStream,
   }) : _recording = recording,
-       _getMapConfigUseCase = getMapConfig,
+       _getMapStyleUrlUseCase = getMapStyleUrl,
        _location = location,
        _positions =
            positionStream ?? PositionStreamController(location: location),
@@ -83,7 +83,7 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
   }
 
   final RecordingBloc _recording;
-  final GetMapConfigUseCase _getMapConfigUseCase;
+  final GetMapStyleUrlUseCase _getMapStyleUrlUseCase;
   final LocationRepository _location;
   final PositionStreamController _positions;
 
@@ -140,14 +140,14 @@ class MapBloc extends Bloc<MapEvent, MapState> with WidgetsBindingObserver {
 
     emit(state.copyWith(loadingStatus: LoadingStatus.loadingMap));
     try {
-      final style = await _getMapConfigUseCase();
+      final styleUrl = await _getMapStyleUrlUseCase();
       logs.info(
-        'InitMap getMapConfig: style '
-        '${style == null ? 'null (tileless)' : 'loaded'}',
+        'InitMap getStyleUrl: style '
+        '${styleUrl == null ? 'null (tileless)' : 'resolved'}',
       );
-      emit(state.copyWith(style: style));
+      emit(state.copyWith(styleUrl: styleUrl));
     } catch (e, s) {
-      logs.severe('InitMap getMapConfig', error: e, trace: s);
+      logs.severe('InitMap getStyleUrl', error: e, trace: s);
       emit(state.copyWith(error: AppError(e.toString())));
     } finally {
       emit(state.copyWith(loadingStatus: null));

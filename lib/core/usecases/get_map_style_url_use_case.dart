@@ -1,7 +1,6 @@
 import 'package:furtive/core/datasources/map_remote_data_source.dart';
 import 'package:furtive/core/models/preferences_model.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 /// Resolves the map style to render with, combining the stored preferences
 /// (theme, UI locale, tile opt-out) with the remote Protomaps style.
@@ -13,8 +12,8 @@ import 'package:vector_map_tiles/vector_map_tiles.dart';
 ///
 /// Returns null for a tileless map: either no PROTOMAPS_KEY was compiled in
 /// (the FOSS/reproducible build) or the user opted out of tile fetches.
-class GetMapConfigUseCase {
-  GetMapConfigUseCase({
+class GetMapStyleUrlUseCase {
+  GetMapStyleUrlUseCase({
     MapRemoteDataSource? remote,
     PreferencesRepository? preferences,
   }) : _remote = remote ?? MapRemoteDataSource(),
@@ -23,9 +22,9 @@ class GetMapConfigUseCase {
   final MapRemoteDataSource _remote;
   final PreferencesRepository _preferences;
 
-  Future<Style?> call() async {
+  Future<String?> call() async {
     final preferences = await _preferences.fetch();
-    return _remote.getMapConfig(
+    return _remote.getStyleUrl(
       // Map label language is derived from the UI locale (or the device locale
       // when there is no override). The dedicated "Map Language" picker is
       // gone — two language settings were redundant.

@@ -9,7 +9,7 @@ import 'package:furtive/core/models/activity_model.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/usecases/ensure_background_tracking_use_case.dart';
-import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
+import 'package:furtive/core/usecases/get_map_style_url_use_case.dart';
 import 'package:furtive/core/usecases/score_activity_use_case.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
@@ -25,7 +25,7 @@ import 'support/fakes.dart';
 /// recording_bloc_test.dart and the stream lifecycle in
 /// position_stream_controller_test.dart.
 ///
-/// The real GetMapConfigUseCase is used rather than a stub: with no
+/// The real GetMapStyleUrlUseCase is used rather than a stub: with no
 /// PROTOMAPS_KEY compiled in (the case under `flutter test`) it takes the
 /// genuine tileless path and returns a null style, which is exactly what the
 /// keyless FOSS build does at runtime.
@@ -65,7 +65,7 @@ void main() {
 
   MapBloc buildBloc() => MapBloc(
     recording: recording,
-    getMapConfig: GetMapConfigUseCase(
+    getMapStyleUrl: GetMapStyleUrlUseCase(
       preferences: PreferencesRepository(
         local: PreferencesLocalDataSource(db: db),
       ),
@@ -105,7 +105,7 @@ void main() {
       expect(location.positionStreamOpenCount, 1);
       expect(bloc.state.userLocation, isNotNull);
       expect(bloc.state.loadingStatus, isNull);
-      expect(bloc.state.style, isNull, reason: 'tileless build');
+      expect(bloc.state.styleUrl, isNull, reason: 'tileless build');
     },
   );
 

@@ -6,42 +6,36 @@ import 'package:furtive/core/datasources/map_remote_data_source.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// Coverage for the third-party style pipeline.
+/// Coverage for basemap resolution.
 ///
-/// This file parses a document Furtive does not control: the Protomaps v5 style
-/// JSON, its TileJSON and its sprite index. Every field read is a place an
-/// upstream schema change breaks the map for every user simultaneously, and it
-/// sat at 3.8% — under `flutter test` there is no compiled-in key, so
-/// getMapConfig returned null on its first line and none of the parsing ran.
+/// This file shrank a lot when rendering moved to MapLibre Native, and that is
+/// the point: the data source no longer parses the Protomaps style at all, so
+/// the sprite index, the TileJSON, the per-source zoom bounds and the
+/// `text-field` rewriting are gone along with the tests that guarded them. The
+/// style is now consumed verbatim by the renderer.
 ///
-/// Two invariants matter beyond "does it parse":
-///  * the API key must never be attached to a host other than the configured
-///    one, or a tampered style could exfiltrate it and aim our viewport-
-///    revealing tile requests elsewhere;
-///  * a malformed field must degrade, not throw a ClassCastError.
+/// One deleted guard deserves a note rather than silent removal. The old code
+/// appended the API key to URLs it read *out of* the style document, so it
+/// needed a host allowlist to stop a tampered style exfiltrating the key. That
+/// code no longer exists: the key is only ever placed in the one URL we build
+/// ourselves, so the guard is replaced by construction, which is stronger than
+/// a test. The residual risk moved rather than vanished — MapLibre Native now
+/// follows whatever hosts the style names (today protomaps.github.io for glyphs
+/// and sprites), and that fetching is no longer under Dart's control.
+///
+/// What still matters here:
+///  * the tile opt-out and the keyless build must be hard stops, since every
+///    tile request discloses the viewport;
+///  * an unusable style must degrade to the tileless map rather than leave a
+///    silently blank one, because maplibre 0.3.5 reports no style-load failure;
+///  * the key must never appear in an error or log line.
 void main() {
   const key = 'test-key';
   const base = 'https://tiles.example.com/styles/v5';
 
-  /// Minimal but realistic Protomaps-shaped style.
-  Map<String, dynamic> style({
-    Object? sources,
-    Object? sprite,
-    List<Object?>? layers,
-    String name = 'test-style',
-  }) => {
-    'name': name,
-    'sources':
-        sources ??
-        {
-          'protomaps': {
-            'type': 'vector',
-            'tiles': ['$base/{z}/{x}/{y}.mvt?key=$key'],
-            'minzoom': 1,
-            'maxzoom': 15,
-          },
-        },
-    'sprite': ?sprite,
+  /// Minimal style with the one field the validator insists on.
+  Map<String, dynamic> style({List<Object?>? layers}) => {
+    'name': 'test-style',
     'layers':
         layers ??
         [
@@ -54,30 +48,22 @@ void main() {
         ],
   };
 
-  /// Serves [styleJson] for the style URL and 404s everything else unless
-  /// [extra] handles it.
-  MapRemoteDataSource source(
-    Map<String, dynamic> styleJson, {
-    Map<String, String> extra = const {},
-  }) {
-    return MapRemoteDataSource(
-      apiKey: key,
-      styleUrlBase: base,
-      clientFactory: () => MockClient((request) async {
-        final url = request.url.toString();
-        // Explicit overrides first: the sprite URL also lives under
-        // /styles/v5/ and ends in .json?key=, so a style-shaped match would
-        // swallow it and serve the style document instead.
-        for (final entry in extra.entries) {
-          if (url.startsWith(entry.key)) return http.Response(entry.value, 200);
-        }
-        if (RegExp(r'/styles/v5/[a-z]+/[\w-]+\.json\?key=').hasMatch(url)) {
-          return http.Response(jsonEncode(styleJson), 200);
-        }
-        return http.Response('not found', 404);
-      }),
-    );
-  }
+  /// Serves [body] for any style URL, 404s everything else.
+  MapRemoteDataSource source(Object? body, {int status = 200}) =>
+      MapRemoteDataSource(
+        apiKey: key,
+        styleUrlBase: base,
+        clientFactory: () => MockClient((request) async {
+          final url = request.url.toString();
+          if (RegExp(r'/styles/v5/[a-z]+/[\w-]+\.json\?key=').hasMatch(url)) {
+            return http.Response(
+              body is String ? body : jsonEncode(body),
+              status,
+            );
+          }
+          return http.Response('not found', 404);
+        }),
+      );
 
   group('resolveMapLabelLanguage', () {
     test('an exactly supported tag is used as-is', () {
@@ -105,9 +91,9 @@ void main() {
   });
 
   group('the tileless path', () {
-    test('no compiled-in key yields a null style, not an exception', () async {
+    test('no compiled-in key yields a null URL, not an exception', () async {
       final ds = MapRemoteDataSource(apiKey: '', styleUrlBase: base);
-      expect(await ds.getMapConfig(), isNull);
+      expect(await ds.getStyleUrl(), isNull);
     });
 
     test(
@@ -123,230 +109,94 @@ void main() {
             return http.Response('{}', 200);
           }),
         );
-        expect(await ds.getMapConfig(tilesEnabled: false), isNull);
+        expect(await ds.getStyleUrl(tilesEnabled: false), isNull);
         expect(requests, 0, reason: 'the opt-out must be a hard stop');
       },
     );
   });
 
-  group('style building', () {
-    test('a well-formed style produces a usable Style', () async {
-      final built = await source(style()).getMapConfig();
-      expect(built, isNotNull);
-      expect(built!.name, 'test-style');
-      expect(built.providers.tileProviderBySource.keys, contains('protomaps'));
+  group('URL resolution', () {
+    test('a valid style yields the URL the renderer should load', () async {
+      final url = await source(style()).getStyleUrl();
+      expect(url, '$base/light/en.json?key=$key');
     });
 
-    test(
-      'the theme and resolved language appear in the requested URL',
-      () async {
-        String? requested;
-        final ds = MapRemoteDataSource(
-          apiKey: key,
-          styleUrlBase: base,
-          clientFactory: () => MockClient((request) async {
-            requested ??= request.url.toString();
-            return http.Response(jsonEncode(style()), 200);
-          }),
-        );
-        await ds.getMapConfig(
-          theme: MapThemeColumn.dark,
-          userLocaleTag: 'fr_CA',
-        );
-        expect(requested, contains('/dark/fr.json'));
-      },
-    );
-
-    test(
-      'text-field expressions are rewritten to a coalesce the renderer can '
-      'parse — without this every label silently vanishes from the map',
-      () async {
-        final withFormat = style(
-          layers: [
-            {
-              'id': 'places',
-              'type': 'symbol',
-              'source': 'protomaps',
-              'source-layer': 'places',
-              // What Protomaps v5 actually emits, and what
-              // vector_tile_renderer 6.x cannot read.
-              'layout': {
-                'text-field': [
-                  'format',
-                  ['get', 'name:fr'],
-                  {},
-                ],
-              },
-            },
-          ],
-        );
-        // Reaching a built Style at all proves the rewrite happened: the raw
-        // format expression is what makes the renderer drop the layer's text.
-        final built = await source(withFormat).getMapConfig();
-        expect(built, isNotNull);
-        expect(built!.providers.tileProviderBySource, isNotEmpty);
-      },
-    );
-
-    test('zoom bounds are read from the source', () async {
-      final built = await source(style()).getMapConfig();
-      final provider = built!.providers.tileProviderBySource.values.first;
-      expect(provider.minimumZoom, 1);
-      expect(provider.maximumZoom, 15);
-    });
-
-    test('non-integer zoom bounds fall back to defaults instead of throwing — '
-        'they used to be an unchecked `as int?`', () async {
-      final built = await source(
-        style(
-          sources: {
-            'protomaps': {
-              'type': 'vector',
-              'tiles': ['$base/{z}/{x}/{y}.mvt?key=$key'],
-              'minzoom': '1', // a string, as a schema change might emit
-              'maxzoom': null,
-            },
-          },
-        ),
-      ).getMapConfig();
-      final provider = built!.providers.tileProviderBySource.values.first;
-      expect(provider.minimumZoom, 1);
-      expect(provider.maximumZoom, 14);
-    });
-  });
-
-  group('malformed input degrades instead of crashing', () {
-    Future<void> expectThrows(Map<String, dynamic> s) =>
-        expectLater(source(s).getMapConfig(), throwsA(anything));
-
-    test('a style with no sources is rejected', () async {
-      await expectThrows(style(sources: <String, Object?>{}));
-    });
-
-    test('a non-object `sources` is rejected', () async {
-      await expectThrows(style(sources: 'nonsense'));
-    });
-
-    test(
-      'a source whose tiles list is empty is skipped, leaving no providers',
-      () async {
-        await expectThrows(
-          style(
-            sources: {
-              'protomaps': {'type': 'vector', 'tiles': <Object?>[]},
-            },
-          ),
-        );
-      },
-    );
-
-    test(
-      'a non-string tile template is skipped rather than cast — a schema change '
-      'shipping a number must not break the map for everyone',
-      () async {
-        await expectThrows(
-          style(
-            sources: {
-              'protomaps': {
-                'type': 'vector',
-                'tiles': [42],
-              },
-            },
-          ),
-        );
-      },
-    );
-
-    test('an unknown source type is ignored', () async {
-      await expectThrows(
-        style(
-          sources: {
-            'weird': {
-              'type': 'something-new',
-              'tiles': ['$base/x'],
-            },
-          },
-        ),
-      );
-    });
-
-    test(
-      'a malformed sprite index is non-fatal — labels still render',
-      () async {
-        final built = await source(
-          style(sprite: '$base/sprite'),
-          extra: {'$base/sprite.json': 'not json at all'},
-        ).getMapConfig();
-        expect(built, isNotNull, reason: 'sprites are optional decoration');
-        expect(built!.sprites, isNull);
-      },
-    );
-
-    test('a non-string sprite field is ignored', () async {
-      final built = await source(style(sprite: 42)).getMapConfig();
-      expect(built, isNotNull);
-      expect(built!.sprites, isNull);
-    });
-  });
-
-  group('API key handling', () {
-    test('the key is NOT attached to a host outside the configured one, so a '
-        'tampered style cannot exfiltrate it', () async {
-      final seen = <String>[];
-      final ds = MapRemoteDataSource(
-        apiKey: key,
-        styleUrlBase: base,
-        clientFactory: () => MockClient((request) async {
-          seen.add(request.url.toString());
-          if (request.url.host == 'tiles.example.com' &&
-              request.url.path.contains('/styles/v5/')) {
-            return http.Response(
-              jsonEncode(
-                style(
-                  // A hostile style pointing its sprite at somebody else.
-                  sprite: 'https://evil.example.net/sprite',
-                ),
-              ),
-              200,
-            );
-          }
-          return http.Response('{}', 200);
-        }),
-      );
-      await ds.getMapConfig();
-
-      final foreign = seen.where((u) => u.contains('evil.example.net'));
-      expect(foreign, isNotEmpty, reason: 'the sprite was still fetched');
-      for (final url in foreign) {
+    test('the theme selects the Protomaps flavour', () async {
+      // The five MapThemeColumn values are named after Protomaps' flavours
+      // precisely so this stays a name substitution rather than a lookup table.
+      for (final theme in MapThemeColumn.values) {
         expect(
-          url,
-          isNot(contains(key)),
-          reason: 'the key must never leave the configured host',
+          await source(style()).getStyleUrl(theme: theme),
+          '$base/${theme.name}/en.json?key=$key',
+          reason: 'flavour ${theme.name}',
         );
       }
     });
 
-    test('a URL already carrying a key is left untouched', () async {
-      // Protomaps pre-bakes ?key= into its TileJSON tile templates; appending a
-      // second one would produce a malformed request.
-      final built = await source(style()).getMapConfig();
-      final template = built!.providers.tileProviderBySource.values.first;
-      expect(template, isNotNull);
+    test('the resolved language lands in the path', () async {
+      expect(
+        await source(style()).getStyleUrl(userLocaleTag: 'pt-BR'),
+        '$base/light/pt.json?key=$key',
+      );
     });
 
-    test('an HTTP error surfaces with the key redacted', () async {
-      final ds = MapRemoteDataSource(
-        apiKey: key,
-        styleUrlBase: base,
-        clientFactory: () =>
-            MockClient((_) async => http.Response('boom', 500)),
-      );
+    test('the key is carried in the returned URL', () async {
+      // Not incidental: MapLibre Native fetches this URL itself and Protomaps
+      // gates the style on the key, so stripping it would blank the map.
+      final url = await source(style()).getStyleUrl();
+      expect(url, contains('key=$key'));
+    });
+  });
+
+  group('an unusable style degrades to the tileless map', () {
+    // Each of these must throw so the caller falls back deliberately. Handing a
+    // bad URL to MapLibre instead would render a blank map with no signal,
+    // because 0.3.5 has no style-load-failure event.
+    test('an HTTP error surfaces, with the key redacted', () async {
       await expectLater(
-        ds.getMapConfig(),
+        source(style(), status: 500).getStyleUrl(),
+        throwsA(
+          isA<String>()
+              .having((e) => e, 'message', contains('500'))
+              .having((e) => e, 'message', isNot(contains(key)))
+              .having((e) => e, 'message', contains('key=***')),
+        ),
+      );
+    });
+
+    test('a body that is not JSON at all is rejected', () async {
+      await expectLater(source('<html>nope</html>').getStyleUrl(), throwsA(anything));
+    });
+
+    test('valid JSON that is not an object is rejected', () async {
+      await expectLater(source([1, 2, 3]).getStyleUrl(), throwsA(anything));
+    });
+
+    test('a JSON object with no layers is rejected', () async {
+      // A 200 carrying an error document, or a captive portal's JSON, would
+      // otherwise be handed to the renderer as a valid style.
+      await expectLater(
+        source({'name': 'no-layers'}).getStyleUrl(),
+        throwsA(
+          isA<String>().having((e) => e, 'message', contains('no layers')),
+        ),
+      );
+    });
+
+    test('a non-list layers field is rejected', () async {
+      await expectLater(
+        source({'layers': 'roads'}).getStyleUrl(),
+        throwsA(anything),
+      );
+    });
+
+    test('the error never leaks the key', () async {
+      await expectLater(
+        source('<html>nope</html>').getStyleUrl(),
         throwsA(
           predicate<Object>(
-            (e) => !e.toString().contains(key) && e.toString().contains('***'),
-            'redacts the API key',
+            (e) => !e.toString().contains(key),
+            'no API key in the message',
           ),
         ),
       );

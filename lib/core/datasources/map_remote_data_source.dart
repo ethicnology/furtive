@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:furtive/core/database/tables/preferences_table.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:http/http.dart' as http;
-import 'package:vector_map_tiles/vector_map_tiles.dart';
-import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 // Secrets are injected at build time via --dart-define so they never get
 // bundled into the APK as a plain asset (which a .env file would be).
@@ -86,7 +84,7 @@ class MapRemoteDataSource {
   /// style JSON and its TileJSON — and every field it reads is a place a schema
   /// change can break the map for every user at once. Without a seam, none of
   /// that parsing was reachable from a test: under `flutter test` there is no
-  /// compiled-in key, so getMapConfig returned null on its first line and the
+  /// compiled-in key, so getStyleUrl returned null on its first line and the
   /// remaining ~100 lines never ran.
   ///
   /// A factory rather than a client instance: each request closes its client
@@ -104,13 +102,21 @@ class MapRemoteDataSource {
   final String _apiKey;
   final String _styleUrlBase;
 
-  /// Host the API key may be appended to. Only URLs on the configured host
-  /// receive it, so a compromised/MITM'd style JSON that smuggles in a
-  /// third-party `url`/`sprite`/`tiles` host cannot exfiltrate the key (or aim
-  /// our viewport-revealing tile requests at an attacker).
-  String get _keyHost => Uri.parse(_styleUrlBase).host;
-
-  Future<Style?> getMapConfig({
+  /// Resolves the basemap style URL to hand to the renderer, or null to render
+  /// tile-less.
+  ///
+  /// Returns a URL rather than a parsed style because MapLibre Native fetches
+  /// and parses the style itself. Protomaps' own style is therefore used
+  /// verbatim — no `text-field` rewriting, no hand-rolled sprite pipeline.
+  ///
+  /// The style is still fetched once here purely to validate it. That looks
+  /// redundant (the native SDK will fetch it again, though its HTTP cache
+  /// usually absorbs that) and it is deliberate: maplibre 0.3.5 emits no
+  /// style-load-failure event, so an expired key or a captive portal would
+  /// otherwise leave a silent blank map with no way to detect it. Validating in
+  /// Dart keeps the deliberate tile-less fallback that the keyless build
+  /// already relies on. Drop this once upstream exposes a failure event.
+  Future<String?> getStyleUrl({
     MapThemeColumn theme = MapThemeColumn.light,
     String? userLocaleTag,
     bool tilesEnabled = true,
@@ -128,7 +134,7 @@ class MapRemoteDataSource {
     // docs/AUDIT-2026-07.md §5.
     if (_apiKey.isEmpty || !tilesEnabled) {
       logs.warning(
-        'getMapConfig: tileless map '
+        'getStyleUrl: tileless map '
         '(keyEmpty: ${_apiKey.isEmpty}, tilesEnabled: $tilesEnabled)',
       );
       return null;
@@ -136,161 +142,26 @@ class MapRemoteDataSource {
 
     final lang = resolveMapLabelLanguage(userLocaleTag);
     final styleUrl = '$_styleUrlBase/${theme.name}/$lang.json?key=$_apiKey';
-    logs.info('getMapConfig: fetching style ${_redactKey(styleUrl)}');
+    logs.info('getStyleUrl: validating style ${_redactKey(styleUrl)}');
 
-    // We don't use StyleReader.read() directly because the Protomaps v5
-    // style JSON encodes localised labels with a MapLibre `format`
-    // expression, and vector_tile_renderer 6.x has no parser for it —
-    // result: every text label silently drops out of the rendered map.
-    // We fetch the JSON, rewrite each layer's `text-field` to a simple
-    // coalesce(get name:LANG, get name) that the renderer DOES parse,
-    // then run the rest of StyleReader's pipeline by hand.
     final styleText = await _httpGet(styleUrl);
     final styleJson = await compute(jsonDecode, styleText);
     if (styleJson is! Map<String, dynamic>) {
       throw 'Protomaps style is not a JSON object: ${_redactKey(styleUrl)}';
     }
-    _patchTextFields(styleJson, lang);
-
-    final builtStyle = await _buildStyle(styleJson);
-    logs.info(
-      'getMapConfig: style built (name: ${builtStyle.name}, '
-      'providers: ${builtStyle.providers.tileProviderBySource.keys.toList()})',
-    );
-    return builtStyle;
+    // A 200 carrying a JSON object that is not a style would still leave the
+    // native SDK blank, so check the one field that must be there.
+    if (styleJson['layers'] is! List) {
+      throw 'Protomaps style has no layers: ${_redactKey(styleUrl)}';
+    }
+    logs.info('getStyleUrl: style valid (${(styleJson['layers'] as List).length}'
+        ' layers)');
+    return styleUrl;
   }
 
-  /// Walk every layer and replace its `text-field` (which Protomaps emits
-  /// as a complex format expression for localisation) with a simple
-  /// coalesce(get name:LANG, get name). Layers without a text-field are
-  /// left alone.
-  void _patchTextFields(Map<String, dynamic> style, String lang) {
-    final layers = style['layers'];
-    if (layers is! List) return;
-    for (final layer in layers) {
-      if (layer is! Map) continue;
-      final layout = layer['layout'];
-      if (layout is! Map) continue;
-      if (layout['text-field'] == null) continue;
-      layout['text-field'] = [
-        'coalesce',
-        ['get', 'name:$lang'],
-        ['get', 'name'],
-      ];
-    }
-  }
-
-  /// Replicates the post-fetch pipeline of vector_map_tiles' [StyleReader]
-  /// (providers + sprites + theme parsing) so we can feed it our patched
-  /// style JSON.
-  Future<Style> _buildStyle(Map<String, dynamic> style) async {
-    final sources = style['sources'];
-    if (sources is! Map) {
-      throw 'Protomaps style has no sources';
-    }
-
-    final providers = <String, VectorTileProvider>{};
-    for (final entry in sources.entries) {
-      final value = entry.value;
-      if (value is! Map) continue;
-      final sourceKey = entry.key;
-      if (sourceKey is! String) continue;
-      final sourceType = value['type'];
-      final type = TileProviderType.values
-          .where((e) => e.name.replaceAll('_', '-') == sourceType)
-          .firstOrNull;
-      if (type == null) continue;
-
-      // Typed as Map rather than `dynamic`: this whole block parses a
-      // third-party document, so every access below is a place a Protomaps
-      // schema change can break the map for every user at once. With
-      // `dynamic source` the analyser could not see any of it (which is what
-      // strict-casts / avoid_dynamic_calls now forbid) and each read compiled to
-      // an unchecked runtime cast.
-      Map<Object?, Object?> source = value;
-      final entryUrl = value['url'];
-      if (entryUrl is String) {
-        final tileJsonText = await _httpGet(_withKey(entryUrl));
-        final decoded = await compute(jsonDecode, tileJsonText);
-        if (decoded is! Map) throw 'Invalid TileJSON at $entryUrl';
-        source = decoded;
-      }
-
-      final tiles = source['tiles'];
-      if (tiles is! List || tiles.isEmpty) continue;
-      // Don't unchecked-cast the first entry — a future Protomaps schema change
-      // shipping a non-string would throw and break the map for everyone until
-      // we ship a patch. Same reasoning for the zoom bounds below: a
-      // non-integer there used to be an unchecked `as int?`.
-      final first = tiles.first;
-      if (first is! String) continue;
-      final maxZoom = source['maxzoom'];
-      final minZoom = source['minzoom'];
-      providers[sourceKey] = NetworkVectorTileProvider(
-        type: type,
-        urlTemplate: _withKey(first),
-        maximumZoom: maxZoom is int ? maxZoom : 14,
-        minimumZoom: minZoom is int ? minZoom : 1,
-      );
-    }
-    if (providers.isEmpty) throw 'No tile providers in Protomaps style';
-
-    SpriteStyle? sprites;
-    final spriteUri = style['sprite'];
-    if (spriteUri is String && spriteUri.trim().isNotEmpty) {
-      try {
-        final jsonText = await _httpGet(_withKey('$spriteUri.json'));
-        final spritesJson = await compute(jsonDecode, jsonText);
-        // SpriteIndexReader.read wants a Map<String, dynamic>; jsonDecode
-        // returns Object?, so check rather than cast — a malformed sprite index
-        // must fall through to the catch below (sprites are non-fatal) instead
-        // of throwing a ClassCastError.
-        if (spritesJson is! Map<String, dynamic>) {
-          throw 'Invalid sprite index at $spriteUri.json';
-        }
-        sprites = SpriteStyle(
-          atlasProvider: () => _httpGetBytes(_withKey('$spriteUri.png')),
-          index: SpriteIndexReader().read(spritesJson),
-        );
-      } catch (_) {
-        // Sprites are non-fatal — labels still render without them.
-      }
-    }
-
-    return Style(
-      name: style['name'] as String?,
-      theme: ThemeReader().read(style),
-      providers: TileProviders(providers),
-      sprites: sprites,
-    );
-  }
-
-  /// Protomaps gates every resource (tiles, sprites, TileJSON) on the
-  /// same API key; URIs in the v5 style JSON are emitted without one.
   // Strip the API key before a URL goes into a thrown/logged error string.
   static String _redactKey(String url) =>
       url.replaceAll(RegExp(r'key=[^&]*'), 'key=***');
-
-  String _withKey(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return url;
-    // Exact query-parameter check (not a substring) and host allowlist.
-    if (uri.queryParameters.containsKey('key')) return url;
-    if (uri.host != _keyHost) return url;
-    // Textual concatenation, NOT uri.replace(queryParameters: ...): a tile
-    // URL template contains literal placeholders like {z}/{x}/{y}, and
-    // Uri.replace re-encodes the whole query/path component, turning them
-    // into %7Bz%7D/%7Bx%7D/%7By%7D — NetworkVectorTileProvider substitutes
-    // placeholders via a regex that only matches the unencoded braces, so
-    // every tile request would 404. Currently masked because Protomaps'
-    // TileJSON responses already embed `?key=` in their own tile templates
-    // (the early return above), but this path is hit directly for `sprite`/
-    // style-level `url` fields, and would be hit for tiles too if Protomaps
-    // ever stopped pre-baking the key.
-    final separator = url.contains('?') ? '&' : '?';
-    return '$url$separator'
-        'key=$_apiKey';
-  }
 
   // Cap every map resource fetch (TileJSON, style, sprites, tiles) so a hung
   // Protomaps connection can't leave the map-setup future pending forever.
@@ -332,6 +203,4 @@ class MapRemoteDataSource {
 
   Future<String> _httpGet(String url) async =>
       utf8.decode(await _httpGetBytesCapped(url));
-
-  Future<Uint8List> _httpGetBytes(String url) => _httpGetBytesCapped(url);
 }

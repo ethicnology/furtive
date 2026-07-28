@@ -1,23 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:furtive/core/facades/file_system_facade.dart';
+import 'package:furtive/core/entities/position_entity.dart';
+import 'package:furtive/core/map/map_view.dart';
+import 'package:furtive/core/map/maplibre_map_view.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/widgets/activity_polyline_layer.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
-import 'package:furtive/core/widgets/km_milestones_layer.dart';
 import 'package:furtive/core/widgets/km_splits_chart.dart';
 import 'package:furtive/l10n/app_localizations.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
-import 'package:furtive/core/usecases/get_map_tile_url_use_case.dart';
+import 'package:furtive/core/usecases/get_map_style_url_use_case.dart';
 import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
 import 'package:furtive/core/usecases/share_activity_use_case.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 class ActivityDetailPage extends StatefulWidget {
   final ActivityEntity activity;
@@ -31,23 +30,29 @@ class ActivityDetailPage extends StatefulWidget {
 // Fallback when an activity has zero usable points (Place de la Concorde,
 // Paris). Picked arbitrarily — the map only renders without points if the
 // user ceased before any GPS fix arrived.
-const _kFallbackCenter = LatLng(48.8566, 2.3522);
+final _kFallbackCenter = PositionEntity(
+  latitude: 48.8566,
+  longitude: 2.3522,
+  elevation: 0,
+);
 
-LatLng _initialCenter(ActivityEntity activity) {
+/// First point with finite coordinates. Not `points.first`: a junk GPS fix can
+/// carry NaN, which poisons the camera so that every later gesture throws.
+PositionEntity _initialCenter(ActivityEntity activity) {
   for (final point in activity.points) {
     final lat = point.position.latitude;
     final lon = point.position.longitude;
-    if (lat.isFinite && lon.isFinite) return LatLng(lat, lon);
+    if (lat.isFinite && lon.isFinite) return point.position;
   }
   return _kFallbackCenter;
 }
 
 class _ActivityDetailPageState extends State<ActivityDetailPage> {
-  final _mapController = MapController();
-  final _getMapConfigUseCase = GetMapConfigUseCase();
+  final MapView _mapView = MapLibreMapView();
+  final _getMapStyleUrlUseCase = GetMapStyleUrlUseCase();
   final _exportActivityToGpxUseCase = ExportActivityToGpxUseCase();
   final _shareActivityUseCase = ShareActivityUseCase();
-  Style? _mapStyle;
+  String? _mapStyleUrl;
   // _isMapStyleLoading covers ONLY the initial map-tile-style fetch.
   // Previously _isLoading was overloaded with export-in-progress as well,
   // which meant the whole map view collapsed to a spinner during GPX
@@ -67,16 +72,16 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
 
   @override
   void dispose() {
-    _mapController.dispose();
+    unawaited(_mapView.dispose());
     super.dispose();
   }
 
   Future<void> _loadMapStyle() async {
     try {
-      final style = await _getMapConfigUseCase();
+      final styleUrl = await _getMapStyleUrlUseCase();
       if (!mounted) return;
       setState(() {
-        _mapStyle = style;
+        _mapStyleUrl = styleUrl;
         _isMapStyleLoading = false;
       });
     } catch (e) {
@@ -145,51 +150,18 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
                   // (keyed build, online); on the keyless FOSS build or an
                   // offline style fetch the polyline draws on a blank canvas
                   // instead of an error.
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      // Use the first point that has finite lat/lon —
-                      // `points.first` can be NaN if the GPS emitted a junk
-                      // fix and we'd crash FlutterMap's LatLng constructor.
-                      initialCenter: _initialCenter(widget.activity),
-                      initialZoom: Global.maxZoom,
-                      maxZoom: Global.maxZoom,
-                    ),
-                    children: [
-                      if (_mapStyle != null)
-                        VectorTileLayer(
-                          maximumZoom: Global.maxZoom,
-                          theme: _mapStyle!.theme,
-                          tileProviders: _mapStyle!.providers,
-                          sprites: _mapStyle!.sprites,
-                        ),
-                      widget.activity.toPolylineLayer(),
-                      KmMilestonesLayer(activity: widget.activity),
-                      // Attribution is required whenever OSM/Protomaps tiles
-                      // are shown.
-                      if (_mapStyle != null)
-                        RichAttributionWidget(
-                          alignment: AttributionAlignment.bottomLeft,
-                          attributions: [
-                            TextSourceAttribution(
-                              'OpenStreetMap',
-                              onTap: () => launchUrl(
-                                Uri.parse(
-                                  'https://www.openstreetmap.org/copyright',
-                                ),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                            ),
-                            TextSourceAttribution(
-                              'Protomaps',
-                              onTap: () => launchUrl(
-                                Uri.parse('https://protomaps.com'),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+                  child: _mapView.build(
+                    styleUrl: _mapStyleUrl,
+                    track: widget.activity,
+                    initialCentre: _initialCenter(widget.activity),
+                    initialZoom: Global.maxZoom,
+                    maxZoom: Global.maxZoom,
+                    // A finished activity: no live position to show, and asking
+                    // for one would prompt for location permission on a page
+                    // that has no use for it.
+                    showUserLocation: false,
+                    // Nothing follows the user here, so a pan means nothing.
+                    onUserGesture: () {},
                   ),
                 ),
                 Positioned(

@@ -35,46 +35,20 @@ dependencies:
   intl: any # version pinned by flutter_localizations
   collection: ^1.19.1 # stable mergeSort, used directly by activity_entity.dart
 
-  flutter_map: ^8.3.1
-  flutter_map_location_marker: ^10.3.0
-  # Two deliberate "no" decisions here, both re-verified 2026-07-26.
+  # Map rendering, via MapLibre Native. Replaced the flutter_map +
+  # vector_map_tiles stack, which janked on zoom and could not parse the
+  # `format` expressions Protomaps uses for its labels — see the rationale in
+  # lib/core/map/maplibre_map_view.dart.
   #
-  # 1. NOT 10.0.0-beta.2, despite the higher number:
-  #    - 9.x is the actively maintained line. Upstream's `9.0.0` branch got
-  #      commits on 2026-07-23; the `main` branch carrying 10.x has had no
-  #      commit since 2025-10-19, and both 10.0.0 betas date from that same
-  #      October 2025 burst.
-  #    - upstream issue #271 ("Fill layers not rendering at zoom levels below
-  #      source maxzoom (v10)") is an open v10-specific rendering defect,
-  #      still unfixed 8 months on.
-  #    - 10.x requires `vector_tile_renderer ^7.0.0-beta.1` (itself a beta,
-  #      untouched since 2025-10-18), whereas 6.1.0 below is the current
-  #      STABLE renderer — and we consume its API directly (next line), so a
-  #      renderer major would break the hand-rolled style pipeline in
-  #      map_remote_data_source.dart.
-  #
-  # 2. NOT 9.0.0-beta.10/11 either, even though they are newer. They raise the
-  #    `latlong2` floor to ^0.10.1, which flutter_map_location_marker 10.3.0
-  #    (its newest release) does not allow (^0.9.1) — an unsatisfiable
-  #    conflict that can only be forced with a `dependency_overrides` entry.
-  #    That override buys nothing: diffing the published beta.9 and beta.11
-  #    archives shows the ONLY code changes are lint fixes with no runtime
-  #    effect — `_renderJob(job)` -> `_renderJob(dynamic job)` and
-  #    `_updateLabels(job)` -> `(dynamic job)` (an untyped Dart parameter is
-  #    already `dynamic`), an added `bool` return type, and dropping a
-  #    `library` directive. Upstream's "fix typecast error" commit reverts an
-  #    over-tightened annotation introduced after beta.9 shipped; beta.9 never
-  #    had the defect. So: no behavioural gain, real solver liability — stay.
-  #    Revisit once flutter_map_location_marker#167 ("Bump latlong2 from 0.9.1
-  #    to 0.10.1", open since 2026-07-01) lands, which removes the conflict
-  #    without an override.
-  vector_map_tiles: ^9.0.0-beta.9
-  vector_tile_renderer: ^6.1.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader. 6.1.0 is the latest stable (7.0.0-beta.1 is a stale beta, see above).
-  executor_lib: ^1.1.2 # transitive of vector_map_tiles, imported directly to recognise its benign CancellationException
+  # The native SDK version this pulls is pinned in android/app/build.gradle.kts;
+  # upstream publishes pre-releases into the `13.0.+` range, so leaving it open
+  # is a reproducibility hazard. Two further constraints live in that file's
+  # comments: R8/minify must stay off, and the GMS exclusion stays as a guard.
+  maplibre: ^0.3.5
+
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0 # sequential()/droppable() transformers for MapBloc
   get_it: ^9.2.1
-  latlong2: ^0.9.1 # capped by flutter_map_location_marker 10.3.0 (^0.9.1), not by vector_map_tiles — see the note on vector_map_tiles above. 0.10.x holds nothing we need (improved LatLng.hashCode, added LatLng.isValid).
   geolocator: ^14.0.2
   permission_handler: ^12.0.3
   http: ^1.6.0

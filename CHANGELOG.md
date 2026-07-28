@@ -8,13 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **The map is rendered by MapLibre Native** instead of
+  `flutter_map` + `vector_map_tiles`. Protomaps remains the tile provider and
+  the tile opt-out is unchanged. Zoom was the one interaction that janked
+  consistently, because the old renderer rasterises per zoom level; measured on
+  a Pixel 5 in profile, a zoom sweep went from 5 frames over budget to none.
+  An idle map and the recording loop already dropped no frames in either stack,
+  so this was not a fix for the app's central use case.
+
+  The larger half of the case is structural: Protomaps' styles are now used
+  verbatim. The old renderer cannot parse MapLibre `format` expressions and a
+  real Protomaps style nests 91 of them in its label logic, so the app rewrote
+  every `text-field`, replacing Protomaps' multi-script fallback with a flat
+  coalesce. No third-party style document is parsed in Dart any more. Dropping
+  the old renderer also lifts the `protobuf ^3` ceiling that made `pmtiles` 2.x
+  unresolvable, which is a prerequisite for offline maps.
+
+  Costs taken on knowingly: a ~13 MB opaque native library per ABI in a project
+  whose premise is auditability; glyphs and sprites are fetched from
+  `protomaps.github.io`, a host the old stack contacted for sprites only;
+  the native SDK version must stay pinned because upstream declares a dynamic
+  `13.0.+` range that does not exclude pre-releases; and R8/minify must stay
+  off, upstream having had two release-only rendering bugs tied to it.
+  Panning horizontally on the map no longer swipes between tabs — a platform
+  view has to claim the gesture outright, or the bottom navigation takes it.
 - **Toolchain** — Flutter 3.44.8; dependencies refreshed to their newest
-  resolvable versions. `vector_map_tiles` deliberately stays on the 9.x line
-  rather than 10.0.0-beta.2: 9.x is the actively maintained branch upstream,
-  10.x has an open rendering defect (upstream #271) and depends on a stale beta
-  renderer. `build_runner` / `drift_dev` / `dart_mappable_builder` are pinned
-  behind their latest because every newer release requires `analyzer ^13`, which
-  no Flutter stable ships yet — see the note in `pubspec.yaml`.
+  resolvable versions. `build_runner` / `drift_dev` / `dart_mappable_builder`
+  are pinned behind their latest because every newer release requires
+  `analyzer ^13`, which no Flutter stable ships yet — see the note in
+  `pubspec.yaml`.
 - **Architecture** — dependencies are now injected through constructors (with
   real defaults) instead of being constructed in place, and `get_it` is confined
   to the composition root. The four-layer bloc → use case → repository →
@@ -61,6 +83,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   code.
 - The dead `map_language` preferences column (schema v9) and the unused
   `KmMilestone.time` field, which was also the only non-UTC timestamp in the app.
+- Six direct dependencies, with the old renderer: `flutter_map`,
+  `flutter_map_location_marker`, `vector_map_tiles`, `vector_tile_renderer`,
+  `executor_lib` and `latlong2`. Sixteen resolved packages left and thirteen
+  arrived, so the dependency graph is barely smaller (185 → 182) — the saving is
+  in the code the app no longer owns, not in its footprint.
 
 ### Accessibility
 - `HoldToConfirmButton` — the only way to stop a recording — now exposes a button
