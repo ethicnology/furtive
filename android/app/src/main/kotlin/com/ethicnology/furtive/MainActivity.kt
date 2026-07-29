@@ -5,6 +5,7 @@ import android.app.ApplicationExitInfo
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 // Dart reads this once at startup (see lib/core/facades/process_exit_facade.dart)
@@ -29,9 +30,37 @@ private const val DIAGNOSTICS_CHANNEL = "app.furtive/diagnostics"
 // this attribute) and to process survival (§2).
 private const val LOCK_SCREEN_CHANNEL = "app.furtive/lock_screen"
 
+// Device heading (which way the phone points), streamed to Dart so the map's
+// location puck can face the right way. An EventChannel rather than a
+// MethodChannel because this is a continuous sensor feed, and the companion
+// MethodChannel below carries the position the magnetic-to-true-north
+// correction needs. See CompassStreamHandler for why this is not a package.
+private const val COMPASS_EVENT_CHANNEL = "app.furtive/compass"
+private const val COMPASS_METHOD_CHANNEL = "app.furtive/compass_control"
+
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val compass = CompassStreamHandler(this)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, COMPASS_EVENT_CHANNEL)
+            .setStreamHandler(compass)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, COMPASS_METHOD_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "updatePosition" -> {
+                        val latitude = call.argument<Double>("latitude")
+                        val longitude = call.argument<Double>("longitude")
+                        val altitude = call.argument<Double>("altitude") ?: 0.0
+                        if (latitude == null || longitude == null) {
+                            result.error("bad_args", "expected latitude/longitude", null)
+                        } else {
+                            compass.updatePosition(latitude, longitude, altitude)
+                            result.success(null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DIAGNOSTICS_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
