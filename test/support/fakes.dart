@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/datasources/location_gps_data_source.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/repositories/location_repository.dart';
 import 'package:geolocator/geolocator.dart';
@@ -54,10 +55,22 @@ class FakeLocationRepository extends LocationRepository {
     return currentLocation!;
   }
 
+  /// Tuning the last [getPositionStream] call was opened with, so a test can
+  /// assert that starting an activity actually re-opened the stream with the
+  /// chosen profile rather than silently keeping the map's generic one.
+  MovementTuning? lastTuning;
+  RecordingDetailEntity? lastDetail;
+
   @override
-  Stream<PositionEntity> getPositionStream({void Function()? onRawFix}) {
+  Stream<PositionEntity> getPositionStream({
+    void Function()? onRawFix,
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) {
     if (failPositionStream) throw StateError('cannot open stream');
     positionStreamOpenCount++;
+    lastTuning = tuning;
+    lastDetail = detail;
     return fixes.stream.map((p) {
       onRawFix?.call();
       return p;

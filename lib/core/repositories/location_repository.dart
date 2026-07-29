@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
+import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/utils/gps_quality_filter.dart';
 
 import '../datasources/location_gps_data_source.dart';
@@ -40,13 +42,22 @@ class LocationRepository {
   /// normal outages look identical to a dead stream: the watchdog would
   /// then tear down and reopen a healthy foreground service and show the
   /// user a false "tracking gap" banner. See docs/REVIEW-2026-07-FULL-APP.md M1.
-  Stream<PositionEntity> getPositionStream({void Function()? onRawFix}) {
+  ///
+  /// [tuning] sizes the quality gate to the activity being recorded; it
+  /// defaults to the permissive generic profile so the map's own stream (which
+  /// runs before any activity is started, and therefore before a profile is
+  /// known) is never gated on constants meant for a runner.
+  Stream<PositionEntity> getPositionStream({
+    void Function()? onRawFix,
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) {
     // Drop any frames with non-finite lat/lon — they crash flutter_map's
     // LatLng constructor ("LatLng is not finite") and corrupt downstream
     // distance / interpolation maths (NaN poisons cumulativeMeters and
     // every km-milestone derived from it).
     final raw = gps
-        .getPositionStream()
+        .getPositionStream(tuning: tuning, detail: detail)
         .map(_toEntity)
         .where((p) => p != null)
         .cast<PositionEntity>();
@@ -63,7 +74,21 @@ class LocationRepository {
     // one-shot fix has no history to compare against, and rejecting it would
     // just make "centre on me" fail more often for no benefit. See
     // docs/AUDIT-2026-07.md §4.
-    return GpsQualityFilter().apply(tapped);
+    final filter = GpsQualityFilter(tuning: tuning);
+    // Rejections used to be silent, which made "the filter is dropping every
+    // fix" (urban canyon, wrong profile) look exactly like "the foreground
+    // service died" in the logs — the single biggest obstacle to diagnosing a
+    // hole in a recorded trace after the fact. Warning rather than fine: a
+    // dropped fix is a hole in the display stream (and usually in the user's
+    // data), and the cadence is low enough that this cannot flood the log.
+    // A vague fix admitted by the anti-starvation escape hatch is still
+    // rejected from an active recording by MapBloc's strict accuracy gate.
+    filter.onRejected = (position, reason) => logs.warning(
+      'GpsQualityFilter dropped a fix: ${reason.name} '
+      '(accuracy ${position.accuracy?.toStringAsFixed(1) ?? 'unknown'} m, '
+      'speed cap ${filter.tuning.plausibleSpeedMps.toStringAsFixed(0)} m/s).',
+    );
+    return filter.apply(tapped);
   }
 
   /// Returns null when the underlying fix has NaN/Infinity coordinates so
@@ -113,6 +138,18 @@ class LocationRepository {
           ? kUntrustedElevationAccuracyMeters
           : sanitizeAccuracy(position.altitudeAccuracy),
       speed: sanitizeAccuracy(position.speed),
+      // Compass-style range check rather than sanitizeAccuracy: 0 is a
+      // legitimate heading (due north), so it cannot be treated as the
+      // "unreported" sentinel the accuracy fields use. Whether the value can
+      // be believed at all is decided by
+      // PositionEntityExtension.trustedHeading, which also needs the speed.
+      heading:
+          (position.heading.isFinite &&
+              position.heading >= 0 &&
+              position.heading <= 360)
+          ? position.heading
+          : null,
+      headingAccuracy: sanitizeAccuracy(position.headingAccuracy),
     );
   }
 

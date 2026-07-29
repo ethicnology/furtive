@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/errors.dart';
 
 // 0 = record every GPS fix. Used to be user-configurable but the setting
@@ -41,14 +42,17 @@ class LocationGpsDataSource {
     return position;
   }
 
-  Stream<Position> getPositionStream() {
+  Stream<Position> getPositionStream({
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) {
     // No timeLimit here: geolocator throws a TimeoutException on the stream
     // itself once the deadline is passed without a fix, which would tear
     // down long-running tracking on a temporary GPS gap (tunnel, dense
     // urban canyon). Staleness while recording is instead detected and
     // recovered by MapBloc._onEnsureTracking.
     return Geolocator.getPositionStream(
-      locationSettings: getLocationSettings(),
+      locationSettings: getLocationSettings(tuning: tuning, detail: detail),
     );
   }
 
@@ -86,15 +90,28 @@ class LocationGpsDataSource {
     return status.isGranted;
   }
 
-  LocationSettings getLocationSettings({Duration? timeLimit}) {
+  /// [tuning] and [detail] come from the activity being recorded. They default
+  /// to the generic profile at balanced detail, which is what the map's own
+  /// stream uses before any activity exists.
+  ///
+  /// The sampling interval has to follow the activity: 5 s of spacing is 5.6 m
+  /// at walking pace and 180 m at motorway speed, i.e. the same setting either
+  /// oversamples a hiker or erases every corner a car takes.
+  LocationSettings getLocationSettings({
+    Duration? timeLimit,
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) {
     late LocationSettings locationSettings;
+    final effective = tuning ?? MovementProfileEntity.generic.tuning;
+    final interval = effective.intervalFor(detail);
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: _kDistanceFilterMeters,
         forceLocationManager: true,
-        intervalDuration: const Duration(milliseconds: 5000),
+        intervalDuration: interval,
         timeLimit: timeLimit,
         useMSLAltitude: true,
         // Foreground-service notification — required by Android FGS rules.
@@ -129,7 +146,10 @@ class LocationGpsDataSource {
         defaultTargetPlatform == TargetPlatform.macOS) {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.high,
-        activityType: ActivityType.fitness,
+        // Was hardcoded to `fitness`, which told Core Location to optimise a
+        // car or a boat as if it were a run. There is no Android equivalent;
+        // this knob is iOS/macOS only.
+        activityType: _appleActivityType(effective.navigationKind),
         distanceFilter: _kDistanceFilterMeters,
         timeLimit: timeLimit,
         // false — we run our own pause/resume. With true, iOS Core Location
@@ -156,6 +176,17 @@ class LocationGpsDataSource {
     }
     return locationSettings;
   }
+
+  /// Maps the platform-neutral [NavigationKind] onto Core Location's five
+  /// activity types. Kept here so the entity layer does not depend on
+  /// geolocator.
+  static ActivityType _appleActivityType(NavigationKind kind) => switch (kind) {
+    NavigationKind.fitness => ActivityType.fitness,
+    NavigationKind.automotive => ActivityType.automotiveNavigation,
+    NavigationKind.otherNavigation => ActivityType.otherNavigation,
+    NavigationKind.airborne => ActivityType.airborne,
+    NavigationKind.other => ActivityType.other,
+  };
 }
 
 class LocationPermissionError extends AppError {

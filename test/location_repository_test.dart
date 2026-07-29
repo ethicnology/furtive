@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:furtive/core/datasources/location_gps_data_source.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/repositories/location_repository.dart';
 import 'package:geolocator/geolocator.dart';
@@ -19,8 +20,18 @@ class _FakeGps implements LocationGpsDataSource {
   bool batteryDisabled = true;
   bool permissionGranted = true;
 
+  MovementTuning? lastTuning;
+  RecordingDetailEntity? lastDetail;
+
   @override
-  Stream<Position> getPositionStream() => raw.stream;
+  Stream<Position> getPositionStream({
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) {
+    lastTuning = tuning;
+    lastDetail = detail;
+    return raw.stream;
+  }
 
   @override
   Future<Position> getCurrentLocation() async {
@@ -42,8 +53,11 @@ class _FakeGps implements LocationGpsDataSource {
   Future<bool> requestDisableBatteryOptimization() async => batteryDisabled;
 
   @override
-  LocationSettings getLocationSettings({Duration? timeLimit}) =>
-      const LocationSettings();
+  LocationSettings getLocationSettings({
+    Duration? timeLimit,
+    MovementTuning? tuning,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) => const LocationSettings();
 
   Future<void> dispose() => raw.close();
 }
@@ -55,6 +69,8 @@ Position rawFix({
   double accuracy = 5,
   double altitudeAccuracy = 3,
   double speed = 2,
+  double heading = 0,
+  double headingAccuracy = 0,
   DateTime? timestamp,
 }) => Position(
   latitude: latitude,
@@ -63,8 +79,8 @@ Position rawFix({
   accuracy: accuracy,
   altitude: altitude,
   altitudeAccuracy: altitudeAccuracy,
-  heading: 0,
-  headingAccuracy: 0,
+  heading: heading,
+  headingAccuracy: headingAccuracy,
   speed: speed,
   speedAccuracy: 0,
 );
@@ -81,9 +97,14 @@ void main() {
   tearDown(() => gps.dispose());
 
   /// Pushes [fixes] through the stream and returns what survived.
-  Future<List<PositionEntity>> emit(List<Position> fixes) async {
+  Future<List<PositionEntity>> emit(
+    List<Position> fixes, {
+    MovementTuning? tuning,
+  }) async {
     final received = <PositionEntity>[];
-    final sub = repository.getPositionStream().listen(received.add);
+    final sub = repository
+        .getPositionStream(tuning: tuning)
+        .listen(received.add);
     for (final f in fixes) {
       gps.raw.add(f);
       await Future<void>.delayed(Duration.zero);
@@ -211,10 +232,64 @@ void main() {
     });
   });
 
+  group('course over ground', () {
+    test('a heading of 0 survives the trip — due north is a real bearing, '
+        'not the "unreported" sentinel', () async {
+      // The accuracy fields use 0/negative as "not reported"; heading cannot,
+      // so it needs its own range check rather than the shared sanitiser.
+      final out = await emit([rawFix(heading: 0, speed: 3)]);
+      expect(out.single.heading, 0);
+    });
+
+    test('an out-of-range heading is dropped', () async {
+      expect((await emit([rawFix(heading: 400)])).single.heading, isNull);
+      expect((await emit([rawFix(heading: -1)])).single.heading, isNull);
+    });
+
+    test('a heading is only trusted once actually moving', () async {
+      // Standing still, Android keeps emitting a bearing (often a flat 0).
+      // Believing it pegs the on-screen arrow to due north for anyone at a
+      // standstill, which is worse than showing no direction at all.
+      final still = await emit([rawFix(heading: 90, speed: 0)]);
+      expect(still.single.heading, 90, reason: 'carried through');
+      expect(still.single.trustedHeading, isNull, reason: 'but not believed');
+
+      final moving = await emit([rawFix(heading: 90, speed: 3)]);
+      expect(moving.single.trustedHeading, 90);
+    });
+
+    test('a fix with no speed at all cannot vouch for its heading', () async {
+      final position = PositionEntity(
+        latitude: 48.85,
+        longitude: 2.35,
+        elevation: 0,
+        heading: 120,
+      );
+      expect(position.trustedHeading, isNull);
+    });
+  });
+
   group('quality gate on the stream', () {
-    test('a fix vaguer than 25 m is rejected', () async {
-      final out = await emit([rawFix(accuracy: 30)]);
-      expect(out, isEmpty);
+    test('the gate is sized by the activity, not by one global constant', () async {
+      // A precise opening fix in both cases: the filter accepts the very first
+      // fix whatever its accuracy (a cold-start position beats none), so the
+      // tolerance is only observable from the second fix onwards.
+      final t0 = DateTime.utc(2026, 7, 26, 10);
+      List<Position> fixes() => [
+        rawFix(accuracy: 5, timestamp: t0),
+        rawFix(accuracy: 45, timestamp: t0.add(const Duration(seconds: 1))),
+      ];
+
+      // No tuning = the map's own stream, before any activity is picked. It
+      // uses the deliberately permissive generic profile: refusing to guess is
+      // safer than guessing wrong about something that might be a car.
+      expect(await emit(fixes()), hasLength(2));
+
+      // The same fix under a runner's profile (35 m) is too vague to keep.
+      expect(
+        await emit(fixes(), tuning: MovementProfileEntity.running.tuning),
+        hasLength(1),
+      );
     });
 
     test(
