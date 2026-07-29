@@ -6,10 +6,11 @@ import 'package:flutter/gestures.dart'
 import 'package:flutter/widgets.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
-import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/map/map_view.dart';
 import 'package:furtive/core/theme.dart';
+import 'package:furtive/core/utils/geo_circle.dart';
 import 'package:furtive/core/widgets/km_milestone_chip.dart';
+import 'package:furtive/core/widgets/user_location_puck.dart';
 import 'package:maplibre/maplibre.dart' as ml;
 
 /// [MapView] backed by MapLibre Native.
@@ -83,8 +84,12 @@ class MapLibreMapView implements MapView {
     required double maxZoom,
     required bool showUserLocation,
     required VoidCallback onUserGesture,
+    bool controlsOnLeft = false,
+    PositionEntity? userPosition,
+    double? deviceHeading,
   }) {
     final centre = initialCentre;
+    final me = showUserLocation ? userPosition : null;
     return ml.MapLibreMap(
       options: ml.MapOptions(
         // An empty style renders MapLibre's own blank canvas, which is exactly
@@ -114,19 +119,21 @@ class MapLibreMapView implements MapView {
         Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
       },
       onMapCreated: (controller) => _controller = controller,
-      onStyleLoaded: (_) async {
-        if (!showUserLocation) return;
-        try {
-          // The native LocationComponent: pulse, accuracy circle and heading,
-          // replacing what flutter_map_location_marker drew in Dart. Note
-          // maplibre_ios currently honours almost none of these flags, so iOS
-          // gets the stock blue dot.
-          await _controller?.enableLocation();
-        } catch (e, s) {
-          // Never fatal: a map without the blue dot is still a usable map.
-          logs.warning('MapLibre: enableLocation failed', error: e, trace: s);
-        }
-      },
+      // No enableLocation() any more, and that is the point. MapLibre's native
+      // LocationComponent came with its own location engine: a second
+      // PRIORITY_HIGH_ACCURACY request at a hardcoded 750 ms which, per
+      // MapLibreFusedLocationEngineImpl, subscribes to the primary provider
+      // and then explicitly adds Android's `network` provider on top — wifi
+      // and cell positioning, tens to thousands of metres out, never passed
+      // through GpsQualityFilter.
+      //
+      // So the dot was drawn from a position this app had never accepted:
+      // Follow centred the camera on the filtered fix while the puck wandered
+      // off on a wifi-derived one. The plugin does not expose
+      // setLocationEngine()/useDefaultLocationEngine(false), so the engine
+      // could not be pointed at our stream — the component had to go. The
+      // puck is now drawn below from MapState.userLocation, the same value
+      // Follow uses, which makes the two incapable of disagreeing.
       onEvent: (event) {
         // Telling a user gesture apart from our own moveCamera is what stops
         // follow-mode fighting the user. `MapEventUserInput` would be the
@@ -139,19 +146,31 @@ class MapLibreMapView implements MapView {
           onUserGesture();
         }
       },
-      layers: [if (track != null) ..._trackLayers(track)],
+      layers: [
+        // Beneath the track: a translucent disc under the polyline reads as
+        // uncertainty, over it as a smudge hiding where you actually went.
+        if (me != null) ..._accuracyLayer(me),
+        if (track != null) ..._trackLayers(track),
+      ],
       children: [
         if (track != null) _milestones(track),
+        if (me != null) _puck(me, deviceHeading),
         // Legally required whenever tiles are shown: the basemap is Protomaps
         // rendering OpenStreetMap data, and ODbL 4.3 plus Protomaps' terms both
         // demand visible credit. SourceAttribution reads it out of the loaded
         // style, so it is correct by construction and self-removes on the
         // tile-less map.
-        // bottomLeft, not the default bottomRight: the Follow/Start/Pause FAB
-        // column occupies the bottom right and covered all but a sliver of the
-        // attribution badge, which does not satisfy "visible credit".
+        // Opposite corner to the FAB column, never the default bottomRight on
+        // its own: the Follow/Start/Pause buttons covered all but a sliver of
+        // the badge, which does not satisfy "visible credit". The column can
+        // now sit on either side (left-handed preference), so the badge
+        // follows it rather than being pinned.
         if (styleUrl != null)
-          const ml.SourceAttribution(alignment: Alignment.bottomLeft),
+          ml.SourceAttribution(
+            alignment: controlsOnLeft
+                ? Alignment.bottomRight
+                : Alignment.bottomLeft,
+          ),
       ],
     );
   }
@@ -190,6 +209,56 @@ class MapLibreMapView implements MapView {
   /// Km markers as Flutter widgets rather than a symbol layer, so the existing
   /// chip renders unchanged and no sprite has to be generated. Cheap here: one
   /// marker per kilometre, most of them off-screen at a following zoom.
+  /// The reported horizontal accuracy, drawn as a real circle on the ground.
+  ///
+  /// A polygon rather than MapLibre's CircleLayer because that layer's radius
+  /// is in pixels: it would be right at one zoom level and wrong at every
+  /// other, which is worse than not drawing it. Skipped entirely when the
+  /// platform reports no accuracy — an unknown radius must not be rendered as
+  /// a confident one.
+  Iterable<ml.Layer> _accuracyLayer(PositionEntity me) {
+    final accuracy = me.accuracy;
+    if (accuracy == null) return const [];
+    final ring = geodesicCirclePoints(
+      latitude: me.latitude,
+      longitude: me.longitude,
+      radiusMeters: accuracy,
+    );
+    if (ring.isEmpty) return const [];
+    return [
+      ml.PolygonLayer(
+        polygons: [
+          ml.Feature(
+            geometry: ml.Polygon.from([
+              [
+                for (final point in ring)
+                  ml.Geographic(lon: point.longitude, lat: point.latitude),
+              ],
+            ]),
+          ),
+        ],
+        color: kLocationPuck.withValues(alpha: 0.14),
+        outlineColor: kLocationPuck.withValues(alpha: 0.30),
+      ),
+    ];
+  }
+
+  Widget _puck(PositionEntity me, double? deviceHeading) => ml.WidgetLayer(
+    markers: [
+      ml.Marker(
+        point: ml.Geographic(lon: me.longitude, lat: me.latitude),
+        size: UserLocationPuck.size,
+        // Rotate with the map so a heading expressed against true north keeps
+        // pointing at true north when the camera bearing is not zero.
+        rotate: true,
+        child: UserLocationPuck(
+          headingDegrees: me.trustedHeading,
+          deviceHeading: deviceHeading,
+        ),
+      ),
+    ],
+  );
+
   Widget _milestones(ActivityEntity track) => ml.WidgetLayer(
     markers: [
       for (final milestone in track.kmMilestones)

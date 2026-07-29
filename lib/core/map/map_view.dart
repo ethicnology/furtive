@@ -51,6 +51,24 @@ abstract class MapView {
   /// [onUserGesture] fires when the user pans or zooms by hand, so callers can
   /// drop follow-mode instead of fighting the gesture. It must not fire for
   /// programmatic [moveTo] calls.
+  ///
+  /// [userPosition] is the live position to draw the "you are here" puck at,
+  /// or null for none. It is a parameter rather than something the map fetches
+  /// for itself on purpose: the renderer's own location component used to do
+  /// that, from a second location engine that bypassed the app's quality
+  /// filter and drew a position the rest of the app had rejected. Passing it
+  /// in makes one source of truth structural.
+  ///
+  /// [deviceHeading] is which way the phone is pointing, in degrees clockwise
+  /// from true north, or null when no compass is available. Distinct from the
+  /// course over ground carried on [userPosition]: a phone can point east
+  /// while its owner walks north, so the puck shows them differently.
+  ///
+  /// [controlsOnLeft] tells the map which bottom corner the caller's floating
+  /// controls occupy, so the attribution badge can take the other one. It is
+  /// legally required to stay visible, and it was already covered once by the
+  /// button column — mirroring the buttons without mirroring the badge would
+  /// reintroduce exactly that.
   Widget build({
     required String? styleUrl,
     required ActivityEntity? track,
@@ -59,6 +77,9 @@ abstract class MapView {
     required double maxZoom,
     required bool showUserLocation,
     required VoidCallback onUserGesture,
+    bool controlsOnLeft = false,
+    PositionEntity? userPosition,
+    double? deviceHeading,
   });
 
   /// Recentres the camera. A no-op before the map has attached, so callers do
