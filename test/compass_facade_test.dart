@@ -22,13 +22,16 @@ void main() {
       );
     });
 
-    test('updatePosition is a no-op off Android rather than an error', () async {
-      final compass = CompassFacade(platform: TargetPlatform.iOS);
-      await expectLater(
-        compass.updatePosition(latitude: 45.5, longitude: -73.6),
-        completes,
-      );
-    });
+    test(
+      'updatePosition is a no-op off Android rather than an error',
+      () async {
+        final compass = CompassFacade(platform: TargetPlatform.iOS);
+        await expectLater(
+          compass.updatePosition(latitude: 45.5, longitude: -73.6),
+          completes,
+        );
+      },
+    );
   });
 
   group('smoothing', () {
@@ -78,7 +81,18 @@ void main() {
       // of 359 and 1 equal 180 — exactly backwards. Smoothing the unit vector
       // instead has no discontinuity at the wrap point.
       final out = await headingsFrom([
-        350, 355, 358, 359, 0, 1, 3, 5, 5, 5, 5, 5,
+        350,
+        355,
+        358,
+        359,
+        0,
+        1,
+        3,
+        5,
+        5,
+        5,
+        5,
+        5,
       ]);
       for (final heading in out) {
         final nearNorth = heading > 330 || heading < 30;
@@ -89,7 +103,16 @@ void main() {
 
     test('output always stays within [0, 360)', () async {
       final out = await headingsFrom([
-        0, 359, 180, 1, 270, 90, 359.9, 0.1, 45, 300,
+        0,
+        359,
+        180,
+        1,
+        270,
+        90,
+        359.9,
+        0.1,
+        45,
+        300,
       ]);
       for (final heading in out) {
         expect(heading, greaterThanOrEqualTo(0));

@@ -27,19 +27,22 @@ void main() {
   Future<List<PositionEntity>> collect(Stream<PositionEntity> s) => s.toList();
 
   group('horizontal accuracy gate', () {
-    test('accepts a fix at the profile tolerance and rejects one past it', () async {
-      final filter = GpsQualityFilter(tuning: running);
-      final out = await collect(
-        filter.apply(
-          Stream.fromIterable([
-            pos(lat: 0, lon: 0, accuracy: 35, sec: 0),
-            pos(lat: 0, lon: 0.00001, accuracy: 36, sec: 5),
-          ]),
-        ),
-      );
-      expect(out.length, 1);
-      expect(out.single.accuracy, 35);
-    });
+    test(
+      'accepts a fix at the profile tolerance and rejects one past it',
+      () async {
+        final filter = GpsQualityFilter(tuning: running);
+        final out = await collect(
+          filter.apply(
+            Stream.fromIterable([
+              pos(lat: 0, lon: 0, accuracy: 35, sec: 0),
+              pos(lat: 0, lon: 0.00001, accuracy: 36, sec: 5),
+            ]),
+          ),
+        );
+        expect(out.length, 1);
+        expect(out.single.accuracy, 35);
+      },
+    );
 
     test('tolerance follows the activity: a fix a runner rejects is fine for '
         'a car', () async {
@@ -226,16 +229,19 @@ void main() {
         pos(lat: 0, lon: 0.000325 * i, accuracy: 8, sec: i),
     ];
 
-    test('a car on a motorway is recorded normally under the road profile', () async {
-      final filter = GpsQualityFilter(tuning: driving);
-      final out = await collect(
-        filter.apply(Stream.fromIterable(motorway())),
-      );
-      // 36 m/s is nowhere near the road profile's 97 m/s ceiling, so nothing
-      // is even suspicious. This is the regression that mattered: the single
-      // 35 m/s ceiling this replaces rejected EVERY fix above 126 km/h.
-      expect(out.length, 13);
-    });
+    test(
+      'a car on a motorway is recorded normally under the road profile',
+      () async {
+        final filter = GpsQualityFilter(tuning: driving);
+        final out = await collect(
+          filter.apply(Stream.fromIterable(motorway())),
+        );
+        // 36 m/s is nowhere near the road profile's 97 m/s ceiling, so nothing
+        // is even suspicious. This is the regression that mattered: the single
+        // 35 m/s ceiling this replaces rejected EVERY fix above 126 km/h.
+        expect(out.length, 13);
+      },
+    );
 
     test('even under a wildly wrong profile the stream never goes silent — it '
         're-anchors instead of dropping everything', () async {
@@ -243,9 +249,7 @@ void main() {
       // dropped the entire trip, because a rejection did not move the anchor
       // and the implied speed therefore stayed above the ceiling forever.
       final filter = GpsQualityFilter(tuning: walking);
-      final out = await collect(
-        filter.apply(Stream.fromIterable(motorway())),
-      );
+      final out = await collect(filter.apply(Stream.fromIterable(motorway())));
       expect(
         out.length,
         greaterThan(1),

@@ -1,4 +1,3 @@
-
 class PositionEntity {
   final double latitude;
   final double longitude;

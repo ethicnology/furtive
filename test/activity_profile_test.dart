@@ -35,7 +35,10 @@ void main() {
     });
 
     test('unknown is never offered as a choice', () {
-      expect(selectableActivityTypes, isNot(contains(ActivityTypeEntity.unknown)));
+      expect(
+        selectableActivityTypes,
+        isNot(contains(ActivityTypeEntity.unknown)),
+      );
       expect(
         selectableActivityTypes.length,
         ActivityTypeEntity.values.length - 1,
@@ -123,7 +126,8 @@ void main() {
       // Garmin's own guidance is explicit that GPS cannot pass through water
       // and that the device is repeatedly submerged, so a tolerance sized for
       // a runner would reject essentially every fix of a swim.
-      final swim = MovementProfileEntity.swimming.tuning.accuracyToleranceMeters;
+      final swim =
+          MovementProfileEntity.swimming.tuning.accuracyToleranceMeters;
       for (final profile in [
         MovementProfileEntity.running,
         MovementProfileEntity.humanWheels,

@@ -94,7 +94,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       clock.advance(
-        PositionStreamController.minimumStaleThreshold + const Duration(seconds: 1),
+        PositionStreamController.minimumStaleThreshold +
+            const Duration(seconds: 1),
       );
       expect(controller.isStale, isTrue);
       expect(controller.isOpen, isTrue, reason: 'still "open", just silent');
@@ -107,7 +108,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       clock.advance(
-        PositionStreamController.minimumStaleThreshold - const Duration(seconds: 1),
+        PositionStreamController.minimumStaleThreshold -
+            const Duration(seconds: 1),
       );
       expect(controller.isStale, isFalse);
     });

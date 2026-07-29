@@ -238,9 +238,7 @@ void main() {
       );
       final openedWhileIdle = location.positionStreamOpenCount;
 
-      recording.add(
-        const StartRecording(activityType: ActivityTypeEntity.car),
-      );
+      recording.add(const StartRecording(activityType: ActivityTypeEntity.car));
       await Future<void>.delayed(const Duration(milliseconds: 150));
 
       // Without this the activity would carry a label and nothing else: the
@@ -284,30 +282,35 @@ void main() {
       expect(location.lastDetail, RecordingDetailEntity.precise);
     });
 
-    test('a preferences change is picked up without re-initialising the map', () async {
-      // Found on device: the control side and the sampling detail were only
-      // read at InitMap, so flipping the switch in Preferences appeared to do
-      // nothing until the app was restarted. InitMap is the wrong hammer here
-      // — it re-resolves the basemap style and flashes the loading UI for a
-      // change that only moves buttons.
-      final prefs = PreferencesRepository(
-        local: PreferencesLocalDataSource(db: db),
-      );
-      final bloc = buildBloc();
-      addTearDown(bloc.close);
-      bloc.add(const InitMap());
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-      expect(bloc.state.mapControlsOnLeft, isFalse);
-      final styleAfterInit = bloc.state.styleUrl;
+    test(
+      'a preferences change is picked up without re-initialising the map',
+      () async {
+        // Found on device: the control side and the sampling detail were only
+        // read at InitMap, so flipping the switch in Preferences appeared to do
+        // nothing until the app was restarted. InitMap is the wrong hammer here
+        // — it re-resolves the basemap style and flashes the loading UI for a
+        // change that only moves buttons.
+        final prefs = PreferencesRepository(
+          local: PreferencesLocalDataSource(db: db),
+        );
+        final bloc = buildBloc();
+        addTearDown(bloc.close);
+        bloc.add(const InitMap());
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        expect(bloc.state.mapControlsOnLeft, isFalse);
+        final styleAfterInit = bloc.state.styleUrl;
 
-      await prefs.store((await prefs.fetch()).copyWith(mapControlsOnLeft: true));
-      bloc.add(const RefreshRecordingPreferences());
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+        await prefs.store(
+          (await prefs.fetch()).copyWith(mapControlsOnLeft: true),
+        );
+        bloc.add(const RefreshRecordingPreferences());
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      expect(bloc.state.mapControlsOnLeft, isTrue);
-      expect(bloc.state.styleUrl, styleAfterInit);
-      expect(bloc.state.loadingStatus, isNull, reason: 'no loading flash');
-    });
+        expect(bloc.state.mapControlsOnLeft, isTrue);
+        expect(bloc.state.styleUrl, styleAfterInit);
+        expect(bloc.state.loadingStatus, isNull, reason: 'no loading flash');
+      },
+    );
 
     test('the chosen type is stamped on the stored activity', () async {
       final bloc = buildBloc();
@@ -320,10 +323,7 @@ void main() {
       );
       await Future<void>.delayed(const Duration(milliseconds: 150));
 
-      expect(
-        recording.state.activity!.activityType,
-        ActivityTypeEntity.swim,
-      );
+      expect(recording.state.activity!.activityType, ActivityTypeEntity.swim);
     });
 
     test(
@@ -382,7 +382,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
       clock.advance(
-        PositionStreamController.minimumStaleThreshold + const Duration(seconds: 5),
+        PositionStreamController.minimumStaleThreshold +
+            const Duration(seconds: 5),
       );
       bloc.add(const EnsureTracking());
       await Future<void>.delayed(const Duration(milliseconds: 80));

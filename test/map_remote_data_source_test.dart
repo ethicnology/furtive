@@ -165,7 +165,10 @@ void main() {
     });
 
     test('a body that is not JSON at all is rejected', () async {
-      await expectLater(source('<html>nope</html>').getStyleUrl(), throwsA(anything));
+      await expectLater(
+        source('<html>nope</html>').getStyleUrl(),
+        throwsA(anything),
+      );
     });
 
     test('valid JSON that is not an object is rejected', () async {

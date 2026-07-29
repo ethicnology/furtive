@@ -67,15 +67,6 @@ enum MapThemeColumn { light, dark, white, grayscale, black }
 /// still holding it stops mapping back to an enum and fails on read, so a
 /// removal must be paired with a migration rewriting those rows (see the v14
 /// step in local_database.dart).
-enum ActivityTypeColumn {
-  walk,
-  run,
-  bike,
-  car,
-  swim,
-  aircraft,
-  other,
-  unknown,
-}
+enum ActivityTypeColumn { walk, run, bike, car, swim, aircraft, other, unknown }
 
 enum RecordingDetailColumn { precise, balanced, endurance }

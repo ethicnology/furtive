@@ -62,9 +62,9 @@ Future<ActivityTypeEntity?> showActivityTypePicker(
               header: true,
               child: Text(
                 l10n.activityPickerTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 8),

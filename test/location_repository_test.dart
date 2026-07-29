@@ -270,27 +270,30 @@ void main() {
   });
 
   group('quality gate on the stream', () {
-    test('the gate is sized by the activity, not by one global constant', () async {
-      // A precise opening fix in both cases: the filter accepts the very first
-      // fix whatever its accuracy (a cold-start position beats none), so the
-      // tolerance is only observable from the second fix onwards.
-      final t0 = DateTime.utc(2026, 7, 26, 10);
-      List<Position> fixes() => [
-        rawFix(accuracy: 5, timestamp: t0),
-        rawFix(accuracy: 45, timestamp: t0.add(const Duration(seconds: 1))),
-      ];
+    test(
+      'the gate is sized by the activity, not by one global constant',
+      () async {
+        // A precise opening fix in both cases: the filter accepts the very first
+        // fix whatever its accuracy (a cold-start position beats none), so the
+        // tolerance is only observable from the second fix onwards.
+        final t0 = DateTime.utc(2026, 7, 26, 10);
+        List<Position> fixes() => [
+          rawFix(accuracy: 5, timestamp: t0),
+          rawFix(accuracy: 45, timestamp: t0.add(const Duration(seconds: 1))),
+        ];
 
-      // No tuning = the map's own stream, before any activity is picked. It
-      // uses the deliberately permissive generic profile: refusing to guess is
-      // safer than guessing wrong about something that might be a car.
-      expect(await emit(fixes()), hasLength(2));
+        // No tuning = the map's own stream, before any activity is picked. It
+        // uses the deliberately permissive generic profile: refusing to guess is
+        // safer than guessing wrong about something that might be a car.
+        expect(await emit(fixes()), hasLength(2));
 
-      // The same fix under a runner's profile (35 m) is too vague to keep.
-      expect(
-        await emit(fixes(), tuning: MovementProfileEntity.running.tuning),
-        hasLength(1),
-      );
-    });
+        // The same fix under a runner's profile (35 m) is too vague to keep.
+        expect(
+          await emit(fixes(), tuning: MovementProfileEntity.running.tuning),
+          hasLength(1),
+        );
+      },
+    );
 
     test(
       'a teleport is rejected without moving the anchor, so the fix after it '

@@ -154,8 +154,10 @@ class MapRemoteDataSource {
     if (styleJson['layers'] is! List) {
       throw 'Protomaps style has no layers: ${_redactKey(styleUrl)}';
     }
-    logs.info('getStyleUrl: style valid (${(styleJson['layers'] as List).length}'
-        ' layers)');
+    logs.info(
+      'getStyleUrl: style valid (${(styleJson['layers'] as List).length}'
+      ' layers)',
+    );
     return styleUrl;
   }
 

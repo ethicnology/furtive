@@ -14,7 +14,6 @@ class Global {
   static AndroidDeviceInfo? android;
   static IosDeviceInfo? ios;
 
-
   static Future<void> init() async {
     app = await PackageInfo.fromPlatform();
     if (Platform.isAndroid) {
