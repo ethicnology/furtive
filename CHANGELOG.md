@@ -7,6 +7,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Activity profiles.** Furtive is no longer implicitly a running app: pick
+  what you are about to do — walk, run, bike, drive, swim, fly or another
+  activity — from the record screen, next to Start. The last choice is
+  remembered, so the common case costs no interaction.
+
+  The type is not a label. It sizes the GPS sampling interval, the horizontal
+  accuracy tolerance, the implied-speed ceiling, and the iOS Core Location
+  activity type, and it is stored on the activity so a later preference change
+  cannot retroactively restate what an old recording meant.
+
+  The list deliberately starts short. `Other` uses a permissive profile for
+  activities that do not yet deserve their own label, while new labels can be
+  added later without rewriting existing database rows.
+- **Map controls can move to the left**, for left-handed use. Every control
+  touched mid-activity lives in that column, one-handed and often while
+  moving. The attribution badge moves to the opposite corner with it — it is
+  legally required to stay visible and the button column had already covered
+  it once.
+- **The location puck is drawn by the app, from the position the app
+  actually trusts.** Previously it came from MapLibre's native
+  LocationComponent, which ran a *second* location engine: a
+  `PRIORITY_HIGH_ACCURACY` request at a hardcoded 750 ms that also subscribed
+  to Android's `network` provider — wifi and cell positioning, tens to
+  thousands of metres out — and never passed through the app's quality filter.
+
+  The result was visible on screen: Follow centred the camera on the filtered
+  fix while the dot wandered off on a wifi-derived one. The plugin exposes no
+  way to point that engine at our own stream, so the component is gone. The
+  puck now reads the same value the Follow button does, which makes the two
+  incapable of disagreeing.
+
+  It shows a plain dot at a standstill and a chevron along the direction of
+  travel once moving, since a course over ground derived from no movement is
+  meaningless. The accuracy circle is drawn as a real polygon in metres rather
+  than MapLibre's pixel-radius circle, which is only correct at one zoom level.
+  Being a Flutter widget, it also renders identically on iOS, where the native
+  component ignored most of its options.
+
+  Android device orientation now comes from the fused rotation-vector sensor,
+  corrected to true north. The puck no longer interpolates between GPS fixes.
+- **Recording detail** (precise / balanced / endurance) scales the sampling
+  interval around whatever the chosen activity already implies. Expressed as
+  an intent rather than a number of seconds on purpose: iOS exposes no
+  interval knob at all and Android's is a *requested* rate, so a literal
+  "every N seconds" field would promise something neither platform delivers.
+
+### Fixed
+- **A car above 126 km/h recorded nothing at all.** The quality gate rejected
+  any fix implying more than 35 m/s, and — by design, to avoid chaining off an
+  untrusted fix — a rejection did not advance the comparison anchor. Above
+  that speed every subsequent fix was therefore measured against an
+  ever-more-distant point and kept failing, so the trace froze at the last
+  accepted position until the vehicle slowed below 126 km/h. A legal French
+  motorway speed is 130.
+
+  Three changes, not one. Ceilings now come from the activity. Reported
+  accuracy is subtracted before judging speed, so two vague fixes of a
+  stationary phone stop looking like a teleport. And no rejection is permanent
+  any more: after a few consecutive suspicions the filter accepts and
+  re-anchors, so even a wildly wrong profile degrades the trace instead of
+  erasing it.
+- **Dropped fixes are logged with a reason.** They were discarded silently,
+  which made "the filter is rejecting everything" (urban canyon, wrong
+  profile) indistinguishable from "the foreground service died" — the single
+  biggest obstacle to explaining a hole in a recorded trace after the fact.
+- **iOS was told every activity was a workout.** `ActivityType.fitness` was
+  hardcoded, including for vehicles and boats; Core Location now gets the
+  right hint per profile.
+- The stream-stall watchdog derived "no fix for 20 s" from the old hardcoded
+  5 s cadence. It now scales with the active profile's interval, so a sparse
+  profile is not mistaken for a dead service and torn down in a loop.
+
+### Removed
+- The dead `accuracy_in_meters` preferences column (schema v12): always
+  written as 0, threaded through the entity, model and data source, never read
+  to drive anything. It was the residue of a user-facing GPS precision setting
+  removed some versions ago as "confusing more than it helped" — which is
+  precisely why sampling is now exposed as an intent instead of a number.
+
 ### Changed
 - **The map is rendered by MapLibre Native** instead of
   `flutter_map` + `vector_map_tiles`. Protomaps remains the tile provider and
@@ -294,14 +374,11 @@ and rationale behind the audit-related items below.
 - Removed the (already unused) local storage of third-party OSM traces
   fetched while panning the map; any residual data from before this fix is
   purged from the database on upgrade.
-- Added a build-time switch (`DISABLE_UPDATE_CHECK`) to disable the
-  opt-out GitHub update check entirely for distribution channels — such as
-  F-Droid — that already manage updates themselves. See the README.
+- Removed the GitHub update check entirely. Obtainium and F-Droid already
+  track releases, so the app no longer contacts `api.github.com` or needs an
+  update-check preference/build flag.
 - Hardened error logging around the (currently unused) public-traces search
   so a future re-enable can't leak a precise map viewport into the log file.
-- The opt-out GitHub update check no longer runs before the first-launch
-  wizard — a fresh install used to phone home before you had any chance to
-  see or decline the Preferences toggle that controls it.
 - Exported GPX files and shared activity-card images no longer risk deleting
   each other out from under an in-flight share; each now purges only its own
   file type, and any leftover from a previous session is also cleaned up at
