@@ -1,3 +1,4 @@
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 
 sealed class RecordingEvent {
@@ -20,7 +21,13 @@ class ResumeOngoingRecording extends RecordingInitializationEvent {
 }
 
 class StartRecording extends RecordingInitializationEvent {
-  const StartRecording();
+  const StartRecording({this.activityType = ActivityTypeEntity.unknown});
+
+  /// Stamped onto the activity and never revised afterwards — it is what sizes
+  /// the sampling interval and the quality gate for this recording. Defaults
+  /// to [ActivityTypeEntity.unknown], whose permissive generic profile is the
+  /// right behaviour when a caller genuinely has no idea what is moving.
+  final ActivityTypeEntity activityType;
 }
 
 class StopRecording extends RecordingEvent {

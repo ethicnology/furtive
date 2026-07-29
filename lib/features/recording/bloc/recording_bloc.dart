@@ -191,10 +191,12 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
       _completedPauses = Duration.zero;
       _gapDetector.reset();
 
-      final activity = await _activities.startNew();
+      final activity = await _activities.startNew(
+        activityType: event.activityType,
+      );
       logs.info(
         'StartRecording: activity ${activity.id} started at '
-        '${activity.startedAt}',
+        '${activity.startedAt} as ${activity.activityType.name}',
       );
       _startedAt = activity.startedAt;
       _startTicking();

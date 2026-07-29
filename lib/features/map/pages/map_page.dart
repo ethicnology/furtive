@@ -7,6 +7,7 @@ import 'package:furtive/core/map/map_view.dart';
 import 'package:furtive/core/map/maplibre_map_view.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/activity_stats_widget.dart';
+import 'package:furtive/core/widgets/activity_type_picker.dart';
 import 'package:furtive/core/widgets/hold_to_confirm_button.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -253,11 +254,20 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         // own bloc makes that structural rather than a buildWhen allowlist: the
         // tick now only ever touches RecordingState, which this builder does not
         // watch at all.
+        // Anything this subtree renders has to be listed here. The two
+        // recording-preference fields below were missing at first and the bug
+        // hid itself: a GPS fix updates userLocation every couple of seconds,
+        // so the picker label and the control side did rebuild — just not
+        // because of their own change. On a stationary phone, or with the
+        // stream still warming up, flipping the setting did nothing.
         buildWhen: (previous, current) =>
             previous.styleUrl != current.styleUrl ||
             previous.userLocation != current.userLocation ||
             previous.loadingStatus != current.loadingStatus ||
-            previous.isFollowingUser != current.isFollowingUser,
+            previous.isFollowingUser != current.isFollowingUser ||
+            previous.mapControlsOnLeft != current.mapControlsOnLeft ||
+            previous.selectedActivityType != current.selectedActivityType ||
+            previous.deviceHeading != current.deviceHeading,
         builder: (context, state) {
           // Treat a non-finite userLocation as if it weren't there at all.
           // LocationRepository drops these at source, but if any path ever lets a
@@ -318,6 +328,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                         initialZoom: Global.defaultZoom,
                         maxZoom: Global.maxZoom,
                         showUserLocation: true,
+                        // The same value the Follow button centres on, so the
+                        // puck and the camera cannot point at different
+                        // places.
+                        userPosition: state.userLocation,
+                        deviceHeading: state.deviceHeading,
+                        controlsOnLeft: state.mapControlsOnLeft,
                         // Panning by hand means the user wants to look somewhere
                         // else, so stop dragging the camera back.
                         onUserGesture: () {
@@ -353,6 +369,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 ),
               ],
             ),
+            // Mirrored for left-handed users. Every control that gets touched
+            // mid-activity lives in this column, one-handed and often while
+            // moving, so which thumb reaches it is not cosmetic.
+            floatingActionButtonLocation: state.mapControlsOnLeft
+                ? FloatingActionButtonLocation.startFloat
+                : FloatingActionButtonLocation.endFloat,
             floatingActionButton: BlocBuilder<RecordingBloc, RecordingState>(
               buildWhen: (previous, current) =>
                   previous.isRecording != current.isRecording ||
@@ -415,11 +437,42 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                       ],
                       if (!rec.isRecording) ...[
                         const SizedBox(height: 16),
+                        // What the next recording will be. Shown rather than
+                        // buried in settings because it changes how the GPS is
+                        // sampled and filtered, and because the choice is only
+                        // ever meaningful right before starting.
+                        FloatingActionButton.extended(
+                          heroTag: 'activity-type',
+                          backgroundColor: AppColors.tertiary.background,
+                          foregroundColor: AppColors.tertiary.foreground,
+                          onPressed: rec.isStarting
+                              ? null
+                              : () async {
+                                  final picked = await showActivityTypePicker(
+                                    context,
+                                    selected: state.selectedActivityType,
+                                  );
+                                  if (picked == null) return;
+                                  map.add(SelectActivityType(picked));
+                                },
+                          icon: Icon(
+                            activityTypeIcon(state.selectedActivityType),
+                          ),
+                          label: Text(
+                            activityTypeName(l10n, state.selectedActivityType),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         FloatingActionButton.extended(
                           heroTag: 'start',
                           onPressed: rec.isStarting
                               ? null
-                              : () => recording.add(const StartRecording()),
+                              : () => recording.add(
+                                  StartRecording(
+                                    activityType: state.selectedActivityType,
+                                  ),
+                                ),
                           label: Text(
                             rec.isStarting ? l10n.btnStarting : l10n.btnStart,
                           ),

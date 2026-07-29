@@ -78,6 +78,7 @@ class ActivityLocalDataSource {
               createdAt: Value(activity.createdAt),
               startedAt: Value(activity.startedAt),
               stoppedAt: Value(activity.stoppedAt),
+              activityType: Value(activity.activityType),
               distanceMeters: Value(agg.distanceMeters),
               activeDurationMs: Value(agg.durationMs),
             ),

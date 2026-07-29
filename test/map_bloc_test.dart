@@ -5,6 +5,10 @@ import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/database/tables/activity_points_table.dart';
 import 'package:furtive/core/datasources/activity_local_data_source.dart';
 import 'package:furtive/core/datasources/preferences_local_data_source.dart';
+import 'package:flutter/foundation.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
+import 'package:furtive/core/entities/activity_entity.dart';
+import 'package:furtive/core/facades/compass_facade.dart';
 import 'package:furtive/core/models/activity_model.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
@@ -72,6 +76,16 @@ void main() {
     ),
     location: location,
     positionStream: PositionStreamController(location: location, clock: clock),
+    // Backed by the in-memory database like the style use case above: MapBloc
+    // reads the recording preferences on InitMap, and the default would reach
+    // for the getIt-registered production database.
+    preferences: PreferencesRepository(
+      local: PreferencesLocalDataSource(db: db),
+    ),
+    // Reported as a non-Android platform so the facade short-circuits: the
+    // compass is a native sensor stream with no meaning in a unit test, and
+    // its own suite covers the smoothing.
+    compass: CompassFacade(platform: TargetPlatform.linux),
   );
 
   Future<void> seedOngoing(String id, DateTime startedAt) {
@@ -158,6 +172,193 @@ void main() {
     expect(recording.state.activity!.points, isNotEmpty);
   });
 
+  test('a vague fix updates the cursor but not the active trace', () async {
+    final bloc = buildBloc();
+    addTearDown(bloc.close);
+    bloc.add(const InitMap());
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+
+    recording.add(const StartRecording(activityType: ActivityTypeEntity.run));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    final vague = fixAt(start.add(const Duration(seconds: 5)), accuracy: 150);
+    location.fixes.add(vague);
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+
+    expect(bloc.state.userLocation, vague, reason: 'the cursor may degrade');
+    expect(
+      recording.state.activity!.points,
+      isEmpty,
+      reason: '150 m is outside the running profile recording tolerance',
+    );
+
+    location.fixes.add(
+      fixAt(start.add(const Duration(seconds: 10)), accuracy: 5),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    expect(recording.state.activity!.points, hasLength(1));
+  });
+
+  test('a vague paused fix is kept as a pause boundary', () async {
+    final bloc = buildBloc();
+    addTearDown(bloc.close);
+    bloc.add(const InitMap());
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+
+    recording.add(const StartRecording(activityType: ActivityTypeEntity.run));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    recording.add(const PauseRecording());
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    location.fixes.add(
+      fixAt(start.add(const Duration(seconds: 5)), accuracy: 150),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+
+    expect(recording.state.activity!.points, hasLength(1));
+    expect(
+      recording.state.activity!.points.single.status,
+      ActivityPointStatusEntity.paused,
+      reason: 'pause boundaries are excluded from active distance',
+    );
+  });
+
+  group('activity profile reaches the GPS stream', () {
+    test('starting a recording re-opens the stream with the activity profile, '
+        'and stopping returns it to the idle one', () async {
+      final bloc = buildBloc();
+      addTearDown(bloc.close);
+      bloc.add(const InitMap());
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+
+      // Idle: the map's own stream, on the permissive generic profile.
+      expect(
+        location.lastTuning?.plausibleSpeedMps,
+        MovementProfileEntity.generic.tuning.plausibleSpeedMps,
+      );
+      final openedWhileIdle = location.positionStreamOpenCount;
+
+      recording.add(
+        const StartRecording(activityType: ActivityTypeEntity.car),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+
+      // Without this the activity would carry a label and nothing else: the
+      // sampling interval and the quality gate are properties of the platform
+      // request, so they only change if the stream is actually reopened.
+      expect(
+        location.positionStreamOpenCount,
+        greaterThan(openedWhileIdle),
+        reason: 'the stream must be reopened for the new profile to apply',
+      );
+      expect(
+        location.lastTuning?.plausibleSpeedMps,
+        MovementProfileEntity.road.tuning.plausibleSpeedMps,
+      );
+
+      recording.add(const StopRecording());
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(
+        location.lastTuning?.plausibleSpeedMps,
+        MovementProfileEntity.generic.tuning.plausibleSpeedMps,
+      );
+    });
+
+    test('the recording-detail preference reaches the GPS layer', () async {
+      // A setting that is stored and displayed but changes nothing is how the
+      // dead `accuracy_in_meters` column happened. This one has to bite.
+      final prefs = PreferencesRepository(
+        local: PreferencesLocalDataSource(db: db),
+      );
+      await prefs.store(
+        (await prefs.fetch()).copyWith(
+          recordingDetail: RecordingDetailEntity.precise,
+        ),
+      );
+
+      final bloc = buildBloc();
+      addTearDown(bloc.close);
+      bloc.add(const InitMap());
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+
+      expect(location.lastDetail, RecordingDetailEntity.precise);
+    });
+
+    test('a preferences change is picked up without re-initialising the map', () async {
+      // Found on device: the control side and the sampling detail were only
+      // read at InitMap, so flipping the switch in Preferences appeared to do
+      // nothing until the app was restarted. InitMap is the wrong hammer here
+      // — it re-resolves the basemap style and flashes the loading UI for a
+      // change that only moves buttons.
+      final prefs = PreferencesRepository(
+        local: PreferencesLocalDataSource(db: db),
+      );
+      final bloc = buildBloc();
+      addTearDown(bloc.close);
+      bloc.add(const InitMap());
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(bloc.state.mapControlsOnLeft, isFalse);
+      final styleAfterInit = bloc.state.styleUrl;
+
+      await prefs.store((await prefs.fetch()).copyWith(mapControlsOnLeft: true));
+      bloc.add(const RefreshRecordingPreferences());
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(bloc.state.mapControlsOnLeft, isTrue);
+      expect(bloc.state.styleUrl, styleAfterInit);
+      expect(bloc.state.loadingStatus, isNull, reason: 'no loading flash');
+    });
+
+    test('the chosen type is stamped on the stored activity', () async {
+      final bloc = buildBloc();
+      addTearDown(bloc.close);
+      bloc.add(const InitMap());
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+
+      recording.add(
+        const StartRecording(activityType: ActivityTypeEntity.swim),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+
+      expect(
+        recording.state.activity!.activityType,
+        ActivityTypeEntity.swim,
+      );
+    });
+
+    test(
+      'a failed profile reopen is surfaced and retried immediately',
+      () async {
+        final bloc = buildBloc();
+        addTearDown(bloc.close);
+        bloc.add(const InitMap());
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+
+        location.positionStreamFailuresRemaining = 1;
+        recording.add(
+          const StartRecording(activityType: ActivityTypeEntity.car),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 180));
+
+        expect(
+          bloc.state.error,
+          isNotNull,
+          reason: 'trace loss must be visible',
+        );
+        expect(
+          location.positionStreamOpenAttempts,
+          3,
+          reason: 'initial open, failed profile open, immediate watchdog retry',
+        );
+        expect(location.positionStreamOpenCount, 2);
+        expect(
+          location.lastTuning?.plausibleSpeedMps,
+          MovementProfileEntity.road.tuning.plausibleSpeedMps,
+        );
+      },
+    );
+  });
+
   group('EnsureTracking', () {
     test('a healthy stream is left alone', () async {
       final bloc = buildBloc();
@@ -181,7 +382,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
       clock.advance(
-        PositionStreamController.staleThreshold + const Duration(seconds: 5),
+        PositionStreamController.minimumStaleThreshold + const Duration(seconds: 5),
       );
       bloc.add(const EnsureTracking());
       await Future<void>.delayed(const Duration(milliseconds: 80));

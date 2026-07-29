@@ -42,8 +42,10 @@ class FakeLocationRepository extends LocationRepository {
   /// Set true to make [getPositionStream] throw, simulating a stream that can't
   /// be opened at all.
   bool failPositionStream = false;
+  int positionStreamFailuresRemaining = 0;
 
   int positionStreamOpenCount = 0;
+  int positionStreamOpenAttempts = 0;
   int batteryExemptionRequests = 0;
   bool batteryOptimizationDisabled = true;
 
@@ -67,7 +69,13 @@ class FakeLocationRepository extends LocationRepository {
     MovementTuning? tuning,
     RecordingDetailEntity detail = RecordingDetailEntity.balanced,
   }) {
-    if (failPositionStream) throw StateError('cannot open stream');
+    positionStreamOpenAttempts++;
+    if (failPositionStream || positionStreamFailuresRemaining > 0) {
+      if (positionStreamFailuresRemaining > 0) {
+        positionStreamFailuresRemaining--;
+      }
+      throw StateError('cannot open stream');
+    }
     positionStreamOpenCount++;
     lastTuning = tuning;
     lastDetail = detail;

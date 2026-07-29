@@ -1,5 +1,6 @@
 import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/datasources/activity_local_data_source.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/activity_summary.dart';
 import 'package:furtive/core/models/activity_model.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
@@ -31,7 +32,12 @@ class ActivityRepository {
   /// The id is the millisecond-precise ISO8601 creation instant; GPX import
   /// reuses the same convention so importing one file twice yields distinct
   /// ids.
-  Future<ActivityEntity> startNew() async {
+  ///
+  /// [activityType] is stamped once, here, and never revised by later
+  /// preference changes — see [ActivityEntity.activityType].
+  Future<ActivityEntity> startNew({
+    ActivityTypeEntity activityType = ActivityTypeEntity.unknown,
+  }) async {
     final startedAt = _clock.nowUtc();
     final activity = ActivityEntity(
       id: startedAt.toIso8601String(),
@@ -40,6 +46,7 @@ class ActivityRepository {
       createdAt: startedAt,
       startedAt: startedAt,
       stoppedAt: null,
+      activityType: activityType,
     );
     await store(activity);
     return activity;

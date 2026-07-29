@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:furtive/core/clock.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/repositories/location_repository.dart';
@@ -35,15 +36,34 @@ class PositionStreamController {
   final LocationRepository _location;
   final Clock _clock;
 
+  /// Floor for [staleThreshold]. Kept at the historical value so the map's own
+  /// stream, and every profile sampling faster than 5 s, behaves exactly as
+  /// before.
+  static const minimumStaleThreshold = Duration(seconds: 20);
+
+  /// How many missed fixes count as a stall.
+  static const _staleIntervalMultiple = 4;
+
   /// If a recording is running and no fix has arrived for longer than this,
-  /// assume the stream stalled and reopen. The Android stream is configured at
-  /// 5 s intervals, so 20 s is ~4 missed fixes — past normal jitter, while a
-  /// stationary device still emits at distanceFilter 0.
-  static const staleThreshold = Duration(seconds: 20);
+  /// assume the stream stalled and reopen.
+  ///
+  /// Derived from the active profile's interval rather than fixed, because the
+  /// interval is no longer fixed: a hard 20 s meant "4 missed fixes" at the
+  /// old hardcoded 5 s cadence, but would be barely one missed fix for an
+  /// airborne profile at endurance detail (15 s) — turning normal spacing into
+  /// a permanent teardown-and-reopen loop of a perfectly healthy service.
+  Duration get staleThreshold {
+    final interval = (_profile ?? MovementProfileEntity.generic).tuning
+        .intervalFor(_detail);
+    final scaled = interval * _staleIntervalMultiple;
+    return scaled > minimumStaleThreshold ? scaled : minimumStaleThreshold;
+  }
 
   StreamSubscription<PositionEntity>? _subscription;
   Future<void>? _opening;
   DateTime? _lastFixAt;
+  MovementProfileEntity? _profile;
+  RecordingDetailEntity _detail = RecordingDetailEntity.balanced;
 
   /// Fires for every accepted fix.
   void Function(PositionEntity position)? onPosition;
@@ -88,8 +108,36 @@ class PositionStreamController {
     await ensureOpen();
   }
 
+  /// Points the stream at a different activity profile, reopening it if it is
+  /// already running.
+  ///
+  /// A reopen is unavoidable: the sampling interval and the iOS activity type
+  /// are properties of the platform request itself, so they cannot be changed
+  /// on a live subscription. Without this, picking "car" would change the
+  /// label on the activity and nothing else — the stream would keep running at
+  /// whatever cadence the map opened it with.
+  ///
+  /// A null [profile] means "no activity is being recorded": back to the
+  /// permissive generic profile the map uses.
+  Future<void> applyProfile({
+    MovementProfileEntity? profile,
+    RecordingDetailEntity detail = RecordingDetailEntity.balanced,
+  }) async {
+    if (_profile == profile && _detail == detail) return;
+    _profile = profile;
+    _detail = detail;
+    logs.info(
+      'Position stream profile -> ${profile?.name ?? 'generic (idle)'} '
+      'at ${detail.name} detail (interval '
+      '${(profile ?? MovementProfileEntity.generic).tuning.intervalFor(detail).inMilliseconds}ms).',
+    );
+    if (_subscription != null) await reopen();
+  }
+
   Future<void> _open() async {
     final stream = _location.getPositionStream(
+      tuning: (_profile ?? MovementProfileEntity.generic).tuning,
+      detail: _detail,
       // Stamped for every raw platform fix, NOT only fixes that survive
       // GpsQualityFilter. Otherwise "every recent fix failed the quality gate"
       // (normal under tree cover / urban canyon / indoors) is indistinguishable
