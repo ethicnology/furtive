@@ -1,24 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:furtive/core/check_version_service.dart';
+import 'package:furtive/core/utils/version.dart';
 
 void main() {
-  group('stripLeadingV', () {
-    test('strips a single leading v/V', () {
-      expect(stripLeadingV('v1.2.0'), '1.2.0');
-      expect(stripLeadingV('V1.2.0'), '1.2.0');
-      expect(stripLeadingV('1.2.0'), '1.2.0');
-    });
-
-    test('leaves a non-leading v intact', () {
-      expect(stripLeadingV('1.2.0-dev'), '1.2.0-dev');
-      expect(stripLeadingV('1.2.0+rev'), '1.2.0+rev');
-    });
-
-    test('trims surrounding whitespace', () {
-      expect(stripLeadingV('  v1.2.0  '), '1.2.0');
-    });
-  });
-
   group('isNewerVersion', () {
     test('detects strictly newer releases', () {
       expect(isNewerVersion('1.2.1', '1.2.0'), isTrue);

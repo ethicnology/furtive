@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart' show mergeSort;
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 
 part 'activity_entity.mapper.dart';
@@ -15,6 +16,14 @@ class ActivityEntity with ActivityEntityMappable {
   final DateTime? stoppedAt;
   final List<ActivityPointEntity> points;
 
+  /// What the user selected before recording. Fixed for the life of the
+  /// activity: it is what sized the sampling interval and the quality gate
+  /// that produced these points, so changing the current preference must not
+  /// retroactively restate an old recording. Defaults to
+  /// [ActivityTypeEntity.unknown] for rows predating the column and for GPX
+  /// imports with no usable type.
+  final ActivityTypeEntity activityType;
+
   ActivityEntity({
     required this.id,
     required this.name,
@@ -23,6 +32,7 @@ class ActivityEntity with ActivityEntityMappable {
     required this.startedAt,
     required this.stoppedAt,
     this.points = const [],
+    this.activityType = ActivityTypeEntity.unknown,
   });
 }
 

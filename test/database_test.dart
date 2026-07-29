@@ -83,15 +83,12 @@ void main() {
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
 
-        expect(db.schemaVersion, 10);
+        expect(db.schemaVersion, 9);
         // Existing preferences survive untouched.
         expect(prefs.mapTheme, MapThemeColumn.white);
         expect(prefs.hasCompletedOnboarding, isTrue);
         expect(prefs.uiLocale, 'fr');
         expect(prefs.lastShownChangelogVersion, '1.1.0');
-        // v3 column present with its default.
-        expect(prefs.checkUpdates, isTrue);
-
         // v4 aggregate columns added with the -1 "not computed" sentinel; the
         // existing activity row is preserved.
         final activity = await (db.select(
@@ -220,7 +217,7 @@ void main() {
         await (db.select(
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
-        expect(db.schemaVersion, 10);
+        expect(db.schemaVersion, 9);
 
         final remainingTables = raw
             .select(
@@ -288,14 +285,13 @@ void main() {
           db.preferences,
         )..where((t) => t.id.equals(1))).getSingle();
 
-        expect(db.schemaVersion, 10);
+        expect(db.schemaVersion, 9);
         // v2 backfill: existing users skip onboarding and get the changelog
         // sentinel; fresh installs (not this path) get the column defaults.
         expect(prefs.hasCompletedOnboarding, isTrue);
         expect(prefs.lastShownChangelogVersion, '0.0.0');
         expect(prefs.uiLocale, isNull);
-        // v3/v6/v7 defaults preserved through the full replay from v1.
-        expect(prefs.checkUpdates, isTrue);
+        // v6/v7 defaults preserved through the full replay from v1.
         expect(prefs.mapTilesEnabled, isTrue);
         expect(prefs.showOnLockScreen, isTrue);
 
@@ -339,6 +335,178 @@ void main() {
 
       expect(() => db.select(db.preferences).get(), throwsA(isA<StateError>()));
     });
+
+    test(
+      'v9 drops both dead preference columns, check_updates and accuracy_in_meters',
+      () async {
+        // The in-app GitHub update check is gone, so its opt-out column must go
+        // too — a dropped feature leaving a column behind is how a schema
+        // accumulates dead weight nobody dares touch later.
+        //
+        // Asserts the schema, not a value: reading the column back would only
+        // prove drift stopped mapping it, which is also true if the column is
+        // still sitting in SQLite.
+        final raw = sqlite3.openInMemory();
+        raw.execute('''
+        CREATE TABLE preferences (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          map_theme TEXT NOT NULL DEFAULT 'light',
+          accuracy_in_meters INTEGER NOT NULL DEFAULT 25,
+          has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+          ui_locale TEXT NULL,
+          last_shown_changelog_version TEXT NULL,
+          check_updates INTEGER NOT NULL DEFAULT 1,
+          map_tiles_enabled INTEGER NOT NULL DEFAULT 1,
+          show_on_lock_screen INTEGER NOT NULL DEFAULT 1
+        );
+      ''');
+        // A real v8 database has this table, and the v9 step adds a column to
+        // it. Without it here the fixture would only exercise half the upgrade.
+        raw.execute('''
+        CREATE TABLE activities (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          started_at INTEGER NOT NULL,
+          stopped_at INTEGER NULL,
+          distance_meters REAL NOT NULL DEFAULT -1,
+          active_duration_ms INTEGER NOT NULL DEFAULT -1
+        );
+      ''');
+        raw.execute(
+          "INSERT INTO preferences (map_theme, ui_locale, check_updates) "
+          "VALUES ('dark', 'fr', 0);",
+        );
+        // A real v8 database has this table, and the v9 step rebuilds it to put
+        // ON DELETE CASCADE on the foreign key. Without it here the fixture would
+        // only exercise part of the upgrade.
+        raw.execute('''
+        CREATE TABLE activity_points (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          elevation REAL NOT NULL,
+          time INTEGER NOT NULL,
+          activity_id TEXT NOT NULL REFERENCES activities (id),
+          status TEXT NOT NULL,
+          -- Added by the v5 step, so a real v8 database has them.
+          accuracy REAL NULL,
+          vertical_accuracy REAL NULL
+        );
+      ''');
+        raw.execute('PRAGMA user_version = 8;');
+
+        final db = LocalDatabase.forTesting(NativeDatabase.opened(raw));
+        addTearDown(db.close);
+
+        // Force the migration to run.
+        final prefs = await (db.select(
+          db.preferences,
+        )..where((t) => t.id.equals(1))).getSingle();
+
+        final columns = raw
+            .select('PRAGMA table_info(preferences)')
+            .map((row) => row['name'] as String)
+            .toSet();
+        expect(
+          columns,
+          isNot(contains('check_updates')),
+          reason: 'v9 must drop the column, not merely stop reading it',
+        );
+        // The residue of a user-facing GPS precision setting removed some
+        // versions ago: always written as 0, threaded through the entity, model
+        // and data source, and never read to drive anything. Its history is the
+        // argument for exposing sampling as an intent (recordingDetail) rather
+        // than as raw numbers.
+        expect(
+          columns,
+          isNot(contains('accuracy_in_meters')),
+          reason: 'the dead precision setting goes in the same rebuild',
+        );
+        // Both dropped by ONE table rebuild. They were two separate migration
+        // steps making the identical call on the identical table until the
+        // release history showed neither had ever shipped.
+        expect(
+          columns,
+          containsAll(<String>[
+            'map_controls_on_left',
+            'last_activity_type',
+            'recording_detail',
+          ]),
+          reason: 'and the new preferences arrive in that same rebuild',
+        );
+        // The rebuild must not lose the columns that are still in use.
+        expect(prefs.mapTheme, MapThemeColumn.dark);
+        expect(prefs.uiLocale, 'fr');
+        expect(prefs.mapTilesEnabled, isTrue);
+      },
+    );
+
+    test('v9 records an activity type, leaving existing activities unknown '
+        'rather than guessing one', () async {
+      // Backfilling a guess (everything was a walk) would silently restate
+      // what every past recording meant — and the type is not cosmetic, it is
+      // what sizes the sampling interval and the quality gate. `unknown` maps
+      // to the permissive generic profile, which is the honest default.
+      final raw = sqlite3.openInMemory();
+      raw.execute('''
+        CREATE TABLE preferences (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          map_theme TEXT NOT NULL DEFAULT 'light',
+          accuracy_in_meters INTEGER NOT NULL DEFAULT 25,
+          has_completed_onboarding INTEGER NOT NULL DEFAULT 0,
+          ui_locale TEXT NULL,
+          last_shown_changelog_version TEXT NULL,
+          check_updates INTEGER NOT NULL DEFAULT 1,
+          map_tiles_enabled INTEGER NOT NULL DEFAULT 1,
+          show_on_lock_screen INTEGER NOT NULL DEFAULT 1
+        );
+      ''');
+      raw.execute('''
+        CREATE TABLE activities (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          started_at INTEGER NOT NULL,
+          stopped_at INTEGER NULL,
+          distance_meters REAL NOT NULL DEFAULT -1,
+          active_duration_ms INTEGER NOT NULL DEFAULT -1
+        );
+      ''');
+      raw.execute(
+        "INSERT INTO activities (id, name, description, created_at, "
+        "started_at) VALUES ('old-run', 'Track', '', 1700000000, 1700000000);",
+      );
+      // A real v8 database has this table, and the v9 step rebuilds it to put
+      // ON DELETE CASCADE on the foreign key. Without it here the fixture would
+      // only exercise part of the upgrade.
+      raw.execute('''
+        CREATE TABLE activity_points (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          elevation REAL NOT NULL,
+          time INTEGER NOT NULL,
+          activity_id TEXT NOT NULL REFERENCES activities (id),
+          status TEXT NOT NULL,
+          -- Added by the v5 step, so a real v8 database has them.
+          accuracy REAL NULL,
+          vertical_accuracy REAL NULL
+        );
+      ''');
+      raw.execute('PRAGMA user_version = 8;');
+
+      final db = LocalDatabase.forTesting(NativeDatabase.opened(raw));
+      addTearDown(db.close);
+
+      final row = await (db.select(
+        db.activities,
+      )..where((t) => t.id.equals('old-run'))).getSingle();
+      expect(row.activityType, ActivityTypeColumn.unknown);
+      expect(row.name, 'Track', reason: 'the rest of the row survives');
+    });
   });
 
   group('fresh database (onCreate + beforeOpen)', () {
@@ -357,12 +525,11 @@ void main() {
       await getIt.reset();
     });
 
-    test('seeds a default preferences row with checkUpdates = true', () async {
+    test('seeds a default preferences row', () async {
       final row = await (db.select(
         db.preferences,
       )..where((t) => t.id.equals(1))).getSingle();
       expect(row.mapTheme, MapThemeColumn.dark);
-      expect(row.checkUpdates, isTrue);
       expect(row.hasCompletedOnboarding, isFalse);
     });
 
@@ -842,29 +1009,23 @@ void main() {
       expect(await ds.fetchOngoing(), isNull);
     });
 
-    test(
-      'preferences round-trip preserves all fields incl. checkUpdates',
-      () async {
-        final ds = PreferencesLocalDataSource();
-        await ds.store(
-          PreferencesModel(
-            mapTheme: MapThemeColumn.white,
-            accuracyInMeters: 0,
-            hasCompletedOnboarding: true,
-            uiLocale: 'de',
-            lastShownChangelogVersion: '1.2.0',
-            checkUpdates: false,
-          ),
-        );
+    test('preferences round-trip preserves all fields', () async {
+      final ds = PreferencesLocalDataSource();
+      await ds.store(
+        PreferencesModel(
+          mapTheme: MapThemeColumn.white,
+          hasCompletedOnboarding: true,
+          uiLocale: 'de',
+          lastShownChangelogVersion: '1.2.0',
+        ),
+      );
 
-        final read = await ds.fetch();
-        expect(read.mapTheme, MapThemeColumn.white);
-        expect(read.hasCompletedOnboarding, isTrue);
-        expect(read.uiLocale, 'de');
-        expect(read.lastShownChangelogVersion, '1.2.0');
-        expect(read.checkUpdates, isFalse);
-      },
-    );
+      final read = await ds.fetch();
+      expect(read.mapTheme, MapThemeColumn.white);
+      expect(read.hasCompletedOnboarding, isTrue);
+      expect(read.uiLocale, 'de');
+      expect(read.lastShownChangelogVersion, '1.2.0');
+    });
 
     test('the v10 foreign key cascades: deleting an activity row directly (not '
         'through delete()) no longer leaves orphan points behind', () async {

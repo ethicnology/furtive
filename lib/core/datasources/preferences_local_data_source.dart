@@ -19,15 +19,16 @@ class PreferencesLocalDataSource {
           PreferencesCompanion(
             id: const Value(1),
             mapTheme: Value(preferences.mapTheme),
-            accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
             uiLocale: Value(preferences.uiLocale),
             lastShownChangelogVersion: Value(
               preferences.lastShownChangelogVersion,
             ),
-            checkUpdates: Value(preferences.checkUpdates),
             mapTilesEnabled: Value(preferences.mapTilesEnabled),
             showOnLockScreen: Value(preferences.showOnLockScreen),
+            mapControlsOnLeft: Value(preferences.mapControlsOnLeft),
+            lastActivityType: Value(preferences.lastActivityType),
+            recordingDetail: Value(preferences.recordingDetail),
           ),
         );
   }
@@ -47,7 +48,6 @@ class PreferencesLocalDataSource {
             const PreferencesCompanion(
               id: Value(1),
               mapTheme: Value(MapThemeColumn.dark),
-              accuracyInMeters: Value(0),
             ),
           );
       preferences = await (db.select(
@@ -57,13 +57,14 @@ class PreferencesLocalDataSource {
 
     return PreferencesModel(
       mapTheme: preferences.mapTheme,
-      accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,
       lastShownChangelogVersion: preferences.lastShownChangelogVersion,
-      checkUpdates: preferences.checkUpdates,
       mapTilesEnabled: preferences.mapTilesEnabled,
       showOnLockScreen: preferences.showOnLockScreen,
+      mapControlsOnLeft: preferences.mapControlsOnLeft,
+      lastActivityType: preferences.lastActivityType,
+      recordingDetail: preferences.recordingDetail,
     );
   }
 }

@@ -185,15 +185,6 @@
   },
   "dlgDeleteLogsTitle": "Delete logs",
   "dlgDeleteLogsConfirm": "Are you sure you want to delete all logs? This action cannot be undone.",
-  "newVersionAvailable": "Download the latest version {version}",
-  "@newVersionAvailable": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
-  "btnDownload": "Download",
   "supportTitle": "Support Development",
   "supportDescription": "This app is built and maintained on my free time. Your support helps keep it alive and growing.",
   "changelogTitle": "What's new",
@@ -212,8 +203,6 @@
   "prefThemeWhite": "White",
   "prefThemeGrayscale": "Grayscale",
   "prefThemeBlack": "Black",
-  "prefCheckUpdates": "Check for updates",
-  "prefCheckUpdatesSubtitle": "Once a day, ask GitHub for the latest release. Nothing else is sent.",
   "prefMapTiles": "Map tiles",
   "prefMapTilesSubtitle": "Loading the map reveals your approximate position to the tile provider. Turn off for a blank, functional map with no network requests.",
   "prefShowOnLockScreen": "Show on lock screen",
@@ -221,5 +210,21 @@
   "mapLoadingLocalizing": "Initializing GPS…",
   "mapLoadingMap": "Loading map…",
   "mapStartingActivity": "Starting activity…",
-  "activitiesLoadError": "Could not open this activity"
+  "activitiesLoadError": "Could not open this activity",
+  "activityPickerTitle": "What are you doing?",
+  "activityWalk": "Walk",
+  "activityRun": "Run",
+  "activityBike": "Ride",
+  "activityCar": "Car",
+  "activityAircraft": "Aircraft",
+  "activityUnknown": "Unknown",
+  "prefMapControlsOnLeft": "Map controls on the left",
+  "prefMapControlsOnLeftSubtitle": "Move the follow, start, pause and stop buttons to the left edge for left-handed use. The map credit moves to the opposite corner.",
+  "prefRecordingDetail": "Recording detail",
+  "prefRecordingDetailSubtitle": "How often a position is requested, relative to the activity's own default. Denser means sharper corners and more battery.",
+  "prefDetailPrecise": "Precise",
+  "prefDetailBalanced": "Balanced",
+  "prefDetailEndurance": "Endurance",
+  "activitySwim": "Swim",
+  "activityOther": "Other"
 }

@@ -4,8 +4,7 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<!-- Required for outbound HTTPS: Protomaps map tiles, the opt-out GitHub
-	     update check, and (dormant) the OSM trace search. Without this a
+	<!-- Required for outbound HTTPS: Protomaps map tiles. Without this a
 	     sandboxed macOS release build cannot open any socket at all — every
 	     network call fails silently, most visibly as a permanently
 	     tileless/loading map. -->

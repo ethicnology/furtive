@@ -17,7 +17,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,12 +65,9 @@ class LocalDatabase extends _$LocalDatabase {
       // this is safe to switch on for upgrading users.
       await customStatement('PRAGMA foreign_keys = ON');
       if (details.wasCreated) {
-        await into(preferences).insert(
-          PreferencesCompanion.insert(
-            mapTheme: MapThemeColumn.dark,
-            accuracyInMeters: 0,
-          ),
-        );
+        await into(
+          preferences,
+        ).insert(PreferencesCompanion.insert(mapTheme: MapThemeColumn.dark));
       }
     },
   );
@@ -82,6 +79,21 @@ class LocalDatabase extends _$LocalDatabase {
     // nesting; still an instance method (not static) so it keeps access to
     // the table getters (preferences, activities, ...) and update() that
     // _$LocalDatabase generates on `this`.
+
+    // Columns that exist in today's `preferences` definition but in none of
+    // the historical shapes the TableMigration steps below rebuild from.
+    //
+    // Every one of those steps must declare them. A TableMigration copies the
+    // CURRENT definition's columns out of the OLD table, so a column the old
+    // table never had makes the copy fail outright with "no such column" —
+    // and because the whole upgrade runs in one transaction, that bricks the
+    // migration for every user on an older schema rather than just skipping a
+    // value. Declaring them as new lets each take its column default instead.
+    final newPreferenceColumns = <GeneratedColumn<Object>>[
+      preferences.mapControlsOnLeft,
+      preferences.lastActivityType,
+      preferences.recordingDetail,
+    ];
     if (from < 2) {
       // v2: add hasCompletedOnboarding + uiLocale + lastShownChangelogVersion
       // to preferences and index hot foreign-key columns. Existing users
@@ -117,9 +129,21 @@ class LocalDatabase extends _$LocalDatabase {
       await m.createIndex(idxActivitiesStartedAt);
     }
     if (from < 3) {
-      // v3: opt-out flag for the GitHub update check. Column default (true)
-      // applies to the existing row, preserving today's behaviour.
-      await m.addColumn(preferences, preferences.checkUpdates);
+      // v3 (historical): added the `check_updates` opt-out for the in-app
+      // GitHub release check. That feature is gone and v9 below drops the
+      // column, so this can no longer go through `m.addColumn` — the Dart
+      // table stops declaring it.
+      //
+      // Kept as raw SQL rather than collapsed into a no-op so the migration
+      // log stays an append-only record of what each version actually did: a
+      // user still on v2 walks through the same intermediate states a v3 user
+      // did, instead of a shape no released version ever had. ADD COLUMN is
+      // supported by every SQLite this app can meet (unlike DROP COLUMN, see
+      // v9).
+      await customStatement(
+        'ALTER TABLE preferences ADD COLUMN check_updates INTEGER NOT NULL '
+        'DEFAULT 1 CHECK ("check_updates" IN (0, 1))',
+      );
     }
     if (from < 4) {
       // v4: denormalised activity aggregates. Default -1 marks existing
@@ -165,37 +189,67 @@ class LocalDatabase extends _$LocalDatabase {
       await m.deleteTable('trace_metadatas');
     }
     if (from < 9) {
-      // v9: drop the dead `map_language` column. Map-label language has been
-      // derived from the UI locale at fetch time for several versions
-      // (resolveMapLabelLanguage in map_remote_data_source.dart); the column
-      // was only still written so the NOT NULL constraint stayed satisfiable,
-      // and never read back.
+      // v9: everything 1.3.0 changes about the schema, in one step.
       //
-      // alterTable + TableMigration (drift's copy-into-a-new-table strategy),
-      // NOT `ALTER TABLE ... DROP COLUMN`: DROP COLUMN needs SQLite >= 3.35
-      // (2021), and this app links the SYSTEM SQLite (no
+      // This was six steps at its worst (v9 drop `map_language`, v10 the FK
+      // cascade and an index, v11 drop `check_updates`, v12 drop
+      // `accuracy_in_meters` plus the new recording preferences, v13 add
+      // `activity_type`, v14 rewrite the activity types a shrinking taxonomy
+      // dropped). Collapsed, because *none of them ever shipped*: the tags say
+      // 1.0.0 and 1.1.0 carried v1 and 1.2.0 carried v8, so no database in
+      // anyone's hands has ever rested above v8. Production has run exactly one
+      // upgrade path, 1 -> 8, and 1.3.0 adds a second, 8 -> 9.
+      //
+      // Four of those steps rebuilt `preferences` with the *identical* call —
+      // three times in a row on the same upgrade — and v14 rewrote values
+      // ('kayak', 'nordicSki', ...) that only a developer device could contain,
+      // since the column holding them is created here in the same run. On every
+      // real path there was nothing to rewrite. Migration code whose only user
+      // is its author is the kind that rots unnoticed.
+      //
+      // The steps below (v2..v8) are deliberately left alone. They are not
+      // resting states either, but they are the rungs the one production path
+      // actually climbs, they work, and rewriting shipped migration code is
+      // risk without a user-visible benefit.
+      //
+      // Table recreation rather than ALTER TABLE ... DROP COLUMN: that needs
+      // SQLite >= 3.35 (2021), and this app links the SYSTEM SQLite (no
       // sqlite3_flutter_libs) with minSdk 24 — an Android 7 device can ship
       // SQLite 3.9, where DROP COLUMN does not exist and the migration would
-      // hard-fail. Table recreation works on every version we support.
+      // hard-fail. Recreation works on every version we support.
       //
-      // Safe with respect to foreign keys: `preferences` is referenced by
-      // nothing, and drift runs onUpgrade before beforeOpen turns
-      // `PRAGMA foreign_keys` on, so enforcement is off during the rebuild
-      // regardless.
-      await m.alterTable(TableMigration(preferences));
-    }
-    if (from < 10) {
-      // v10: make the activity_points -> activities foreign key actually
-      // enforce ON DELETE CASCADE, and index activities.stopped_at.
-      //
-      // The FK change needs the same table-recreation treatment as v9 (SQLite
-      // cannot alter a constraint in place at any version), so activity_points
-      // is rebuilt and its rows copied. That is the one migration here that
-      // touches a potentially large table — a few tens of thousands of rows for
-      // a heavy user — but it runs once, inside the transaction wrapping the
-      // whole upgrade.
+      // Safe with respect to foreign keys: drift runs onUpgrade before
+      // beforeOpen turns `PRAGMA foreign_keys` on, so enforcement is off during
+      // the rebuilds regardless.
+
+      // One rebuild of `preferences` retires four dead columns at once
+      // (`map_language`, superseded by resolveMapLabelLanguage deriving the
+      // label language from the UI locale; `check_updates`, whose in-app GitHub
+      // check is gone; `accuracy_in_meters`, the residue of a precision setting
+      // that was always written as 0 and never read) and lets the new recording
+      // preferences take their defaults. TableMigration copies the CURRENT
+      // Dart definition's columns out of the old table, so dropping a column is
+      // simply not listing it any more.
+      await m.alterTable(
+        TableMigration(preferences, newColumns: newPreferenceColumns),
+      );
+
+      // Make the activity_points -> activities foreign key actually enforce
+      // ON DELETE CASCADE. SQLite cannot alter a constraint in place at any
+      // version, so the table is rebuilt and its rows copied. This is the one
+      // operation here that touches a potentially large table — a few tens of
+      // thousands of rows for a heavy user — but it runs once, inside the
+      // transaction wrapping the whole upgrade.
       await m.alterTable(TableMigration(activityPoints));
       await m.createIndex(idxActivitiesStoppedAt);
+
+      // Record what the user was doing. `activities` is never rebuilt from the
+      // Dart definition by an earlier step, so addColumn is right here.
+      // Existing rows take the column default, `unknown` — deliberately not
+      // `walk`: backfilling a guess would silently restate what every past
+      // recording meant, and `unknown` already behaves as the permissive
+      // generic profile.
+      await m.addColumn(activities, activities.activityType);
     }
   }
 }

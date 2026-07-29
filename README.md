@@ -35,12 +35,6 @@ The Obtainium button opens on a device with [Obtainium](https://github.com/Imran
 
 - `PROTOMAPS_KEY` / `PROTOMAPS_URL` — map tiles, see "Reproducible builds"
   below.
-- `DISABLE_UPDATE_CHECK=true` — disables the opt-out GitHub release check
-  entirely at compile time (no code path, no network call ever made),
-  independent of the in-app preference. Off by default. Intended for
-  distribution channels that already manage updates themselves (e.g.
-  F-Droid), where an app also phoning GitHub — even opt-out — is typically
-  flagged as an anti-feature.
 
 ## GPS signal loss
 

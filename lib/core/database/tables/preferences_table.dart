@@ -4,7 +4,6 @@ import 'package:drift/drift.dart';
 class Preferences extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get mapTheme => textEnum<MapThemeColumn>()();
-  IntColumn get accuracyInMeters => integer()();
   // false on a freshly created DB (-> wizard shows); true after migration
   // for existing users (-> wizard does not show).
   BoolColumn get hasCompletedOnboarding =>
@@ -17,9 +16,6 @@ class Preferences extends Table {
   // pubspec's version WITHOUT the trailing "+buildNumber" — so changing
   // only the build number won't re-trigger the changelog.
   TextColumn get lastShownChangelogVersion => text().nullable()();
-  // Opt-out for the once-a-day GitHub release check. Defaults to true; users
-  // who want zero network calls can turn it off in Preferences.
-  BoolColumn get checkUpdates => boolean().withDefault(const Constant(true))();
   // Opt-out for fetching Protomaps map tiles/style/sprites. Defaults to
   // true (matches today's behaviour for anyone who compiled in a
   // PROTOMAPS_KEY). Every map-tile request reveals the current viewport —
@@ -38,6 +34,48 @@ class Preferences extends Table {
   // docs/AUDIT-2026-07.md §5.
   BoolColumn get showOnLockScreen =>
       boolean().withDefault(const Constant(true))();
+  // Which side of the screen the map's floating controls sit on. Default
+  // false = right, today's behaviour. Left-handed users reach across the
+  // screen for every control on a phone that is getting wider every
+  // generation; the follow/pause/stop buttons are the ones touched mid-run,
+  // one-handed, often while moving. The map attribution follows the opposite
+  // corner (see MapPage), because the two collided when both sat right.
+  BoolColumn get mapControlsOnLeft =>
+      boolean().withDefault(const Constant(false))();
+  // The activity type to preselect on the record screen. Written on every
+  // start so the next recording opens on the last thing the user actually
+  // did, which is the only prediction worth making — Strava and OsmAnd both
+  // do this rather than asking every time.
+  TextColumn get lastActivityType =>
+      textEnum<ActivityTypeColumn>().withDefault(const Constant('walk'))();
+  // How densely to sample fixes, relative to the activity profile's default.
+  // Expressed as an intent rather than a number of seconds: iOS exposes no
+  // interval knob at all and Android's is a *requested* rate, so a literal
+  // "every N seconds" setting would promise something neither platform
+  // guarantees. See RecordingDetailEntity.
+  TextColumn get recordingDetail => textEnum<RecordingDetailColumn>()
+      .withDefault(const Constant('balanced'))();
 }
 
 enum MapThemeColumn { light, dark, white, grayscale, black }
+
+/// Storage spelling of ActivityTypeEntity. Duplicated rather than reusing the
+/// entity so a rename in the domain layer cannot silently rewrite what is
+/// already on disk — same reason ActivityPointsStatusColumn exists.
+/// Adding a value here needs no migration — drift stores the name in a plain
+/// TEXT column with no CHECK constraint. **Removing** one does: any stored row
+/// still holding it stops mapping back to an enum and fails on read, so a
+/// removal must be paired with a migration rewriting those rows (see the v14
+/// step in local_database.dart).
+enum ActivityTypeColumn {
+  walk,
+  run,
+  bike,
+  car,
+  swim,
+  aircraft,
+  other,
+  unknown,
+}
+
+enum RecordingDetailColumn { precise, balanced, endurance }

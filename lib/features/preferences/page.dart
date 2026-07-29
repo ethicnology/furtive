@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/global.dart';
@@ -112,11 +113,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
                               const SizedBox(height: 24),
                               _buildAppLanguageSection(context, state),
                               const SizedBox(height: 24),
-                              _buildCheckUpdatesSection(context, state),
-                              const SizedBox(height: 24),
                               _buildMapTilesSection(context, state),
                               const SizedBox(height: 24),
                               _buildLockScreenSection(context, state),
+                              const SizedBox(height: 24),
+                              _buildMapControlsSideSection(context, state),
+                              const SizedBox(height: 24),
+                              _buildRecordingDetailSection(context, state),
                               const Spacer(),
                               SizedBox(
                                 width: double.infinity,
@@ -210,23 +213,6 @@ String mapThemeName(AppLocalizations l10n, MapThemeEntity theme) =>
       MapThemeEntity.black => l10n.prefThemeBlack,
     };
 
-Widget _buildCheckUpdatesSection(BuildContext context, PreferencesState state) {
-  final l10n = AppLocalizations.of(context);
-  return SwitchListTile(
-    contentPadding: EdgeInsets.zero,
-    title: Text(
-      l10n.prefCheckUpdates,
-      style: Theme.of(
-        context,
-      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-    ),
-    subtitle: Text(l10n.prefCheckUpdatesSubtitle),
-    value: state.preferences.checkUpdates,
-    onChanged: (v) =>
-        context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
-  );
-}
-
 Widget _buildMapTilesSection(BuildContext context, PreferencesState state) {
   final l10n = AppLocalizations.of(context);
   return SwitchListTile(
@@ -260,6 +246,70 @@ Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
         context.read<PreferencesBloc>().add(ChangeShowOnLockScreen(v)),
   );
 }
+
+Widget _buildMapControlsSideSection(
+  BuildContext context,
+  PreferencesState state,
+) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefMapControlsOnLeft,
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefMapControlsOnLeftSubtitle),
+    value: state.preferences.mapControlsOnLeft,
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeMapControlsOnLeft(v)),
+  );
+}
+
+/// Sampling density. Deliberately three named intents rather than a number of
+/// seconds: the right interval depends on the activity (which the recorder
+/// already knows) and no user can reason about it, while a wrong value
+/// silently degrades the trace. The app has been here before — a
+/// user-facing GPS precision setting was removed years ago as confusing more
+/// than helping, leaving a dead column behind.
+Widget _buildRecordingDetailSection(
+  BuildContext context,
+  PreferencesState state,
+) {
+  final l10n = AppLocalizations.of(context);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        l10n.prefRecordingDetail,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        l10n.prefRecordingDetailSubtitle,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 8),
+      LabeledDropdown<RecordingDetailEntity>(
+        value: state.preferences.recordingDetail,
+        items: RecordingDetailEntity.values,
+        labelFor: (d) => recordingDetailName(l10n, d),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeRecordingDetail(v)),
+      ),
+    ],
+  );
+}
+
+String recordingDetailName(AppLocalizations l10n, RecordingDetailEntity d) =>
+    switch (d) {
+      RecordingDetailEntity.precise => l10n.prefDetailPrecise,
+      RecordingDetailEntity.balanced => l10n.prefDetailBalanced,
+      RecordingDetailEntity.endurance => l10n.prefDetailEndurance,
+    };
 
 Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
   final l10n = AppLocalizations.of(context);

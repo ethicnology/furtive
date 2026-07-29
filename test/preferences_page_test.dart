@@ -31,6 +31,10 @@ class _FailingPreferencesRepository extends PreferencesRepository {
   }
 }
 
+/// The page is pumped with the default (English) localisations, so labels can
+/// be looked up directly instead of hardcoding display strings in the test.
+final enLocalizations = lookupAppLocalizations(const Locale('en'));
+
 void main() {
   late LocalDatabase db;
 
@@ -87,10 +91,22 @@ void main() {
 
     expect(find.byType(PreferencesPage), findsOneWidget);
 
-    // Turn the update check off, then Apply.
-    await tester.ensureVisible(find.byType(Switch).first);
+    // The lock-screen switch specifically. Every other control on this page
+    // (map theme, map tiles) makes PreferencesBloc reach into the service
+    // locator for MapBloc to re-init the map, which would turn a preferences
+    // test into a test that has to stand up the GPS stack. This toggle only
+    // calls LockScreenFacade, which is a no-op off Android.
+    //
+    // Located by its label rather than by position: this used to be "the last
+    // switch", which silently started pointing at a different setting the
+    // moment one was added below it.
+    final lockScreen = find.ancestor(
+      of: find.text(enLocalizations.prefShowOnLockScreen),
+      matching: find.byType(SwitchListTile),
+    );
+    await tester.ensureVisible(lockScreen);
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(lockScreen);
     await tester.pumpAndSettle();
     await tapApply(tester);
     await tester.pumpAndSettle();
@@ -100,7 +116,7 @@ void main() {
       findsNothing,
       reason: 'the page pops once the write has actually landed',
     );
-    expect((await repo.fetch()).checkUpdates, isFalse);
+    expect((await repo.fetch()).showOnLockScreen, isFalse);
   });
 
   testWidgets(

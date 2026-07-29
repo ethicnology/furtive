@@ -22,9 +22,10 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     on<UpdatePreferences>(_onUpdatePreferences);
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeUiLocale>(_onChangeUiLocale);
-    on<ChangeCheckUpdates>(_onChangeCheckUpdates);
     on<ChangeMapTilesEnabled>(_onChangeMapTilesEnabled);
     on<ChangeShowOnLockScreen>(_onChangeShowOnLockScreen);
+    on<ChangeMapControlsOnLeft>(_onChangeMapControlsOnLeft);
+    on<ChangeRecordingDetail>(_onChangeRecordingDetail);
   }
 
   final PreferencesRepository _preferences;
@@ -79,16 +80,6 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     emit(state.copyWith(preferences: newPreferences));
   }
 
-  void _onChangeCheckUpdates(
-    ChangeCheckUpdates event,
-    Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      checkUpdates: event.enabled,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
-
   void _onChangeMapTilesEnabled(
     ChangeMapTilesEnabled event,
     Emitter<PreferencesState> emit,
@@ -107,6 +98,30 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
       showOnLockScreen: event.enabled,
     );
     emit(state.copyWith(preferences: newPreferences));
+  }
+
+  void _onChangeMapControlsOnLeft(
+    ChangeMapControlsOnLeft event,
+    Emitter<PreferencesState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        preferences: state.preferences.copyWith(
+          mapControlsOnLeft: event.onLeft,
+        ),
+      ),
+    );
+  }
+
+  void _onChangeRecordingDetail(
+    ChangeRecordingDetail event,
+    Emitter<PreferencesState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        preferences: state.preferences.copyWith(recordingDetail: event.detail),
+      ),
+    );
   }
 
   Future<void> _onUpdatePreferences(
@@ -149,14 +164,25 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     );
 
     // Re-init the map only when something the map style actually depends on
-    // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for
-    // updates") needlessly re-localises, reloads the map config and flashes
-    // the loading UI. The position stream is preserved either way (InitMap is
-    // idempotent on it), so a live recording is never disturbed.
+    // changed. Re-firing InitMap for an unrelated toggle (the lock-screen one)
+    // needlessly re-resolves the style and flashes the loading UI. The position
+    // stream is preserved either way (InitMap is idempotent on it), so a live
+    // recording is never disturbed.
     final mapChanged =
         previous.mapTheme != event.preferences.mapTheme ||
         previous.mapTilesEnabled != event.preferences.mapTilesEnabled;
     if (mapChanged) getIt<MapBloc>().add(InitMap());
+
+    // The recording preferences reach the map by a lighter path: they move
+    // buttons and change the sampling rate, neither of which needs the style
+    // re-resolved. Without this the map keeps whatever it read at startup, so
+    // flipping the control side appeared to do nothing until an app restart.
+    final recordingChanged =
+        previous.mapControlsOnLeft != event.preferences.mapControlsOnLeft ||
+        previous.recordingDetail != event.preferences.recordingDetail;
+    if (recordingChanged) {
+      getIt<MapBloc>().add(const RefreshRecordingPreferences());
+    }
 
     // Apply the locale override immediately so the UI reflects the change
     // without requiring an app restart.

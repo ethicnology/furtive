@@ -50,6 +50,10 @@ class ExportActivityToGpxUseCase {
 
     for (final segment in activeSegments) {
       buffer.writeln('  <trk>');
+      // GPX 1.1 defines <type> as free text on a track. Furtive writes the
+      // stable storage spelling so export -> import preserves the profile that
+      // produced the recording; import also accepts common third-party names.
+      buffer.writeln('    <type>${activity.activityType.name}</type>');
       buffer.writeln('    <trkseg>');
 
       for (final point in segment.points) {

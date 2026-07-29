@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
@@ -13,7 +14,14 @@ import 'package:xml/xml.dart';
 class _GpxParseResult {
   final List<ActivityPointEntity> points;
   final String? metadataName;
-  _GpxParseResult(this.points, this.metadataName);
+  final String? metadataDescription;
+  final ActivityTypeEntity activityType;
+  _GpxParseResult(
+    this.points,
+    this.metadataName,
+    this.metadataDescription,
+    this.activityType,
+  );
 }
 
 typedef _GpxParseRequest = ({String content, DateTime fallbackTime});
@@ -142,14 +150,45 @@ _GpxParseResult _parseGpxContent(_GpxParseRequest request) {
 
   if (points.isEmpty) throw const GpxNoPointsError();
 
-  final metadataName = root
-      .findElements('metadata')
-      .firstOrNull
-      ?.findElements('name')
+  final metadata = root.findElements('metadata').firstOrNull;
+  final metadataName = metadata?.findElements('name').firstOrNull?.innerText;
+  final metadataDescription = metadata
+      ?.findElements('desc')
       .firstOrNull
       ?.innerText;
+  final trackType = root
+      .findElements('trk')
+      .map((trk) => trk.findElements('type').firstOrNull?.innerText)
+      .whereType<String>()
+      .firstOrNull;
 
-  return _GpxParseResult(points, metadataName);
+  return _GpxParseResult(
+    points,
+    metadataName,
+    metadataDescription,
+    _activityTypeFromGpx(trackType),
+  );
+}
+
+ActivityTypeEntity _activityTypeFromGpx(String? raw) {
+  switch (raw?.trim().toLowerCase()) {
+    case 'walk' || 'walking' || 'hike' || 'hiking':
+      return ActivityTypeEntity.walk;
+    case 'run' || 'running':
+      return ActivityTypeEntity.run;
+    case 'bike' || 'biking' || 'cycle' || 'cycling':
+      return ActivityTypeEntity.bike;
+    case 'car' || 'driving' || 'automotive':
+      return ActivityTypeEntity.car;
+    case 'swim' || 'swimming':
+      return ActivityTypeEntity.swim;
+    case 'aircraft' || 'flight' || 'flying':
+      return ActivityTypeEntity.aircraft;
+    case 'other':
+      return ActivityTypeEntity.other;
+    default:
+      return ActivityTypeEntity.unknown;
+  }
 }
 
 /// Parses GPX into an activity. Imports what ExportActivityToGpxUseCase emits
@@ -250,11 +289,12 @@ class ImportActivityFromGpxUseCase {
     final activity = ActivityEntity(
       id: id,
       name: name,
-      description: '',
+      description: parsed.metadataDescription?.trim() ?? '',
       createdAt: createdAt,
       startedAt: startedAt,
       stoppedAt: stoppedAt,
       points: points,
+      activityType: parsed.activityType,
     );
 
     await _activities.store(activity);

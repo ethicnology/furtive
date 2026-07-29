@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/usecases/export_activity_to_gpx_use_case.dart';
@@ -45,6 +46,7 @@ void main() {
     List<ActivityPointEntity> points, {
     String name = 'Track',
     String description = '',
+    ActivityTypeEntity activityType = ActivityTypeEntity.unknown,
   }) => ActivityEntity(
     id: 'test',
     name: name,
@@ -53,6 +55,7 @@ void main() {
     startedAt: t0,
     stoppedAt: t0.add(const Duration(seconds: 60)),
     points: points,
+    activityType: activityType,
   );
 
   group('numeric formatting', () {
@@ -106,6 +109,16 @@ void main() {
       );
       expect(gpx, contains('line1\nline2\ttab'));
     });
+  });
+
+  test('writes the activity type on every track for a lossless import', () {
+    final gpx = useCase.generateGpx(
+      act([
+        pt(0, 0),
+        pt(0, 0.001, sec: 10),
+      ], activityType: ActivityTypeEntity.bike),
+    );
+    expect(gpx, contains('<type>bike</type>'));
   });
 
   group('segment mapping', () {

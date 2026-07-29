@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:furtive/core/check_version_service.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/logs.dart';
+import 'package:furtive/core/entities/preferences_entity.dart';
+import 'package:furtive/core/utils/version.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/features/changelog/changelog_entries.dart';
@@ -25,6 +26,7 @@ class CheckPermissionPage extends StatefulWidget {
 
 class _PermissionCheckPageState extends State<CheckPermissionPage> {
   bool _hasNavigated = false;
+  String? _navigationError;
   final _preferences = PreferencesRepository();
 
   @override
@@ -35,25 +37,25 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
 
   Future<void> _navigate(bool allGranted) async {
     if (_hasNavigated || !mounted) return;
-    _hasNavigated = true;
+    setState(() {
+      _hasNavigated = true;
+      _navigationError = null;
+    });
 
-    final prefs = await _preferences.fetch();
+    final PreferencesEntity prefs;
+    try {
+      prefs = await _preferences.fetch();
+    } catch (error, trace) {
+      logs.severe('Load startup preferences', error: error, trace: trace);
+      if (mounted) {
+        setState(() {
+          _hasNavigated = false;
+          _navigationError = error.toString();
+        });
+      }
+      return;
+    }
     if (!mounted) return;
-
-    // Fire-and-forget — version check is informational, not gating.
-    // No BuildContext needed: checkNewVersion uses Global.scaffoldMessengerKey
-    // instead, since this page's context is unmounted (pushReplacement below)
-    // well before the HTTP call can settle. See M4 in
-    // docs/REVIEW-2026-07-FULL-APP.md.
-    //
-    // Gated on hasCompletedOnboarding: this page runs on EVERY launch,
-    // including the very first, before the onboarding wizard has shown the
-    // user anything (let alone the Preferences toggle that opts out of this
-    // check). checkUpdates defaults to true, so an ungated call here made a
-    // brand-new install phone home to GitHub before the user had any chance
-    // to see or decline that. See docs/REVIEW-2026-07-FULL-APP.md / the privacy
-    // audit's "update check phones home before consent" finding.
-    if (prefs.hasCompletedOnboarding) unawaited(checkNewVersion());
 
     // Show the post-upgrade changelog before the main UI, but only for
     // existing users who came from an older version. Fresh installs
@@ -115,7 +117,28 @@ class _PermissionCheckPageState extends State<CheckPermissionPage> {
       listener: (context, state) {
         if (!state.isLoading) _navigate(state.requiredGranted);
       },
-      child: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      child: Scaffold(
+        body: Center(
+          child: _navigationError == null
+              ? const CircularProgressIndicator()
+              : Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_navigationError!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => _navigate(
+                          context.read<PermissionsBloc>().state.requiredGranted,
+                        ),
+                        child: Text(AppLocalizations.of(context).btnRetry),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
