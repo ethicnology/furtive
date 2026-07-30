@@ -81,7 +81,7 @@ CONTAINER ?= podman
 container-tools:
 	@echo "🔧 Building tools image"
 	@$(CONTAINER) build -f Containerfile.tools -t furtive-tools \
-		--build-arg FLUTTER_VERSION=$$(jq -r .flutter .fvmrc) \
+		--build-arg FLUTTER_VERSION=$$(python3 -c 'import json; print(json.load(open(".fvmrc"))["flutter"])') \
 		--build-arg JVM_TARGET=$$(grep 'android.jvmTarget' android/gradle.properties | cut -d= -f2) \
 		--build-arg ANDROID_API_LEVEL=$$(grep 'android.compileSdk' android/gradle.properties | cut -d= -f2) \
 		--build-arg ANDROID_BUILD_TOOLS=$$(grep 'android.buildToolsVersion' android/gradle.properties | cut -d= -f2) \
