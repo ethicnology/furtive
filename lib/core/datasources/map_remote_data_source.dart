@@ -69,6 +69,14 @@ String resolveMapLabelLanguage(String? userLocaleTag) {
   final tag =
       userLocaleTag ?? PlatformDispatcher.instance.locale.toLanguageTag();
   if (protomapsSupportedLanguages.contains(tag)) return tag;
+  if (tag == 'zh-TW' ||
+      tag == 'zh_TW' ||
+      tag == 'zh-HK' ||
+      tag == 'zh_HK' ||
+      tag == 'zh-MO' ||
+      tag == 'zh_MO') {
+    return 'zh-Hant';
+  }
   final lang = tag.split(RegExp(r'[-_]')).first;
   if (lang == 'zh') return 'zh-Hans';
   if (protomapsSupportedLanguages.contains(lang)) return lang;

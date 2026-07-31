@@ -81,6 +81,12 @@ void main() {
       expect(resolveMapLabelLanguage('zh_CN'), 'zh-Hans');
     });
 
+    test('traditional-Chinese regions map to traditional labels', () {
+      expect(resolveMapLabelLanguage('zh-TW'), 'zh-Hant');
+      expect(resolveMapLabelLanguage('zh_HK'), 'zh-Hant');
+      expect(resolveMapLabelLanguage('zh-MO'), 'zh-Hant');
+    });
+
     test('an unsupported language falls back to English', () {
       // The app ships 26 UI locales; Protomaps supports 41 label languages, and
       // the two sets are not the same. Armenian and Bengali are UI-only.
