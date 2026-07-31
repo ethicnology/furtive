@@ -29,6 +29,12 @@ jobs:
       - name: pub get (enforce lockfile)
         run: flutter pub get --enforce-lockfile
 
+      - name: viewer pub get (enforce lockfile)
+        run: dart pub get --directory viewer --enforce-lockfile
+
+      - name: shared package pub get (enforce lockfile)
+        run: dart pub get --directory packages/furtive_share --enforce-lockfile
+
       # dart_mappable (*mapper.dart) and drift (*.g.dart) generated sources
       # are gitignored — analyze/test can't resolve without them.
       - name: build_runner (generate *.g.dart / *mapper.dart)
@@ -47,16 +53,37 @@ jobs:
           sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing={m} extra={e}') for loc,m,e in bad], sys.exit(1))"
 
       - name: dart format --set-exit-if-changed
-        run: dart format --set-exit-if-changed lib test
+        run: dart format --set-exit-if-changed lib test packages/furtive_share/lib packages/furtive_share/test viewer/lib viewer/test viewer/web
 
       - name: flutter analyze
         run: flutter analyze
+
+      - name: Analyze shared package and web viewer
+        run: |
+          dart analyze packages/furtive_share
+          dart analyze viewer
+
+      - name: Compile web viewer
+        run: dart compile js -O4 -o /tmp/furtive-viewer.js viewer/web/main.dart
+
+      # Fails on an import that would drag Flutter, storage, or sensors into the
+      # pure-Dart package shared with the web viewer.
+      - name: Share-layer boundary
+        run: python3 tool/check_share_boundary.py
 
       # --coverage rather than a bare `flutter test`: the threshold check below
       # is what stops the suite from silently rotting. Without a measured floor
       # in CI, coverage only ever moves in one direction.
       - name: flutter test (with coverage)
         run: flutter test --coverage
+
+      - name: Shared package tests
+        working-directory: packages/furtive_share
+        run: dart test
+
+      - name: Viewer logic tests
+        working-directory: viewer
+        run: dart test
 
       - name: Coverage floor
         run: python3 tool/coverage_threshold.py --report

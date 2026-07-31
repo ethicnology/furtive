@@ -1,4 +1,4 @@
-.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible format analyze test check
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible format analyze test viewer-deps viewer-analyze viewer-build share-boundary check
 
 fvm-check:
 	@echo "🔍 Checking FVM"
@@ -22,6 +22,8 @@ clean:
 deps:
 	@echo "🏃 Fetch dependencies"
 	@fvm flutter pub get --enforce-lockfile
+	@fvm dart pub get --directory packages/furtive_share --enforce-lockfile
+	@fvm dart pub get --directory viewer --enforce-lockfile
 
 build-runner:
 	@echo "🏗️ Build runner"
@@ -50,22 +52,49 @@ sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing=
 
 format:
 	@echo "🎨 Checking formatting (dart format --set-exit-if-changed)"
-	@fvm dart format --set-exit-if-changed lib test
+	@fvm dart format --set-exit-if-changed lib test packages/furtive_share/lib packages/furtive_share/test viewer/lib viewer/test viewer/web
 
 analyze:
 	@echo "🔎 Running flutter analyze"
 	@fvm flutter analyze
+	@$(MAKE) viewer-analyze
 
 test:
 	@echo "🧪 Running flutter test"
 	@fvm flutter test
+	@echo "🔐 Running pure-Dart share package tests"
+	@cd packages/furtive_share && fvm dart test
+	@echo "🌐 Running web viewer logic tests"
+	@cd viewer && fvm dart test
+
+viewer-deps:
+	@echo "🌐 Fetching viewer dependencies"
+	@fvm dart pub get --directory viewer --enforce-lockfile
+
+viewer-analyze:
+	@echo "🔎 Analyzing shared package and web viewer"
+	@fvm dart analyze packages/furtive_share
+	@fvm dart analyze viewer
+
+viewer-build:
+	@echo "🌐 Compiling the Dart Web viewer"
+	@mkdir -p build/viewer
+	@fvm dart compile js -O4 -o build/viewer/main.dart.js viewer/web/main.dart
+	@cp viewer/web/index.html viewer/web/styles.css build/viewer/
+
+# The path package is a real compiler boundary, and this denylist guards its
+# product promise as well: no storage, sensor, Flutter, or app import. See
+# docs/SHARE-TRACKING.md.
+share-boundary:
+	@echo "🚧 Checking the share-layer boundary"
+	@python3 tool/check_share_boundary.py
 
 # Everything CI runs on every push/PR (see .github/workflows/ci.yml) — kept
 # as a single make target so it can also be run locally before pushing.
 # `translations` both regenerates lib/l10n/app_localizations*.dart (gitignored,
 # needed for analyze/test to see the generated AppLocalizations class) and
 # checks ARB key parity across every locale.
-check: translations format analyze test
+check: viewer-deps translations format analyze share-boundary test viewer-build
 	@echo "✅ All checks passed"
 
 ios-pod-update:

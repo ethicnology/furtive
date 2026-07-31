@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0d11">
+  <meta name="description" content="View an end-to-end encrypted Furtive live track.">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss:; base-uri 'none'; form-action 'none'">
+  <title>Furtive Live</title>
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="identity">
+        <span class="wordmark">FURTIVE</span>
+        <span class="separator"></span>
+        <span id="live-badge" class="live-badge waiting">
+          <span class="live-dot"></span>
+          <span id="freshness">CONNECTING</span>
+        </span>
+        <span id="relays" class="relay-count">0/0 relays</span>
+      </div>
+      <div class="actions">
+        <button id="map-toggle" class="action active" type="button" aria-pressed="true">
+          <span class="action-icon layers-icon" aria-hidden="true"></span>
+          <span class="action-label">Map on</span>
+        </button>
+        <button id="follow-toggle" class="action active" type="button" aria-pressed="true">
+          <span class="action-icon follow-icon" aria-hidden="true"></span>
+          <span class="action-label">Following</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="map-stage">
+      <div id="map" aria-label="Live activity map"></div>
+      <div id="map-loading" class="map-loading">
+        <span class="spinner"></span>
+        <span id="map-loading-label">Waiting for a secure position</span>
+      </div>
+      <div id="fatal" class="fatal" hidden>
+        <div class="fatal-icon">×</div>
+        <strong id="fatal-title">This link is not valid</strong>
+        <p id="fatal-detail">Open the complete share link, including everything after the #.</p>
+      </div>
+      <form id="password-prompt" class="fatal password-prompt" hidden>
+        <div class="fatal-icon password-icon" aria-hidden="true"></div>
+        <strong>Password required</strong>
+        <p>This activity uses an additional password. It never leaves this browser.</p>
+        <label for="share-password">Share password</label>
+        <input id="share-password" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" required>
+        <button type="submit">Open activity</button>
+        <span id="password-error" class="password-error" hidden>Enter the share password.</span>
+      </form>
+    </main>
+
+    <footer class="telemetry">
+      <div class="metric-grid">
+        <div class="metric">
+          <span class="metric-label">DISTANCE</span>
+          <span id="distance" class="metric-value">0 m</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">DURATION</span>
+          <span id="duration" class="metric-value">00:00</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">PACE</span>
+          <span class="metric-value"><span id="pace">--:--</span><small>/km</small></span>
+        </div>
+        <div class="metric start-metric">
+          <span class="metric-label">STARTED</span>
+          <span id="started" class="metric-value">--:--</span>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span id="activity-note" class="activity-note" hidden></span>
+        <span id="privacy" class="privacy">End-to-end encrypted</span>
+        <span class="attribution">© OpenStreetMap · © CARTO</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script defer src="main.dart.js"></script>
+</body>
+</html>
