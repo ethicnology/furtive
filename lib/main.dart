@@ -13,6 +13,7 @@ import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
 import 'package:furtive/features/permissions/pages/check_permission_page.dart';
 import 'package:furtive/features/recording/bloc/recording_bloc.dart';
+import 'package:furtive/features/share/live_share_cubit.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:path/path.dart' as p;
@@ -136,6 +137,7 @@ class MyApp extends StatelessWidget {
         // must not close them on widget disposal.
         BlocProvider<LocaleCubit>.value(value: getIt<LocaleCubit>()),
         BlocProvider<RecordingBloc>.value(value: getIt<RecordingBloc>()),
+        BlocProvider<LiveShareCubit>.value(value: getIt<LiveShareCubit>()),
         BlocProvider<MapBloc>.value(value: getIt<MapBloc>()),
         BlocProvider<ActivitiesBloc>.value(value: getIt<ActivitiesBloc>()),
         BlocProvider<PermissionsBloc>.value(value: getIt<PermissionsBloc>()),

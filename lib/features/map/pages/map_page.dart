@@ -18,10 +18,12 @@ import 'package:furtive/features/map/map_navigation.dart';
 import 'package:furtive/features/recording/bloc/recording_bloc.dart';
 import 'package:furtive/features/recording/bloc/recording_event.dart';
 import 'package:furtive/features/recording/bloc/recording_state.dart';
+import 'package:furtive/features/share/live_share_cubit.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
 import 'package:furtive/features/activities/pages/activity_detail_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';
+import 'package:share_plus/share_plus.dart';
 
 String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
     switch (status) {
@@ -110,6 +112,107 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       ..showSnackBar(bar);
   }
 
+  Future<void> _shareLiveLink(
+    BuildContext context,
+    LiveShareCubit sharing, {
+    String? password,
+  }) async {
+    try {
+      final link =
+          sharing.state.link ?? await sharing.start(password: password);
+      await SharePlus.instance.share(ShareParams(text: link));
+    } catch (error) {
+      if (!context.mounted) return;
+      _showSnackBar(
+        context,
+        SnackBar(
+          content: Text(AppLocalizations.of(context).shareFailed('$error')),
+          backgroundColor: kDestructive,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showLiveShareActions(
+    BuildContext context,
+    LiveShareCubit sharing,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    if (!sharing.state.isActive) {
+      final passwordController = TextEditingController();
+      final start = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.liveShareTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.liveSharePasswordHelp),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                autocorrect: false,
+                enableSuggestions: false,
+                autofillHints: const [AutofillHints.newPassword],
+                decoration: InputDecoration(
+                  labelText: l10n.liveSharePassword,
+                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.btnCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.shareTooltip),
+            ),
+          ],
+        ),
+      );
+      final password = passwordController.text;
+      passwordController.dispose();
+      if (!context.mounted || start != true) return;
+      await _shareLiveLink(
+        context,
+        sharing,
+        password: password.isEmpty ? null : password,
+      );
+      return;
+    }
+    final action = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.liveShareTitle),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.btnCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.btnStop),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.shareTooltip),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || action == null) return;
+    if (action) {
+      await _shareLiveLink(context, sharing);
+    } else {
+      await sharing.stop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // required by AutomaticKeepAliveClientMixin
@@ -146,6 +249,22 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               ),
             );
             context.read<RecordingBloc>().add(const ClearRecordingError());
+          },
+        ),
+        BlocListener<LiveShareCubit, LiveShareState>(
+          listenWhen: (previous, current) =>
+              previous.error != current.error && current.error != null,
+          listener: (context, state) {
+            _showSnackBar(
+              context,
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).shareFailed(state.error!),
+                ),
+                backgroundColor: kDestructive,
+              ),
+            );
+            context.read<LiveShareCubit>().clearError();
           },
         ),
         BlocListener<RecordingBloc, RecordingState>(
@@ -434,6 +553,40 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                                 : Icons.pause_rounded,
                           ),
                         ),
+                        if (context.read<LiveShareCubit>().isConfigured) ...[
+                          const SizedBox(height: 16),
+                          BlocBuilder<LiveShareCubit, LiveShareState>(
+                            builder: (context, share) {
+                              final sharing = context.read<LiveShareCubit>();
+                              return FloatingActionButton.extended(
+                                heroTag: 'live-share',
+                                onPressed: share.isStarting
+                                    ? null
+                                    : () => _showLiveShareActions(
+                                        context,
+                                        sharing,
+                                      ),
+                                backgroundColor: share.isActive
+                                    ? kMint
+                                    : AppColors.secondary.background,
+                                foregroundColor: share.isActive
+                                    ? Colors.black
+                                    : AppColors.secondary.foreground,
+                                icon: Icon(
+                                  share.isActive
+                                      ? Icons.share_location_rounded
+                                      : Icons.share_location_outlined,
+                                ),
+                                label: Text(
+                                  share.isActive
+                                      ? '${share.connectedRelays}/${share.totalRelays}'
+                                      : l10n.liveShareTitle,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
                       if (!rec.isRecording) ...[
                         const SizedBox(height: 16),

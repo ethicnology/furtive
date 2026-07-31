@@ -3,6 +3,7 @@ import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
 import 'package:furtive/features/recording/bloc/recording_bloc.dart';
+import 'package:furtive/features/share/live_share_cubit.dart';
 import 'package:furtive/core/database/local_database.dart';
 
 final getIt = GetIt.instance;
@@ -23,6 +24,9 @@ class Locator {
     // to RecordingBloc, a preferences change re-initing the map) reaches the
     // live instance rather than a fresh one.
     getIt.registerLazySingleton<RecordingBloc>(RecordingBloc.new);
+    getIt.registerLazySingleton<LiveShareCubit>(
+      () => LiveShareCubit(recording: getIt<RecordingBloc>()),
+    );
     getIt.registerLazySingleton<MapBloc>(
       () => MapBloc(recording: getIt<RecordingBloc>()),
     );
