@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **End-to-end encrypted live sharing.** While recording, share a browser link
+  that follows the accepted trace through anonymous Nostr relays. Every share
+  uses an ephemeral identity and NIP-44 v2 encryption; the key remains in the
+  URL fragment, an optional password is sent separately, and stopping the
+  recording stops publication. A lightweight Dart Web + Leaflet viewer verifies
+  event signatures, rejects stale positions and bootstraps late joiners from a
+  fixed-size ten-minute encrypted snapshot.
 - **Activity profiles.** Furtive is no longer implicitly a running app: pick
   what you are about to do — walk, run, bike, drive, swim, fly or another
   activity — from the record screen, next to Start. The last choice is

@@ -13,10 +13,12 @@ right and the code is a bug.
 - **The relay never sees a position.** Payloads are NIP-44 v2 (ChaCha20 +
   HMAC-SHA256, audited by Cure53 in December 2023, with published test vectors).
   A relay operator sees ciphertext, a throwaway public key, and timing.
-- **No identity is involved, ever.** One ephemeral keypair per share, generated
-  on the device, never persisted, never reused. Two shares by the same user are
-  not linkable to each other, and neither is linkable to any nostr identity.
-  The app stores no long-term key material of any kind.
+- **No long-term nostr identity is involved.** One ephemeral keypair per share,
+  generated on the device, never persisted, never reused. The event keys do not
+  cryptographically link two shares to each other or to a nostr identity, and
+  the app stores no long-term key material of any kind. This is not a network-
+  anonymity guarantee: relay metadata can still correlate shares as described
+  below.
 - **The observer cannot be fed a forged track.** Not because of the `authors`
   filter — that is a *request*, and a relay is free to answer with something else
   — but because forging a position requires the NIP-44 conversation key, which
@@ -41,10 +43,12 @@ right and the code is a bug.
   a security control.
 - **Revocation is: stop sharing, then issue a new link.** There is no way to
   claw back a key that has been handed out.
-- **The relay learns metadata.** The publishing device's IP, the cadence, and the
-  fact that *someone* is sharing a live track right now. Only the content is
-  hidden — and, since every update is padded to a constant length, the *size*
-  carries nothing either (see below).
+- **The relay learns metadata and may correlate shares.** It sees the publishing
+  device's IP, connection timing, cadence, relay selection, and the fact that
+  *someone* is sharing a live track right now. Reusing the same network session
+  or address can let a relay associate otherwise independent ephemeral keys.
+  Only the content is hidden — and, since every update is padded to a constant
+  length, the *size* carries nothing either (see below).
 - **A leaked link is a leaked track.** Anyone holding it — a forwarded message,
   a screenshot, a browser-history sync — sees the same thing the intended
   recipient sees, unless a password was set.
@@ -66,6 +70,11 @@ to be escaped in a URL).
 | `publisher-pubkey` | 32 | Pins the author, so the viewer can refuse an event it did not ask for instead of trusting the relay's filtering. |
 | `share-secret` | 32 | Random. Everything the observer needs is derived from it. |
 | `relays` | var | Comma-joined relay hosts, `wss://` implied and enforced. |
+
+The descriptor is capped at 8192 characters, with at most eight relays and 512
+UTF-8 bytes per relay URL. These are security bounds: opening a link must not let
+an attacker allocate an arbitrary buffer or make the browser maintain an
+arbitrary number of websocket/reconnect loops.
 
 The password requirement is **announced** in the version rather than discovered.
 A viewer that had to guess could not tell "needs a password" from "the share has
@@ -162,13 +171,15 @@ computed, so the viewer cannot subscribe, let alone decrypt.
 | | Kind | Stored by relays | Cadence |
 |---|---|---|---|
 | Live positions | `22222` (ephemeral) | no, by design (NIP-01) | one event per 10 s |
-| Last known position | `32222` (addressable) | latest only, per `(kind, pubkey, d)` | refreshed every 30 s |
+| Recent history | `32222` (addressable) | latest snapshot only, per `(kind, pubkey, d)` | refreshed every 30 s |
 
 Ephemeral events are not retained, so an observer opening the link mid-run would
 otherwise see a blank map until the next fix. The addressable event is what they
-bootstrap from. It is also the one piece of the design that deliberately leaves
-data at rest on a relay, which is why it carries the same NIP-40 expiration and
-holds exactly one position.
+bootstrap from. It contains at most 60 sampled updates — ten minutes at the live
+cadence — and is padded to a fixed 12,288-character plaintext envelope so its
+size does not disclose how long the share has been running. It is the one piece
+of the design that deliberately leaves recent route data at rest on a relay,
+which is why it carries the same NIP-40 expiration.
 
 Both kinds were checked against the **machine-readable registry**
 (`nostr-protocol/registry-of-kinds`, `schema.yaml`), which is the only list that
@@ -190,12 +201,15 @@ now fixed for every update regardless (see "Constant-length payloads"):
 
 ```json
 {"v":1,"p":{"t":1785421513000,"y":45.5019,"x":-73.5674,"s":"a",
-            "e":132.5,"a":4.5},"d":4231.75,"el":1329}
+            "e":132.5,"a":4.5},"b":1785420184000,"d":4231.75,"el":1329}
 ```
 
-`t` is unix milliseconds UTC, `y`/`x` are latitude/longitude, `s` is the point
-status (`a` active, `p` paused, `s` signal lost), `e` elevation and `a` accuracy
-are optional, `d` is active distance in metres and `el` active elapsed seconds.
+`t` is the fix's unix milliseconds UTC, `y`/`x` are latitude/longitude, `s` is
+the point status (`a` active, `p` paused, `s` signal lost), `e` elevation and `a`
+accuracy are optional, `b` is the recording's wall-clock start in unix
+milliseconds UTC, `d` is active distance in metres and `el` active elapsed
+seconds. `b` is transmitted because subtracting active elapsed time from `t`
+produces the wrong start after a pause.
 
 Totals travel rather than being recomputed: a viewer only ever sees a sampled
 subset of the track — ephemeral events it missed are gone — so summing what it
@@ -215,6 +229,7 @@ Every numeric field is bounded, because each unbounded one has a specific failur
 |---|---|---|
 | `y` / `x` | ±90 / ±180, finite | A non-finite coordinate poisons MapLibre's camera and every later gesture throws. JSON smuggles one as `1e999`, which decodes to `Infinity`. |
 | `t` | 0 → 2100-01-01Z | The observer sorts by time, so a point claiming the year 5138 pins itself to the end of the trace for the whole session. |
+| `b` | 0 → 2100-01-01Z | The wall-clock recording start cannot be reconstructed from active elapsed time across pauses. It may be slightly after the first GPS timestamp when that fix was captured just before recording began. |
 | `el` | 0 → 30 days | A negative elapsed makes the viewer compute a negative pace, which renders as a plausible-looking number. |
 | `d` | 0 → 40 075 km | One Earth circumference; a negative or absurd distance is not a recording. |
 | `e` | −500 → 20 000 m | Optional, so an out-of-range value is dropped rather than fatal. `1e300` is perfectly finite and would wreck any chart axis it reached. |
@@ -222,8 +237,9 @@ Every numeric field is bounded, because each unbounded one has a specific failur
 
 ### Constant-length payloads
 
-Every update is padded to **192 characters** before encryption, with the filler in
-a key `decode` ignores.
+Every live update is padded to **192 characters** before encryption, and every
+recent-history snapshot to **12,288 characters**, with the filler in a key
+`decode` ignores.
 
 NIP-44's own 32-byte bucketing is not enough. Measured without this padding: a
 fresh share encrypted to 220 characters and one a few kilometres in to 260,
@@ -254,8 +270,9 @@ cannot.
   authenticated and a relay cannot alter it. But relays also deliver out of order
   in normal operation, so dropping everything older than the newest `t` seen would
   discard legitimate points — the rule is a window (a few multiples of the publish
-  cadence), not a ratchet. Move the cursor only forward; accept slightly late
-  arrivals and sort them into place.
+  cadence), not a ratchet. The shipped viewer accepts at most 15 minutes of age
+  and two minutes of future clock skew. Move the cursor only forward; accept
+  slightly late arrivals and sort them into place.
 - **Expect relays to refuse events over clock skew.** NIP-01 lists
   `invalid: event creation date is too far off from the current time` among the
   standard rejections, and a phone clock is often wrong. That failure must reach
@@ -266,8 +283,10 @@ cannot.
   send whatever it likes. Verified: it yields a speed of `Infinity`. This is the
   same argument as bounding coordinates to protect the camera, one derivation
   further out, and the format cannot tell the two cases apart.
-- **De-duplicate by `t`.** The bootstrap addressable event and the live stream
-  overlap by design, so the same position arrives twice.
+- **De-duplicate exact points.** The bootstrap addressable event and the live
+  stream overlap by design, so the same position arrives twice. Timestamp alone
+  is insufficient: signal-loss boundary points can deliberately share one
+  millisecond while carrying different status/coordinates.
 - **Draw the track without WebGL.** Measured: combining Flutter CanvasKit and
   MapLibre gives Firefox two WebGL renderers and can block its main thread for
   tens of seconds. The selected viewer uses Leaflet's DOM/SVG path instead.
@@ -310,13 +329,13 @@ The phone remains free to use its existing MapLibre implementation. This decisio
 is scoped to the read-only browser viewer, where a second rendering engine buys
 nothing and WebGL is not an acceptable prerequisite.
 
-**A late-joining observer sees a point, not a track.** Measured against a
+**The one-point bootstrap was rejected.** Measured against a
 publisher that had been running for an hour and had pushed over 1800 positions:
 a viewer opening the link received **2**. That is the ephemeral design working as
 specified — relays do not retain kind 22222 — but the effect is a product defect
-for a feature whose point is watching someone move. The addressable bootstrap
-therefore has to carry a compact *recent history*, not a single position, and the
-threat model has to say plainly how much data that leaves at rest on a relay.
+for a feature whose point is watching someone move. The addressable bootstrap now
+carries the most recent 60 sampled updates, and the threat model says plainly
+that this leaves up to ten minutes of encrypted route data at rest on a relay.
 
 **Flutter Web owned the `#` in the discarded prototype.** Its bootstrap could
 normalise the URL before `main()` read it. Dart Web plus Leaflet has no router, so
@@ -345,7 +364,7 @@ five to twelve seconds as the real figure. The password-less path is HKDF only:
 117-167 ms.
 
 **The share layer is a real package boundary.** `packages/furtive_share` owns the
-four wire/crypto modules and their 69 pure-Dart tests. Both the Flutter app and
+four wire/crypto modules and their pure-Dart tests. Both the Flutter app and
 the Dart Web viewer resolve that same path package; its only runtime dependencies
 are `nostr` and `pointycastle`. CI analyzes and tests it independently, then
 compiles the viewer against it.
@@ -366,10 +385,9 @@ at the connection level. **Relay failure is the normal case**, so:
   currency. Pay it for the addressable event only; a per-position PoW on battery
   is not worth it.
 
-Two or three defaults ship, seeded in the migration so they are inspectable and
-removable, and the code never re-adds them behind the user's back. Users can add
-their own relay, which is also the answer for anyone needing a restricted one —
-there is no identity to authenticate with, so NIP-42 is not available to us.
+Two defaults ship in the build configuration. Distributors can replace them with
+the `SHARE_RELAYS` compile-time setting, including a self-hosted relay. There is
+no identity to authenticate with, so NIP-42 is not available to this feature.
 
 ## Boundaries in the app
 
@@ -378,6 +396,15 @@ there is no identity to authenticate with, so NIP-42 is not available to us.
   signal-loss status — so pause semantics come for free and the recording path is
   not modified at all. A dead relay cannot cost a single point of trace, by
   construction rather than by care.
+- **The publisher is opt-in and memory-only.** `LiveShareCubit` creates one
+  ephemeral session when the user taps the live-share control. Regular points
+  are sampled to 10 s, status transitions publish immediately, snapshots refresh
+  every 30 s, and recording stop also stops the share. A process kill ends the
+  share: restoring its keys would require persisting them, contradicting the
+  memory-only promise. The link remains readable only for already-published data.
+- **A production build must set `SHARE_VIEWER_URL`.** Without a canonical HTTPS
+  viewer origin the live-share control is hidden rather than generating a broken
+  or insecure link. HTTP is accepted only for loopback development URLs.
 - **The share code holds no Flutter, drift or geolocator import.** It lives in
   `packages/furtive_share`, consumed by both the app and the Dart Web viewer; a
   CI check additionally enforces the sensor/storage denylist.
