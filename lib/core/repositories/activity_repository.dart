@@ -75,6 +75,16 @@ class ActivityRepository {
     );
   }
 
+  Future<void> updateLiveAggregates(
+    String activityId, {
+    required double distanceMeters,
+    required Duration activeDuration,
+  }) => local.updateLiveAggregates(
+    activityId,
+    distanceMeters: distanceMeters,
+    activeDuration: activeDuration,
+  );
+
   Future<void> cease(String activityId) => local.cease(activityId);
 
   Future<void> updateName(String activityId, String newName) =>

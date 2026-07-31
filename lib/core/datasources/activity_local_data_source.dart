@@ -60,10 +60,9 @@ class ActivityLocalDataSource {
     // One transaction so a crash between the header insert and the point batch
     // can't leave a pointless header row (matters most for a large GPX import).
     // Completed/imported activities (stoppedAt set) store real aggregates.
-    // An in-progress activity (just-started recording, stoppedAt null) stores
-    // the -1 sentinel so fetchSummaries recomputes its stats live from points
-    // until it's ceased — otherwise the list would show 0 km / 0:00 for the
-    // active activity (and for any activity whose cease never ran after a crash).
+    // A just-started recording stores the -1 sentinel until its first fix.
+    // RecordingBloc writes live aggregates after every accepted fix, keeping the
+    // activities list summary-only even while a long recording is in progress.
     final agg = activity.stoppedAt != null
         ? _aggregates(activity.points)
         : (distanceMeters: -1.0, durationMs: -1);
@@ -172,6 +171,33 @@ class ActivityLocalDataSource {
       }
       await insert();
     });
+  }
+
+  /// Persists already-computed live aggregates without reading the point table.
+  ///
+  /// The recording state has the complete in-memory trace and computes these
+  /// values for the map anyway. Reusing them avoids loading thousands of points
+  /// when the Activities tab asks for summaries during a long recording.
+  Future<void> updateLiveAggregates(
+    String activityId, {
+    required double distanceMeters,
+    required Duration activeDuration,
+  }) async {
+    if (!distanceMeters.isFinite ||
+        distanceMeters < 0 ||
+        activeDuration.isNegative) {
+      throw ArgumentError('live activity aggregates must be non-negative');
+    }
+    await (db.update(db.activities)..where(
+          (activity) =>
+              activity.id.equals(activityId) & activity.stoppedAt.isNull(),
+        ))
+        .write(
+          ActivitiesCompanion(
+            distanceMeters: Value(distanceMeters),
+            activeDurationMs: Value(activeDuration.inMilliseconds),
+          ),
+        );
   }
 
   /// Stamps [activityId] as stopped and persists its final aggregates.
@@ -314,9 +340,9 @@ class ActivityLocalDataSource {
   /// Lightweight list query: activities only (no point join), newest first,
   /// using the idx_activities_started_at index. Reads the denormalised
   /// distance/duration columns; for rows still at the -1 sentinel (legacy
-  /// pre-v4 activities, or an in-progress activity) it computes from points
-  /// once and — for ceased activities — persists the result so later loads
-  /// stay cheap.
+  /// pre-v4 activities, or an activity with no accepted fix yet) it computes
+  /// from points once and — for ceased activities — persists the result so
+  /// later loads stay cheap.
   ///
   /// [limit]/[offset] page the query. Unbounded by default for callers that
   /// genuinely want everything, but the activities list passes a page size:

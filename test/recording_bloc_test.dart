@@ -441,6 +441,33 @@ void main() {
     );
 
     blocTest<RecordingBloc, RecordingState>(
+      'live aggregates keep the activities list summary-only and current',
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(const StartRecording());
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        bloc.add(
+          ScoreFix(position: fixAt(start.add(const Duration(seconds: 5)))),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        bloc.add(
+          ScoreFix(
+            position: fixAt(
+              start.add(const Duration(seconds: 10)),
+              latitude: 48.851,
+            ),
+          ),
+        );
+      },
+      wait: const Duration(milliseconds: 100),
+      verify: (bloc) async {
+        final summary = (await repository().fetchSummaries()).single;
+        expect(summary.activeDistanceMeters, greaterThan(0));
+        expect(summary.activeDuration, const Duration(seconds: 5));
+      },
+    );
+
+    blocTest<RecordingBloc, RecordingState>(
       'a fix arriving after a long GPS outage is bracketed with signalLost '
       'boundary points so the gap leaves the active stats alone',
       build: buildBloc,

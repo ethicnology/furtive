@@ -263,11 +263,26 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
           '(status: ${status.name}).',
         );
       }
-      emit(
-        state.copyWith(
-          activity: current.copyWith(points: [...current.points, ...newPoints]),
-        ),
+      final updated = current.copyWith(
+        points: [...current.points, ...newPoints],
       );
+      // Computing these also warms ActivityEntity's per-instance stats cache for
+      // the map rebuild. Persisting them keeps the Activities tab from loading
+      // the full in-progress trace just to render one summary row.
+      final liveDistance = updated.activeDistanceMeters;
+      final liveDuration = updated.activeDuration;
+      emit(state.copyWith(activity: updated));
+      try {
+        await _activities.updateLiveAggregates(
+          activity.id,
+          distanceMeters: liveDistance,
+          activeDuration: liveDuration,
+        );
+      } catch (e, s) {
+        // The point itself is already durable. A stale list summary is not a
+        // reason to report that recording failed; cease() recomputes it later.
+        logs.warning('update live activity aggregates', error: e, trace: s);
+      }
     } catch (e, s) {
       logs.severe('$ScoreFix', error: e, trace: s);
       emit(state.copyWith(error: AppError('ScoreFix: $e')));
