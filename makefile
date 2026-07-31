@@ -1,4 +1,4 @@
-.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible format analyze test viewer-deps viewer-analyze viewer-build share-boundary check
+.PHONY: all setup clean deps build-runner build-runner-watch ios-pod-update drift-migrations devcontainer devcontainer-create devcontainer-start container-tools container-app apk fvm-check release debug translations verify-reproducible format analyze test viewer-deps viewer-analyze viewer-build share-boundary share-config check
 
 fvm-check:
 	@echo "🔍 Checking FVM"
@@ -16,8 +16,8 @@ setup: fvm-check clean deps build-runner
 	@echo "🚀 Setup complete!"
 
 clean:
-	@echo "🧹 Clean and remove pubspec.lock and ios/Podfile.lock"
-	@fvm flutter clean && rm -f pubspec.lock && rm -f ios/Podfile.lock
+	@echo "🧹 Clean generated build output"
+	@fvm flutter clean
 
 deps:
 	@echo "🏃 Fetch dependencies"
@@ -52,7 +52,7 @@ sys.exit(0) if not bad else (print('PARITY ISSUES:'), [print(f'  {loc}: missing=
 
 format:
 	@echo "🎨 Checking formatting (dart format --set-exit-if-changed)"
-	@fvm dart format --set-exit-if-changed lib test packages/furtive_share/lib packages/furtive_share/test viewer/lib viewer/test viewer/web
+	@fvm dart format --set-exit-if-changed lib test packages/furtive_share/lib packages/furtive_share/test viewer/lib viewer/test viewer/web tool/validate_share_config.dart
 
 analyze:
 	@echo "🔎 Running flutter analyze"
@@ -80,7 +80,7 @@ viewer-build:
 	@echo "🌐 Compiling the Dart Web viewer"
 	@mkdir -p build/viewer
 	@fvm dart compile js -O4 -o build/viewer/main.dart.js viewer/web/main.dart
-	@cp viewer/web/index.html viewer/web/styles.css build/viewer/
+	@python3 tool/package_viewer.py build/viewer
 
 # The path package is a real compiler boundary, and this denylist guards its
 # product promise as well: no storage, sensor, Flutter, or app import. See
@@ -89,12 +89,16 @@ share-boundary:
 	@echo "🚧 Checking the share-layer boundary"
 	@python3 tool/check_share_boundary.py
 
+share-config:
+	@echo "🔐 Validating the live-share release configuration"
+	@fvm dart run tool/validate_share_config.dart
+
 # Everything CI runs on every push/PR (see .github/workflows/ci.yml) — kept
 # as a single make target so it can also be run locally before pushing.
 # `translations` both regenerates lib/l10n/app_localizations*.dart (gitignored,
 # needed for analyze/test to see the generated AppLocalizations class) and
 # checks ARB key parity across every locale.
-check: viewer-deps translations format analyze share-boundary test viewer-build
+check: deps build-runner translations format analyze share-boundary test viewer-build
 	@echo "✅ All checks passed"
 
 ios-pod-update:
@@ -156,6 +160,12 @@ ifneq ($(strip $(PROTOMAPS_KEY)),)
 endif
 ifneq ($(strip $(PROTOMAPS_URL)),)
   DART_DEFINES += --dart-define=PROTOMAPS_URL=$(PROTOMAPS_URL)
+endif
+ifneq ($(strip $(SHARE_VIEWER_URL)),)
+  DART_DEFINES += --dart-define=SHARE_VIEWER_URL=$(SHARE_VIEWER_URL)
+endif
+ifneq ($(strip $(SHARE_RELAYS)),)
+  DART_DEFINES += --dart-define=SHARE_RELAYS=$(SHARE_RELAYS)
 endif
 
 # Pin every timestamp the build embeds (zip entries, .class files, manifest

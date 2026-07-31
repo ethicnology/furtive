@@ -14,10 +14,10 @@ jobs:
     # (tracked in actions/runner-images#13855). Bump when available.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -26,13 +26,38 @@ jobs:
           large-packages: true
           swap-storage: false
 
+      - name: Read Flutter version from .fvmrc
+        if: inputs.mode == 'release'
+        id: fvmrc
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        if: inputs.mode == 'release'
+        with:
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Resolve configuration validator dependencies
+        if: inputs.mode == 'release'
+        run: flutter pub get --enforce-lockfile
+
+      - name: Validate live-share release configuration
+        if: inputs.mode == 'release'
+        env:
+          SHARE_VIEWER_URL: ${{ vars.SHARE_VIEWER_URL }}
+          SHARE_RELAYS: ${{ vars.SHARE_RELAYS }}
+        run: dart run tool/validate_share_config.dart
+
       - name: Build APK
         # makefile uses `podman` directly; ubuntu-24.04 ships podman 4.9.3 preinstalled.
         env:
           PROTOMAPS_KEY: ${{ secrets.PROTOMAPS_KEY }}
+          SHARE_VIEWER_URL: ${{ vars.SHARE_VIEWER_URL }}
+          SHARE_RELAYS: ${{ vars.SHARE_RELAYS }}
         run: make apk ${{ inputs.mode }}
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: app-${{ inputs.mode }}
           path: app-${{ inputs.mode }}.apk
