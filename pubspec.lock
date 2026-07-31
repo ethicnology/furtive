@@ -49,6 +49,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  bech32:
+    dependency: transitive
+    description:
+      name: bech32
+      sha256: "156cbace936f7720c79a79d16a03efad343b1ef17106716e04b8b8e39f99f7f7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
+  bip340:
+    dependency: transitive
+    description:
+      name: bip340
+      sha256: "4c2df9fa2409d26f1d9334b2801015ebe4dc3978191f186743e60e89a90230c4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
   bloc:
     dependency: transitive
     description:
@@ -305,6 +321,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.34.0"
+  elliptic:
+    dependency: transitive
+    description:
+      name: elliptic
+      sha256: "67931d408faa353bdebac9f7a1df0c3f6f828f4e8439cdf084573cd1601a2f4b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.12"
   fake_async:
     dependency: transitive
     description:
@@ -461,6 +485,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  furtive_share:
+    dependency: "direct main"
+    description:
+      path: "packages/furtive_share"
+      relative: true
+    source: path
+    version: "0.1.0"
   geobase:
     dependency: transitive
     description:
@@ -829,6 +860,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  nostr:
+    dependency: transitive
+    description:
+      name: nostr
+      sha256: "44d602199d032e40a469b8e00e3c58e1b0c206673e0edf4a4a468499f75f6298"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   objective_c:
     dependency: transitive
     description:
@@ -1021,6 +1060,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.10.3"
+  pointycastle:
+    dependency: transitive
+    description:
+      name: pointycastle
+      sha256: "92aa3841d083cc4b0f4709b5c74fd6409a3e6ba833ffc7dc6a8fee096366acf5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
   pool:
     dependency: transitive
     description:

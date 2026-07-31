@@ -64,6 +64,11 @@ dependencies:
   file_selector: ^1.1.0
   share_plus: ^13.3.0
 
+  # Shared live-tracking format and cryptography. Kept in a pure-Dart package so
+  # the mobile app and the sensor-free web viewer compile the same source.
+  furtive_share:
+    path: packages/furtive_share
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

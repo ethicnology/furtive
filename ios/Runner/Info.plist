@@ -87,10 +87,12 @@
 	<array>
 		<string>location</string>
 	</array>
-	<!-- Export-compliance declaration: this app uses only the standard
-	     HTTPS / TLS provided by iOS, with no custom or non-exempt
-	     encryption. Without this key, TestFlight asks the question on
-	     every upload and may delay app review. -->
+	<!-- Export-compliance declaration: in addition to platform HTTPS/TLS, live
+	     sharing implements the published NIP-44 v2 standard (ChaCha20 and
+	     HMAC-SHA256). `false` records the project's determination that these
+	     uses are exempt encryption, not that the app uses only Apple-provided
+	     cryptography. Confirm the classification and any annual self-
+	     classification reporting before App Store distribution. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
