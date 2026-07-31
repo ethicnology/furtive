@@ -3,6 +3,7 @@ package com.ethicnology.furtive
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -85,14 +86,18 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    // Activity.setShowWhenLocked(Boolean) is API 27+; on older platforms the
-    // manifest attribute's default (true) simply can't be changed at
-    // runtime — minSdk is 24, so this stays a no-op there rather than using
-    // the deprecated pre-27 window-flag API for three platform versions'
-    // worth of users.
+    // Activity.setShowWhenLocked(Boolean) is API 27+. The deprecated window
+    // flag remains the only runtime implementation on API 24-26; leaving those
+    // versions as a no-op would make the privacy toggle lie while the manifest's
+    // showWhenLocked=true continued exposing the map.
+    @Suppress("DEPRECATION")
     private fun setShowWhenLockedCompat(enabled: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(enabled)
+        } else if (enabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
         }
     }
 
