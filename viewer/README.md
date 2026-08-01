@@ -46,9 +46,15 @@ production deployment component.
 ## GitHub Pages deployment
 
 `.github/workflows/deploy-viewer.yml` publishes the viewer to
-`https://ethicnology.github.io/furtive/` on manual dispatch. It exists to check
-a real link end to end — fragment parsing, key derivation, relay connection,
-decryption, drawing — against a real browser.
+`https://ethicnology.github.io/furtive/`. It exists to check a real link end to
+end — fragment parsing, key derivation, relay connection, decryption, drawing —
+against a real browser.
+
+It runs on every push to the working branch. That is not a preference: a
+`workflow_dispatch` entry only becomes usable once the workflow file exists on
+the repository default branch, and this one is kept off it for now, so pushing
+is the only trigger that reaches GitHub. The manual entry is declared anyway and
+starts working the day the file lands there.
 
 It is not a production deployment, and it does not satisfy the contract above:
 

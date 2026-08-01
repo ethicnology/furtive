@@ -1,9 +1,20 @@
 name: Deploy viewer to Pages
 
-# Manual only. The viewer is a verification surface, not a release artifact, and
-# publishing it is a decision rather than a consequence of pushing.
+# Pushes to the working branch, because that is the only trigger available here:
+# workflow_dispatch requires the workflow file to sit on the default branch, and
+# this one deliberately does not, so the manual entry below stays inert until it
+# lands there. A push event, by contrast, runs the definition from the ref that
+# was pushed.
+#
+# No paths filter on purpose. Dispatch being unavailable, a filter would remove
+# the only way to force a redeployment: an unrelated commit could not trigger
+# one, and an empty commit changes no path either. Add one once this file
+# reaches the default branch and manual runs become possible.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - share-live-tracking
 
 # contents stays read-only: the job reads the tree and publishes build/viewer.
 # The two Pages scopes are what actions/deploy-pages needs to mint its OIDC
