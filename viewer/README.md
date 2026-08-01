@@ -23,7 +23,9 @@ files referenced by its current `index.html`.
 
 The host must serve:
 
-- dark raster XYZ tiles at `/tiles/{z}/{x}/{y}.png`;
+- dark raster XYZ tiles at `/tiles/{z}/{x}/{y}.png`, the same-origin default;
+  `make viewer-build VIEWER_TILE_URL=…` retargets the basemap, and the packager
+  then grants that one origin in the CSP;
 - the viewer over HTTPS so links containing `wss://` relays are not downgraded;
 - `index.html` without long-lived caching and content-hashed static assets with
   compression;
@@ -40,3 +42,27 @@ the same CSP as headers; `frame-ancestors` is ignored in a meta element.
 
 The Python proxy under `/tmp/opencode` is only a local spike server and is not a
 production deployment component.
+
+## GitHub Pages deployment
+
+`.github/workflows/deploy-viewer.yml` publishes the viewer to
+`https://ethicnology.github.io/furtive/` on manual dispatch. It exists to check
+a real link end to end — fragment parsing, key derivation, relay connection,
+decryption, drawing — against a real browser.
+
+It is not a production deployment, and it does not satisfy the contract above:
+
+- Pages cannot proxy tiles, so that build points at CARTO's public basemap.
+  Visitors disclose the area they watch to CARTO. The encrypted route is
+  unaffected.
+- Pages sends no custom headers, so `frame-ancestors`, `Permissions-Policy` and
+  a header-delivered CSP are unavailable; the `meta` CSP in `index.html` is all
+  there is, and `frame-ancestors` does not work from a `meta` element.
+
+Two things must be set by hand before it works:
+
+1. The `github-pages` environment restricts deployments by branch. Add the
+   branch you dispatch from under Settings → Environments → `github-pages`, or
+   the run is refused.
+2. The app only produces links once built with the matching viewer origin:
+   `make apk SHARE_VIEWER_URL=https://ethicnology.github.io/furtive`.

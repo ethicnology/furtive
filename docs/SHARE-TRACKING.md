@@ -410,10 +410,22 @@ no identity to authenticate with, so NIP-42 is not available to this feature.
   CI check additionally enforces the sensor/storage denylist.
 - **The viewer enables tiles by default as an explicit product decision.** Tile
   requests disclose the viewed area to whichever service terminates them. The
-  tested viewer uses a same-origin cache so the browser contacts no third-party
-  tile host; production must provide the equivalent first-party endpoint or state
-  the disclosure plainly. The observer can disable the basemap without affecting
-  the encrypted route.
+  basemap is a compile-time setting (`TILE_URL`) defaulting to the same-origin
+  `/tiles/{z}/{x}/{y}.png`, so a self-hosted viewer contacts no third-party tile
+  host. Production must provide that first-party endpoint or state the
+  disclosure plainly. The observer can disable the basemap without affecting the
+  encrypted route.
+- **The GitHub Pages deployment takes the second option, and this is the plain
+  statement.** A static host cannot proxy tiles, so that build loads CARTO's
+  public basemap: every visitor discloses the area they are watching to CARTO,
+  which the same-origin default exists to avoid. The route itself stays
+  end-to-end encrypted — CARTO sees tile coordinates, never a position. The
+  packager grants exactly that one origin in `img-src`, never a wildcard.
+- **That deployment is for verification, not production.** A static host sends
+  no custom headers, and `frame-ancestors` is ignored in a `meta` element, so
+  the clickjacking guard the hosting contract requires is simply absent there —
+  which matters because the observer types the share password into that page.
+  HSTS still holds: `github.io` is on the browser preload list.
 
 ## Rejected alternatives
 

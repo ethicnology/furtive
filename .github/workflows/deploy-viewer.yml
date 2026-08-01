@@ -1,0 +1,69 @@
+name: Deploy viewer to Pages
+
+# Manual only. The viewer is a verification surface, not a release artifact, and
+# publishing it is a decision rather than a consequence of pushing.
+on:
+  workflow_dispatch:
+
+# contents stays read-only: the job reads the tree and publishes build/viewer.
+# The two Pages scopes are what actions/deploy-pages needs to mint its OIDC
+# token and attach the deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One site, one deployment at a time. Not cancel-in-progress: interrupting a
+# deployment mid-flight can leave the site serving a half-published artifact.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Pinned to 24.04 for consistency with ci.yml and build-android.yml.
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Read Flutter version from .fvmrc
+        id: fvmrc
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: viewer pub get (enforce lockfile)
+        run: dart pub get --directory viewer --enforce-lockfile
+
+      - name: shared package pub get (enforce lockfile)
+        run: dart pub get --directory packages/furtive_share --enforce-lockfile
+
+      # Pages is static and cannot proxy tiles, so this deployment cannot honour
+      # the same-origin basemap the self-hosted contract assumes. It loads
+      # CARTO's public basemap instead, which means every visitor discloses the
+      # area they look at to CARTO. Stated plainly in docs/SHARE-TRACKING.md;
+      # the packager grants exactly this origin in the CSP and nothing wider.
+      - name: Compile and package the viewer
+        env:
+          VIEWER_TILE_URL: https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png
+        run: |
+          mkdir -p build/viewer
+          dart compile js -O4 -DTILE_URL="$VIEWER_TILE_URL" \
+            -o build/viewer/main.dart.js viewer/web/main.dart
+          python3 tool/package_viewer.py build/viewer --tile-url "$VIEWER_TILE_URL"
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: build/viewer
+
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
