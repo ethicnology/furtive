@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Package the static viewer with verified Leaflet and hashed app assets."""
 
+import argparse
 import hashlib
 import os
 import sys
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
 LEAFLET_BASE = "https://unpkg.com/leaflet@1.9.4/dist"
 LEAFLET_ASSETS = {
@@ -19,8 +21,36 @@ LEAFLET_ASSETS = {
 }
 
 
+# The exact directive index.html ships. Matched literally so that a CSP edit
+# which renames or reorders it fails the build instead of silently producing a
+# viewer whose basemap is blocked at runtime.
+CSP_IMG_DIRECTIVE = "img-src 'self' data:"
+
+DEFAULT_TILE_URL = "/tiles/{z}/{x}/{y}.png"
+
+
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def tile_origin(tile_url: str) -> str | None:
+    """Origin the CSP must additionally allow, or None when tiles are same-origin.
+
+    A relative URL needs nothing: `img-src 'self'` already covers it. An absolute
+    one is a third-party basemap, and every visitor discloses the area they look
+    at to that host, so it has to be named explicitly rather than waved through
+    with a wildcard.
+    """
+    parts = urlsplit(tile_url)
+    if not parts.scheme and not parts.netloc:
+        return None
+    if parts.scheme != "https" or not parts.netloc:
+        raise RuntimeError(f"tile URL must be relative or HTTPS: {tile_url}")
+    # A '{s}' subdomain placeholder would need a CSP wildcard, which grants far
+    # more than one basemap host. Refuse rather than widen the policy silently.
+    if "{" in parts.netloc:
+        raise RuntimeError(f"tile host must be literal, not templated: {parts.netloc}")
+    return f"https://{parts.netloc}"
 
 
 def write_atomic(path: Path, data: bytes) -> None:
@@ -46,12 +76,20 @@ def download_verified(relative: str, expected: str, destination: Path) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: package_viewer.py <build-directory>", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("build_directory")
+    parser.add_argument(
+        "--tile-url",
+        default=DEFAULT_TILE_URL,
+        help=(
+            "basemap URL the viewer was compiled with; an absolute one is "
+            "granted in the CSP (default: %(default)s)"
+        ),
+    )
+    args = parser.parse_args()
 
     root = Path(__file__).resolve().parent.parent
-    output = Path(sys.argv[1]).resolve()
+    output = Path(args.build_directory).resolve()
     compiled = output / "main.dart.js"
     if not compiled.is_file():
         print(f"compiled viewer is missing: {compiled}", file=sys.stderr)
@@ -69,6 +107,11 @@ def main() -> int:
     index = template.replace("styles.css", styles_name).replace(
         "main.dart.js", script_name
     )
+    origin = tile_origin(args.tile_url)
+    if origin is not None:
+        if CSP_IMG_DIRECTIVE not in index:
+            raise RuntimeError("index.html no longer carries the expected img-src")
+        index = index.replace(CSP_IMG_DIRECTIVE, f"{CSP_IMG_DIRECTIVE} {origin}")
     write_atomic(output / "index.html", index.encode("utf-8"))
 
     vendor = output / "vendor"
@@ -89,7 +132,11 @@ def main() -> int:
         if obsolete.is_file():
             obsolete.unlink()
 
-    print(f"Viewer packaged in {output} ({script_name}, {styles_name})")
+    basemap = origin if origin is not None else "same-origin"
+    print(
+        f"Viewer packaged in {output} ({script_name}, {styles_name}); "
+        f"basemap: {basemap}"
+    )
     return 0
 
 

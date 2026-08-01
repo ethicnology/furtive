@@ -76,11 +76,16 @@ viewer-analyze:
 	@fvm dart analyze packages/furtive_share
 	@fvm dart analyze viewer
 
+# Same-origin by default, so a self-hosted viewer contacts no third-party tile
+# host. Overriding this points the basemap at a public service and discloses the
+# viewed area to it — a deliberate trade, documented in docs/SHARE-TRACKING.md.
+VIEWER_TILE_URL ?= /tiles/{z}/{x}/{y}.png
+
 viewer-build:
 	@echo "🌐 Compiling the Dart Web viewer"
 	@mkdir -p build/viewer
-	@fvm dart compile js -O4 -o build/viewer/main.dart.js viewer/web/main.dart
-	@python3 tool/package_viewer.py build/viewer
+	@fvm dart compile js -O4 -DTILE_URL='$(VIEWER_TILE_URL)' -o build/viewer/main.dart.js viewer/web/main.dart
+	@python3 tool/package_viewer.py build/viewer --tile-url '$(VIEWER_TILE_URL)'
 
 # The path package is a real compiler boundary, and this denylist guards its
 # product promise as well: no storage, sensor, Flutter, or app import. See

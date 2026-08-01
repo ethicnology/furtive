@@ -12,6 +12,19 @@ const _shareKinds = [shareLiveKind, shareLastKnownKind];
 const _maxSeenEvents = 4096;
 const _maxRelayFrameCharacters = 64 * 1024;
 
+/// Where the basemap comes from, fixed at compile time.
+///
+/// The default is same-origin: a self-hosted viewer terminates tiles under its
+/// own origin, so the browser contacts no third party and the CSP stays as
+/// narrow as it can be. Pointing this at a public basemap is a deliberate
+/// privacy trade — tile requests disclose the area being watched to whoever
+/// serves them — and `tool/package_viewer.py` then has to widen `img-src` to
+/// match. See docs/SHARE-TRACKING.md.
+const _tileUrlTemplate = String.fromEnvironment(
+  'TILE_URL',
+  defaultValue: '/tiles/{z}/{x}/{y}.png',
+);
+
 @JS('L.map')
 external LeafletMap _createMap(String elementId, JSAny options);
 
@@ -521,7 +534,7 @@ class LiveViewer {
     final map = _map;
     if (map == null || !_tiles || _tileLayer != null) return;
     final tileLayer = _tileLayer = _createTileLayer(
-      '/tiles/{z}/{x}/{y}.png',
+      _tileUrlTemplate,
       <String, Object>{
         'maxZoom': 19,
         'keepBuffer': 1,
