@@ -27,6 +27,7 @@
   "shareFailed": "Nie udało się udostępnić aktywności: {error}",
   "shareTooltip": "Udostępnij aktywność",
   "liveShareTitle": "Udostępnij lokalizację na żywo",
+  "liveShareButton": "Udostępnij",
   "liveSharePassword": "Opcjonalne hasło",
   "liveSharePasswordHelp": "Wyślij hasło osobno. Pozostaw puste, aby dostęp wymagał tylko linku.",
   "navMap": "Mapa",

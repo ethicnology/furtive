@@ -27,6 +27,7 @@
   "shareFailed": "কার্যক্রম শেয়ার করা যায়নি: {error}",
   "shareTooltip": "কার্যক্রম শেয়ার করুন",
   "liveShareTitle": "লাইভ অবস্থান শেয়ার করুন",
+  "liveShareButton": "শেয়ার করুন",
   "liveSharePassword": "ঐচ্ছিক পাসওয়ার্ড",
   "liveSharePasswordHelp": "পাসওয়ার্ডটি আলাদাভাবে পাঠান। শুধু লিংক দিয়ে প্রবেশের জন্য খালি রাখুন।",
   "navMap": "মানচিত্র",

@@ -27,6 +27,7 @@
   "shareFailed": "无法分享活动: {error}",
   "shareTooltip": "分享活动",
   "liveShareTitle": "分享实时位置",
+  "liveShareButton": "分享",
   "liveSharePassword": "可选密码",
   "liveSharePasswordHelp": "请单独发送密码。留空则仅凭链接即可访问。",
   "navMap": "地图",

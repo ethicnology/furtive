@@ -580,7 +580,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                                 label: Text(
                                   share.isActive
                                       ? '${share.connectedRelays}/${share.totalRelays}'
-                                      : l10n.liveShareTitle,
+                                      : l10n.liveShareButton,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               );

@@ -27,6 +27,7 @@
   "shareFailed": "No se pudo compartir la actividad: {error}",
   "shareTooltip": "Compartir actividad",
   "liveShareTitle": "Compartir ubicación en vivo",
+  "liveShareButton": "Compartir",
   "liveSharePassword": "Contraseña opcional",
   "liveSharePasswordHelp": "Envía la contraseña por separado. Déjala vacía para acceder solo con el enlace.",
   "navMap": "Mapa",

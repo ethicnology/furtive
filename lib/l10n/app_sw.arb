@@ -27,6 +27,7 @@
   "shareFailed": "Imeshindwa kushiriki shughuli: {error}",
   "shareTooltip": "Shiriki shughuli",
   "liveShareTitle": "Shiriki eneo la moja kwa moja",
+  "liveShareButton": "Shiriki",
   "liveSharePassword": "Nenosiri la hiari",
   "liveSharePasswordHelp": "Tuma nenosiri kando. Acha wazi kwa ufikiaji wa kiungo pekee.",
   "navMap": "Ramani",

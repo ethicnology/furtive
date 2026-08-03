@@ -27,6 +27,7 @@
   "shareFailed": "Kon activiteit niet delen: {error}",
   "shareTooltip": "Activiteit delen",
   "liveShareTitle": "Live locatie delen",
+  "liveShareButton": "Delen",
   "liveSharePassword": "Optioneel wachtwoord",
   "liveSharePasswordHelp": "Stuur het wachtwoord apart. Laat leeg voor toegang met alleen de link.",
   "navMap": "Kaart",

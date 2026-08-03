@@ -27,6 +27,7 @@
   "shareFailed": "Չհաջողվեց կիսել գործունեությունը՝ {error}",
   "shareTooltip": "Կիսել գործունեությունը",
   "liveShareTitle": "Կիսվել կենդանի տեղադրությամբ",
+  "liveShareButton": "Կիսվել",
   "liveSharePassword": "Ընտրովի գաղտնաբառ",
   "liveSharePasswordHelp": "Գաղտնաբառն ուղարկեք առանձին։ Միայն հղումով մուտքի համար թողեք դատարկ։",
   "navMap": "Քարտեզ",

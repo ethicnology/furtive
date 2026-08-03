@@ -27,6 +27,7 @@
   "shareFailed": "Kunde inte dela aktivitet: {error}",
   "shareTooltip": "Dela aktivitet",
   "liveShareTitle": "Dela liveposition",
+  "liveShareButton": "Dela",
   "liveSharePassword": "Valfritt lösenord",
   "liveSharePasswordHelp": "Skicka lösenordet separat. Lämna tomt för åtkomst endast via länken.",
   "navMap": "Karta",

@@ -27,6 +27,7 @@
   "shareFailed": "Nu s-a putut partaja activitatea: {error}",
   "shareTooltip": "Partajează activitatea",
   "liveShareTitle": "Partajează locația în direct",
+  "liveShareButton": "Partajează",
   "liveSharePassword": "Parolă opțională",
   "liveSharePasswordHelp": "Trimite parola separat. Lasă gol pentru acces doar prin link.",
   "navMap": "Hartă",

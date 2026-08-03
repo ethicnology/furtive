@@ -27,6 +27,7 @@
   "shareFailed": "アクティビティを共有できませんでした: {error}",
   "shareTooltip": "アクティビティを共有",
   "liveShareTitle": "現在地をリアルタイム共有",
+  "liveShareButton": "共有",
   "liveSharePassword": "任意のパスワード",
   "liveSharePasswordHelp": "パスワードは別に送信してください。リンクのみでアクセスする場合は空欄にします。",
   "navMap": "マップ",

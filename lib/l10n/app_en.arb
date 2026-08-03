@@ -51,6 +51,7 @@
   },
   "shareTooltip": "Share activity",
   "liveShareTitle": "Share live location",
+  "liveShareButton": "Share",
   "liveSharePassword": "Optional password",
   "liveSharePasswordHelp": "Send the password separately. Leave it empty for link-only access.",
   "navMap": "Map",

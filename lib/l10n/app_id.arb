@@ -27,6 +27,7 @@
   "shareFailed": "Tidak dapat membagikan aktivitas: {error}",
   "shareTooltip": "Bagikan aktivitas",
   "liveShareTitle": "Bagikan lokasi langsung",
+  "liveShareButton": "Bagikan",
   "liveSharePassword": "Kata sandi opsional",
   "liveSharePasswordHelp": "Kirim kata sandi secara terpisah. Kosongkan untuk akses hanya dengan tautan.",
   "navMap": "Peta",

@@ -27,6 +27,7 @@
   "shareFailed": "تعذرت مشاركة النشاط: {error}",
   "shareTooltip": "مشاركة النشاط",
   "liveShareTitle": "مشاركة الموقع المباشر",
+  "liveShareButton": "مشاركة",
   "liveSharePassword": "كلمة مرور اختيارية",
   "liveSharePasswordHelp": "أرسل كلمة المرور بشكل منفصل. اتركها فارغة للوصول عبر الرابط فقط.",
   "navMap": "الخريطة",

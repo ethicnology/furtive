@@ -27,6 +27,7 @@
   "shareFailed": "활동을 공유할 수 없습니다: {error}",
   "shareTooltip": "활동 공유",
   "liveShareTitle": "실시간 위치 공유",
+  "liveShareButton": "공유",
   "liveSharePassword": "선택적 비밀번호",
   "liveSharePasswordHelp": "비밀번호는 별도로 보내세요. 링크만으로 접근하려면 비워 두세요.",
   "navMap": "지도",

@@ -27,6 +27,7 @@
   "shareFailed": "Etkinlik paylaşılamadı: {error}",
   "shareTooltip": "Etkinliği paylaş",
   "liveShareTitle": "Canlı konumu paylaş",
+  "liveShareButton": "Paylaş",
   "liveSharePassword": "İsteğe bağlı parola",
   "liveSharePasswordHelp": "Parolayı ayrı gönderin. Yalnızca bağlantıyla erişim için boş bırakın.",
   "navMap": "Harita",

@@ -27,6 +27,7 @@
   "shareFailed": "Aktiviteetin jakaminen epäonnistui: {error}",
   "shareTooltip": "Jaa aktiviteetti",
   "liveShareTitle": "Jaa reaaliaikainen sijainti",
+  "liveShareButton": "Jaa",
   "liveSharePassword": "Valinnainen salasana",
   "liveSharePasswordHelp": "Lähetä salasana erikseen. Jätä tyhjäksi, jos pelkkä linkki riittää.",
   "navMap": "Kartta",

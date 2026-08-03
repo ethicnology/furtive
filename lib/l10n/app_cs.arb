@@ -27,6 +27,7 @@
   "shareFailed": "Aktivitu se nepodařilo sdílet: {error}",
   "shareTooltip": "Sdílet aktivitu",
   "liveShareTitle": "Sdílet živou polohu",
+  "liveShareButton": "Sdílet",
   "liveSharePassword": "Volitelné heslo",
   "liveSharePasswordHelp": "Heslo pošlete zvlášť. Pro přístup pouze odkazem ponechte prázdné.",
   "navMap": "Mapa",
