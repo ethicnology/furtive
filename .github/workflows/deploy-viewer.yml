@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - share-live-tracking
+      - furtive-1.3
 
 # contents stays read-only: the job reads the tree and publishes build/viewer.
 # The two Pages scopes are what actions/deploy-pages needs to mint its OIDC
