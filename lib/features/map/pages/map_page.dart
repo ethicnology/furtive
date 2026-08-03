@@ -133,6 +133,40 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     }
   }
 
+  /// Shared by both layouts: the control is reachable whether or not a
+  /// recording is running, since a share can be armed in advance. Only one of
+  /// the two branches is ever mounted, so the hero tag stays unique.
+  Widget _liveShareFab(BuildContext context, AppLocalizations l10n) {
+    return BlocBuilder<LiveShareCubit, LiveShareState>(
+      builder: (context, share) {
+        final sharing = context.read<LiveShareCubit>();
+        return FloatingActionButton.extended(
+          heroTag: 'live-share',
+          onPressed: share.isStarting
+              ? null
+              : () => _showLiveShareActions(context, sharing),
+          backgroundColor: share.isActive
+              ? kMint
+              : AppColors.secondary.background,
+          foregroundColor: share.isActive
+              ? Colors.black
+              : AppColors.secondary.foreground,
+          icon: Icon(
+            share.isActive
+                ? Icons.share_location_rounded
+                : Icons.share_location_outlined,
+          ),
+          label: Text(
+            share.isActive
+                ? '${share.connectedRelays}/${share.totalRelays}'
+                : l10n.liveShareButton,
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showLiveShareActions(
     BuildContext context,
     LiveShareCubit sharing,
@@ -555,37 +589,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                         ),
                         if (context.read<LiveShareCubit>().isConfigured) ...[
                           const SizedBox(height: 16),
-                          BlocBuilder<LiveShareCubit, LiveShareState>(
-                            builder: (context, share) {
-                              final sharing = context.read<LiveShareCubit>();
-                              return FloatingActionButton.extended(
-                                heroTag: 'live-share',
-                                onPressed: share.isStarting
-                                    ? null
-                                    : () => _showLiveShareActions(
-                                        context,
-                                        sharing,
-                                      ),
-                                backgroundColor: share.isActive
-                                    ? kMint
-                                    : AppColors.secondary.background,
-                                foregroundColor: share.isActive
-                                    ? Colors.black
-                                    : AppColors.secondary.foreground,
-                                icon: Icon(
-                                  share.isActive
-                                      ? Icons.share_location_rounded
-                                      : Icons.share_location_outlined,
-                                ),
-                                label: Text(
-                                  share.isActive
-                                      ? '${share.connectedRelays}/${share.totalRelays}'
-                                      : l10n.liveShareButton,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            },
-                          ),
+                          _liveShareFab(context, l10n),
                         ],
                       ],
                       if (!rec.isRecording) ...[
@@ -616,6 +620,13 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        // Above Start, not below: a share can be armed before
+                        // the recording exists, but Start stays the last thing
+                        // under the thumb.
+                        if (context.read<LiveShareCubit>().isConfigured) ...[
+                          const SizedBox(height: 16),
+                          _liveShareFab(context, l10n),
+                        ],
                         const SizedBox(height: 16),
                         FloatingActionButton.extended(
                           heroTag: 'start',

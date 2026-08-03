@@ -461,6 +461,7 @@ class LiveViewer {
 
     try {
       final firstPosition = _track.isEmpty;
+      final wasFinished = _trackState.finished;
       var accepted = false;
       final now = DateTime.now().toUtc();
       for (final update in updates) {
@@ -468,6 +469,10 @@ class LiveViewer {
           accepted = true;
         }
       }
+      // The final update repeats the last position, so it is a duplicate and
+      // accepts nothing. Render the badge on the flag alone, or the observer
+      // waits for the next clock tick to learn the share ended.
+      if (_trackState.finished != wasFinished) _renderStatus();
       if (!accepted) return;
 
       if (firstPosition) {
@@ -738,7 +743,11 @@ class LiveViewer {
     final last = _trackState.lastFixAt;
     var label = 'WAITING';
     var live = false;
-    if (last != null) {
+    if (_trackState.finished) {
+      // No age counter once it is over: it would only invite the observer to
+      // wait for a position that is never coming.
+      label = 'ENDED';
+    } else if (last != null) {
       final measuredAge = DateTime.now().toUtc().difference(last);
       final age = measuredAge.isNegative ? Duration.zero : measuredAge;
       if (age.inSeconds < 20) {

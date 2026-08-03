@@ -65,6 +65,12 @@ class ViewerTrackState {
   DateTime? startedAt;
   DateTime? lastFixAt;
 
+  /// Whether the publisher said the share is over.
+  ///
+  /// Latched: it never reverts, because a relay replaying an older event must
+  /// not resurrect a finished share.
+  bool finished = false;
+
   List<SharePosition> get points {
     final result = _points.values.toList()
       ..sort((a, b) => a.time.compareTo(b.time));
@@ -72,6 +78,12 @@ class ViewerTrackState {
   }
 
   ViewerUpdateResult add(ShareUpdate update, {required DateTime now}) {
+    // Read before every filter below. The end of a share is session state, not a
+    // property of the point carrying it, and the final update deliberately
+    // repeats the last known position — so the position itself is a duplicate
+    // and gets dropped. Reading the flag afterwards would lose it every time.
+    if (update.finished) finished = true;
+
     final timestamp = update.position.time.toUtc();
     final age = now.toUtc().difference(timestamp);
     if (age > viewerMaximumUpdateAge) return ViewerUpdateResult.tooOld;

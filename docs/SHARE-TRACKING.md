@@ -211,6 +211,18 @@ milliseconds UTC, `d` is active distance in metres and `el` active elapsed
 seconds. `b` is transmitted because subtracting active elapsed time from `t`
 produces the wrong start after a pause.
 
+`f` is present, as `1`, on exactly one update: the last of the share. It is
+omitted otherwise, so it costs nothing on the wire, and the constant padding
+hides the difference in length. It exists because without it the end of a share
+is indistinguishable from a phone that ran out of battery — the publisher simply
+stops, and the observer watches a counter climb forever.
+
+`f` was added to v1 rather than bumping the link version, which the rule above
+permits: it is additive in both directions. A viewer predating it ignores the
+key, exactly as it already ignores the padding filler, and a publisher predating
+it omits it, which a newer viewer reads as "still running". What that rule
+forbids is changing an existing spelling, not adding an optional field.
+
 Totals travel rather than being recomputed: a viewer only ever sees a sampled
 subset of the track — ephemeral events it missed are gone — so summing what it
 received would under-report distance and disagree with the recorder's own screen.
@@ -398,10 +410,27 @@ no identity to authenticate with, so NIP-42 is not available to this feature.
   construction rather than by care.
 - **The publisher is opt-in and memory-only.** `LiveShareCubit` creates one
   ephemeral session when the user taps the live-share control. Regular points
-  are sampled to 10 s, status transitions publish immediately, snapshots refresh
-  every 30 s, and recording stop also stops the share. A process kill ends the
-  share: restoring its keys would require persisting them, contradicting the
-  memory-only promise. The link remains readable only for already-published data.
+  are sampled to 10 s, status transitions publish immediately, and snapshots
+  refresh every 30 s. A process kill ends the share: restoring its keys would
+  require persisting them, contradicting the memory-only promise. The link
+  remains readable only for already-published data.
+- **A share may be armed before the recording exists.** The link can be created
+  first, publishes nothing while it waits, and binds to the first recording that
+  starts. Binding happens once and is never redone, because the viewer's totals
+  are deliberately monotonic: distance and elapsed only grow and the start time
+  only moves earlier, so a second recording would leave the observer looking at
+  the first one's figures forever. Following several recordings would require an
+  activity identifier on the wire and a reset path in the viewer.
+- **One share follows exactly one recording, and says when it ends.** When the
+  bound recording stops — or the user stops sharing — the publisher sends a last
+  update carrying `f`, refreshes the snapshot so a late opener reads it too, and
+  only then closes the sockets. Tearing down first would cut that update in
+  flight. A leaked link therefore cannot stream a *later* recording, which is the
+  privacy property arming had to preserve.
+
+  One consequence worth stating: if the recording ends while a password is still
+  being derived, which takes seconds, the share does not fail. It stays armed and
+  will follow the next recording instead.
 - **A production build must set `SHARE_VIEWER_URL`.** Without a canonical HTTPS
   viewer origin the live-share control is hidden rather than generating a broken
   or insecure link. HTTP is accepted only for loopback development URLs.

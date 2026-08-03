@@ -142,26 +142,81 @@ void main() {
     expect(cubit.state.isActive, isTrue);
   });
 
-  test('recording end during password derivation aborts sharing', () async {
+  test('a recording ending during derivation leaves the share armed', () async {
     await startRecording();
     final cubit = buildCubit();
     addTearDown(cubit.close);
 
     final starting = cubit.start(password: 'separate passphrase');
     recording.add(const StopRecording());
+    final link = await starting;
 
-    await expectLater(
-      starting,
-      throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          contains('ended before live sharing started'),
-        ),
-      ),
-    );
-    expect(cubit.state.isActive, isFalse);
+    // Deriving takes seconds, so the recording can end underneath it. Now that
+    // a share may exist without one, that is no longer a failure: it waits.
+    expect(ShareLink.parse(link).passwordProtected, isTrue);
+    expect(cubit.state.isActive, isTrue);
     expect(relay.sent, isEmpty);
+  });
+
+  test('a share can be armed before any activity exists', () async {
+    final cubit = buildCubit();
+    addTearDown(cubit.close);
+
+    final link = await cubit.start();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(cubit.state.isActive, isTrue);
+    expect(relay.sent, isEmpty, reason: 'nothing to publish while armed');
+
+    await startRecording();
+    recording.add(
+      ScoreFix(position: fixAt(startedAt.add(const Duration(seconds: 1)))),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+
+    final updates = await decryptLiveUpdates(link);
+    expect(updates, hasLength(1));
+    expect(updates.single.startedAt, startedAt);
+    expect(updates.single.finished, isFalse);
+  });
+
+  test('stopping announces the end, once, and in the snapshot too', () async {
+    await startRecording();
+    final cubit = buildCubit();
+    addTearDown(cubit.close);
+    final link = await cubit.start();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    recording.add(
+      ScoreFix(position: fixAt(startedAt.add(const Duration(seconds: 1)))),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    recording.add(const StopRecording());
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    final updates = await decryptLiveUpdates(link);
+    expect(updates.last.finished, isTrue);
+    expect(
+      updates.where((update) => update.finished),
+      hasLength(1),
+      reason: 'the recording stream keeps emitting; the end is announced once',
+    );
+
+    // A viewer opening the link afterwards only has the snapshot to read.
+    final descriptor = ShareLink.parse(link);
+    final keys = deriveShareKeys(shareSecret: descriptor.shareSecret);
+    final snapshotEvent = relay.sent
+        .map(Event.deserialize)
+        .lastWhere((event) => event.kind == shareLastKnownKind);
+    final snapshot = await decryptShareSnapshot(
+      payload: snapshotEvent.content,
+      recipientSecretKey: keys.recipientSecretKey,
+      publisherPublicKey: descriptor.publisherPublicKey,
+    );
+    expect(snapshot.updates.last.finished, isTrue);
+
+    expect(cubit.state.isActive, isFalse);
+    expect(relay.closed, isTrue);
   });
 
   test('publishes pause and resume without waiting for another fix', () async {

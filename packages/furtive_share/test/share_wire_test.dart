@@ -11,6 +11,7 @@ void main() {
     double? elevation = 132.5,
     double? accuracy = 4.5,
     SharePointStatus status = SharePointStatus.active,
+    bool finished = false,
   }) => ShareUpdate(
     position: SharePosition(
       time: at,
@@ -23,6 +24,7 @@ void main() {
     startedAt: at.subtract(const Duration(minutes: 22, seconds: 9)),
     distanceMeters: 4231.75,
     elapsed: const Duration(minutes: 22, seconds: 9),
+    finished: finished,
   );
 
   group('round trip', () {
@@ -67,6 +69,26 @@ void main() {
           status,
         );
       }
+    });
+
+    test('the end of a share crosses, and is absent until it happens', () {
+      expect(ShareUpdate.decode(update().encode()).finished, isFalse);
+      expect(
+        ShareUpdate.decode(update(finished: true).encode()).finished,
+        isTrue,
+      );
+      // Absent rather than false on the wire: an observer counting bytes must
+      // not be able to tell the two apart before the padding is applied.
+      expect(update().encode(), isNot(contains('"f"')));
+      expect(update(finished: true).encode(), contains('"f":1'));
+    });
+
+    test('ending a share does not change the ciphertext length', () {
+      expect(
+        update(finished: true).encode().length,
+        update().encode().length,
+        reason: 'otherwise the last update announces itself by size alone',
+      );
     });
   });
 
@@ -135,8 +157,9 @@ void main() {
 
     test('padding still applies at the worst case the bounds allow', () {
       // The leak comes back the moment a payload outgrows the padding target, and
-      // it comes back silently. Measured worst case is 139 characters against a
-      // 185-character budget; this fails if a new field eats the margin.
+      // it comes back silently. Measured worst case is 163 characters against a
+      // 185-character budget, every optional present and the share ending; this
+      // fails if a new field eats the remaining 22.
       final worst = ShareUpdate(
         position: SharePosition(
           time: DateTime.utc(2100),
@@ -149,6 +172,7 @@ void main() {
         startedAt: DateTime.utc(2026),
         distanceMeters: 40074999.99999,
         elapsed: const Duration(days: 30),
+        finished: true,
       );
 
       expect(worst.encode().length, 192);
@@ -324,6 +348,20 @@ void main() {
           '{"v":1,"p":{"t":1,"y":1,"x":1,"s":"a","e":$hostile},"b":1,"d":0,"el":0}',
         );
         expect(decoded.position.elevation, isNull, reason: hostile);
+      }
+    });
+
+    test('a garbled end-of-share flag reads as still running', () {
+      // Refusing here would cost the position over a field that only decorates
+      // the badge. And a relay withholding the flag is no worse than a relay
+      // dropping the whole event, which it can always do.
+      for (final hostile in ['0', '"true"', 'null', '2', '[]']) {
+        final decoded = ShareUpdate.decode(
+          '{"v":1,"p":{"t":1,"y":1,"x":1,"s":"a"},"b":1,"d":0,"el":0,'
+          '"f":$hostile}',
+        );
+        expect(decoded.finished, isFalse, reason: hostile);
+        expect(decoded.position.latitude, 1, reason: hostile);
       }
     });
 

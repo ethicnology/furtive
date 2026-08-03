@@ -142,6 +142,49 @@ void main() {
       expect(state.points, hasLength(2));
     });
 
+    test('the end of a share latches, though its position is a duplicate', () {
+      final state = ViewerTrackState();
+      final last = updateAt(now);
+      expect(state.add(last, now: now), ViewerUpdateResult.accepted);
+      expect(state.finished, isFalse);
+
+      // The publisher repeats the last known position with the flag set, so the
+      // position itself is a duplicate. The flag must survive that.
+      final ended = ShareUpdate(
+        position: last.position,
+        startedAt: last.startedAt,
+        distanceMeters: last.distanceMeters,
+        elapsed: last.elapsed,
+        finished: true,
+      );
+
+      expect(state.add(ended, now: now), ViewerUpdateResult.duplicate);
+      expect(state.finished, isTrue, reason: 'dedup must not swallow the flag');
+    });
+
+    test('a final update refused as stale still ends the share', () {
+      final state = ViewerTrackState();
+      final ended = ShareUpdate(
+        position: SharePosition(
+          time: now.subtract(const Duration(hours: 2)),
+          latitude: 45,
+          longitude: -73,
+          status: SharePointStatus.active,
+        ),
+        startedAt: now.subtract(const Duration(hours: 3)),
+        distanceMeters: 10,
+        elapsed: const Duration(minutes: 1),
+        finished: true,
+      );
+
+      expect(state.add(ended, now: now), ViewerUpdateResult.tooOld);
+      expect(
+        state.finished,
+        isTrue,
+        reason: 'a viewer opening late reads the end from the snapshot',
+      );
+    });
+
     test('uses the transmitted start across a long pause', () {
       final state = ViewerTrackState();
       final resumedAt = now.subtract(const Duration(minutes: 1));

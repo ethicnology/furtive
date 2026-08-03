@@ -146,6 +146,7 @@ class ShareUpdate {
     required this.startedAt,
     required this.distanceMeters,
     required this.elapsed,
+    this.finished = false,
   });
 
   final SharePosition position;
@@ -161,6 +162,18 @@ class ShareUpdate {
   /// Active elapsed time so far.
   final Duration elapsed;
 
+  /// Whether the recording has ended, making this the last update of the share.
+  ///
+  /// Without it the end of a share is indistinguishable from a phone that lost
+  /// signal or ran out of battery: the publisher simply stops, and the observer
+  /// is left watching a countdown that never resolves.
+  ///
+  /// Added to v1 rather than bumping the link version, because it is additive in
+  /// both directions: a viewer that predates it ignores the key, exactly as it
+  /// already ignores the padding filler, and a publisher that predates it omits
+  /// it, which a newer viewer reads as "still running".
+  final bool finished;
+
   /// Private on purpose: [encode] is the only way an update leaves this class.
   ///
   /// A public `toJson` is a footgun here — `jsonEncode(update.toJson())` looks
@@ -173,6 +186,9 @@ class ShareUpdate {
     'b': startedAt.toUtc().millisecondsSinceEpoch,
     'd': distanceMeters,
     'el': elapsed.inSeconds,
+    // Omitted while false, which is every update but the last one. The padding
+    // hides the resulting length difference, so this costs an observer nothing.
+    if (finished) 'f': 1,
   };
 
   void validate() {
@@ -250,6 +266,10 @@ class ShareUpdate {
       elapsed: Duration(
         seconds: _readInt(decoded, 'el', min: 0, max: _maxElapsedSeconds),
       ),
+      // Optional, so it degrades to "still running" rather than refusing the
+      // position it travelled with. A relay withholding it is no worse than a
+      // relay dropping the event outright, which it can always do.
+      finished: decoded['f'] == 1,
     );
   }
 }

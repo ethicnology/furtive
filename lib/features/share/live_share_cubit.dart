@@ -119,10 +119,6 @@ class LiveShareCubit extends Cubit<LiveShareState> {
 
   Future<String> start({String? password}) async {
     if (state.isActive) return state.link!;
-    final activity = _recording.state.activity;
-    if (activity == null) {
-      throw StateError('Start an activity before sharing it live.');
-    }
     if (!isConfigured) {
       throw StateError(
         'Live sharing is not configured in this build (SHARE_VIEWER_URL).',
@@ -145,10 +141,6 @@ class LiveShareCubit extends Cubit<LiveShareState> {
               secret: secret,
               password: password,
             ));
-      final currentActivity = _recording.state.activity;
-      if (currentActivity == null || currentActivity.id != activity.id) {
-        throw StateError('The activity ended before live sharing started.');
-      }
       final publisher = Keys.generate();
       final link = ShareLink(
         publisherPublicKey: publisher.public,
@@ -157,15 +149,16 @@ class LiveShareCubit extends Cubit<LiveShareState> {
         passwordProtected: password != null,
       ).toUri(viewerBase);
       final session = _session = _LiveShareSession(
-        activityId: activity.id,
         publisher: publisher,
         recipientPublicKey: derived.recipientPublicKey,
         topic: derived.topic,
         expiresAt: _clock.nowUtc().add(shareLifetime),
-        processedPointCount: currentActivity.points.isEmpty
-            ? 0
-            : currentActivity.points.length - 1,
       );
+      // Read the recording state after derivation rather than before: a
+      // password costs seconds, and a recording may have started or ended in
+      // the meantime. Finding none is no longer a failure — the share simply
+      // stays armed until one begins.
+      _bindActivity(session, _recording.state.activity);
       emit(
         LiveShareState(
           status: LiveShareStatus.active,
@@ -188,7 +181,42 @@ class LiveShareCubit extends Cubit<LiveShareState> {
     }
   }
 
+  /// Ends the share, telling observers before the sockets close.
   Future<void> stop() async {
+    final session = _session;
+    if (session != null) await _notifyEnd(session);
+    await _teardown();
+  }
+
+  /// Publishes one last update marking the share as over, and waits for it to
+  /// leave.
+  ///
+  /// Without this the end of a share is indistinguishable from a phone that ran
+  /// out of battery: the publisher stops and the observer keeps watching a
+  /// counter climb. The snapshot is refreshed too, so somebody opening the link
+  /// afterwards reads "ended" instead of waiting for a position that will never
+  /// come.
+  Future<void> _notifyEnd(_LiveShareSession session) async {
+    if (session.finishing || session.history.isEmpty) return;
+    session.finishing = true;
+    final last = session.history.last;
+    _queueUpdate(
+      session,
+      ShareUpdate(
+        position: last.position,
+        startedAt: last.startedAt,
+        distanceMeters: last.distanceMeters,
+        elapsed: last.elapsed,
+        finished: true,
+      ),
+      forceSnapshot: true,
+    );
+    await _publishQueue;
+  }
+
+  /// Tears down without notifying, for the cases where there is nobody left to
+  /// tell: an expired share, a failed start, a cubit being disposed.
+  Future<void> _teardown() async {
     _session = null;
     for (final timer in _reconnectTimers.values) {
       timer.cancel();
@@ -337,10 +365,30 @@ class LiveShareCubit extends Cubit<LiveShareState> {
     _emitRelayHealth();
   }
 
+  /// Binds an armed share to the recording it will follow.
+  ///
+  /// Skips whatever is already recorded: an observer joining a run in progress
+  /// wants the current position, not the whole track replayed at cadence.
+  void _bindActivity(_LiveShareSession session, ActivityEntity? activity) {
+    if (activity == null || session.activityId != null) return;
+    session
+      ..activityId = activity.id
+      ..processedPointCount = activity.points.isEmpty
+          ? 0
+          : activity.points.length - 1;
+  }
+
   void _onRecordingState(RecordingState recording) {
     final session = _session;
-    final activity = recording.activity;
     if (session == null) return;
+    final activity = recording.activity;
+
+    // Armed and waiting: the absence of a recording is the normal state here,
+    // not a reason to end the share.
+    if (session.activityId == null) {
+      if (activity == null) return;
+      _bindActivity(session, activity);
+    }
     if (activity == null || activity.id != session.activityId) {
       unawaited(stop());
       return;
@@ -412,7 +460,11 @@ class LiveShareCubit extends Cubit<LiveShareState> {
     );
   }
 
-  void _queueUpdate(_LiveShareSession session, ShareUpdate update) {
+  void _queueUpdate(
+    _LiveShareSession session,
+    ShareUpdate update, {
+    bool forceSnapshot = false,
+  }) {
     session
       ..lastLiveAt = update.position.time
       ..lastPublishedStatus = update.position.status
@@ -424,16 +476,21 @@ class LiveShareCubit extends Cubit<LiveShareState> {
         .catchError((Object error, StackTrace trace) {
           logs.warning('Live share publish', error: error, trace: trace);
         })
-        .then((_) => _publishUpdate(session, update));
+        .then(
+          (_) => _publishUpdate(session, update, forceSnapshot: forceSnapshot),
+        );
   }
 
   Future<void> _publishUpdate(
     _LiveShareSession session,
-    ShareUpdate update,
-  ) async {
+    ShareUpdate update, {
+    bool forceSnapshot = false,
+  }) async {
     if (_session != session) return;
     if (!session.expiresAt.isAfter(_clock.nowUtc())) {
-      await stop();
+      // No notification: the event would carry an expiration already in the
+      // past, which relays are entitled to drop.
+      await _teardown();
       return;
     }
     final content = await encryptShareUpdate(
@@ -446,7 +503,9 @@ class LiveShareCubit extends Cubit<LiveShareState> {
     final sinceSnapshot = session.lastSnapshotAt == null
         ? null
         : update.position.time.difference(session.lastSnapshotAt!);
-    if (sinceSnapshot == null || sinceSnapshot >= snapshotCadence) {
+    if (forceSnapshot ||
+        sinceSnapshot == null ||
+        sinceSnapshot >= snapshotCadence) {
       session.lastSnapshotAt = update.position.time;
       await _publishSnapshot(session);
     }
@@ -531,7 +590,9 @@ class LiveShareCubit extends Cubit<LiveShareState> {
   @override
   Future<void> close() async {
     await _recordingSubscription.cancel();
-    await stop();
+    // Deliberately not stop(): a disposed cubit must not wait on the network,
+    // and the process is on its way out anyway.
+    await _teardown();
     return super.close();
   }
 }
@@ -542,23 +603,32 @@ ShareKeys _derivePasswordProtectedKeys(
 
 class _LiveShareSession {
   _LiveShareSession({
-    required this.activityId,
     required this.publisher,
     required this.recipientPublicKey,
     required this.topic,
     required this.expiresAt,
-    required this.processedPointCount,
   });
 
-  final String activityId;
   final Keys publisher;
   final String recipientPublicKey;
   final String topic;
   final DateTime expiresAt;
   final List<ShareUpdate> history = [];
-  int processedPointCount;
+
+  /// The recording this share follows, or null while it is armed and waiting.
+  ///
+  /// Bound once and never rebound: the viewer's totals are deliberately
+  /// monotonic, so a second recording would leave it displaying the first one's
+  /// distance, duration and start time forever.
+  String? activityId;
+
+  int processedPointCount = 0;
   DateTime? lastLiveAt;
   DateTime? lastSnapshotAt;
   SharePointStatus? lastPublishedStatus;
   bool? lastRecordingPaused;
+
+  /// Guards against a second final update: the recording stream keeps
+  /// delivering while the last publication is still in flight.
+  bool finishing = false;
 }

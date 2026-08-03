@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recording stops publication. A lightweight Dart Web + Leaflet viewer verifies
   event signatures, rejects stale positions and bootstraps late joiners from a
   fixed-size ten-minute encrypted snapshot.
+
+  The link can be created before starting the activity: it waits, then follows
+  the first recording that begins. When that recording ends, the viewer is told
+  so explicitly and shows `ENDED`, instead of leaving a watcher guessing whether
+  the phone simply lost signal.
 - **Activity profiles.** Furtive is no longer implicitly a running app: pick
   what you are about to do — walk, run, bike, drive, swim, fly or another
   activity — from the record screen, next to Start. The last choice is
