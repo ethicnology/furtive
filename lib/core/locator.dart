@@ -17,8 +17,15 @@ final getIt = GetIt.instance;
 /// untestable — there was no seam anywhere between a bloc and SQLite.
 class Locator {
   static void setup() {
-    // One connection per app lifetime.
-    getIt.registerLazySingleton<LocalDatabase>(LocalDatabase.new);
+    // One connection per app lifetime. The dispose hook is what closes the
+    // SQLite connection if the locator is ever reset (tests, a future
+    // shutdown path) — on mobile the OS reclaims the process long before
+    // that, and WAL is crash-safe, but leaving close() unwired made the
+    // composition root's ownership a lie.
+    getIt.registerLazySingleton<LocalDatabase>(
+      LocalDatabase.new,
+      dispose: (db) => db.close(),
+    );
 
     // Blocs are lazy singletons so cross-bloc wiring (MapBloc forwarding fixes
     // to RecordingBloc, a preferences change re-initing the map) reaches the

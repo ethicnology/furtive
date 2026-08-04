@@ -354,8 +354,15 @@ class ActivityLocalDataSource {
     int? limit,
     int offset = 0,
   }) async {
+    // desc(id) as tie-break: two activities can share a startedAt (a GPX
+    // import stamps startedAt from the file, so importing the same file
+    // twice produces exact ties), and an unstable order would make paged
+    // fetches skip or repeat rows across pages.
     final query = db.select(db.activities)
-      ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]);
+      ..orderBy([
+        (t) => OrderingTerm.desc(t.startedAt),
+        (t) => OrderingTerm.desc(t.id),
+      ]);
     if (limit != null) query.limit(limit, offset: offset);
     final rows = await query.get();
 
@@ -404,14 +411,15 @@ class ActivityLocalDataSource {
   }
 
   Future<void> updateName(String activityId, String newName) async {
-    final activity = await (db.select(
-      db.activities,
-    )..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    // Single UPDATE with a rowcount check rather than SELECT-then-UPDATE:
+    // atomic, and one round-trip shorter. write() returns the number of
+    // affected rows, so an unknown id surfaces as the same AppError the
+    // check-then-write version threw.
+    final updated =
+        await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
+            .write(ActivitiesCompanion(name: Value(newName)));
 
-    if (activity == null) throw AppError('Activity not found');
-
-    await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
-        .write(ActivitiesCompanion(name: Value(newName)));
+    if (updated == 0) throw AppError('Activity not found');
   }
 
   Future<void> delete(String activityId) async {
