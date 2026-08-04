@@ -18,7 +18,6 @@
   "btnRetry": "Tentar novamente",
   "btnRename": "Renomear",
   "btnDelete": "Excluir",
-  "btnApply": "Aplicar",
   "prefSaveFailed": "Não foi possível salvar suas preferências.",
   "btnStarGitHub": "Dar estrela no GitHub",
   "btnSponsor": "Apoiar",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Preciso",
   "prefDetailBalanced": "Equilibrado",
   "prefDetailEndurance": "Resistência",
-  "prefMapControlsOnLeft": "Controles do mapa à esquerda",
-  "prefMapControlsOnLeftSubtitle": "Move os botões seguir, iniciar, pausar e parar para a borda esquerda, facilitando o uso com a mão esquerda. Os créditos do mapa vão para o canto oposto."
+  "prefMapControlsOnRight": "Controles do mapa à direita",
+  "prefMapControlsOnRightSubtitle": "Os botões seguir, iniciar, pausar e parar estão na borda direita. Desativa para os mover para a esquerda, facilitando o uso com a mão esquerda. Os créditos do mapa vão para o canto oposto."
 }

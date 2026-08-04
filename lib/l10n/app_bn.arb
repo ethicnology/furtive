@@ -18,7 +18,6 @@
   "btnRetry": "আবার চেষ্টা করুন",
   "btnRename": "পুনর্নামকরণ",
   "btnDelete": "মুছুন",
-  "btnApply": "প্রয়োগ করুন",
   "prefSaveFailed": "আপনার পছন্দ সংরক্ষণ করা যায়নি।",
   "btnStarGitHub": "GitHub-এ স্টার দিন",
   "btnSponsor": "সহায়তা করুন",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "নিখুঁত",
   "prefDetailBalanced": "সুষম",
   "prefDetailEndurance": "সহনশীলতা",
-  "prefMapControlsOnLeft": "বাঁ দিকে ম্যাপ নিয়ন্ত্রণ",
-  "prefMapControlsOnLeftSubtitle": "বাঁ হাতে ব্যবহারের জন্য অনুসরণ, শুরু, বিরতি ও থামার বোতাম বাঁ প্রান্তে সরায়। ম্যাপের কৃতিত্ব বিপরীত কোণে চলে যায়।"
+  "prefMapControlsOnRight": "ডান দিকে ম্যাপ নিয়ন্ত্রণ",
+  "prefMapControlsOnRightSubtitle": "অনুসরণ, শুরু, বিরতি ও থামার বোতাম ডান প্রান্তে থাকে। বাঁ হাতে ব্যবহারের জন্য বাম দিকে সরাতে বন্ধ করুন। ম্যাপের কৃতিত্ব বিপরীত কোণে চলে যায়।"
 }

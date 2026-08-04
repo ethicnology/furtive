@@ -18,7 +18,6 @@
   "btnRetry": "Erneut versuchen",
   "btnRename": "Umbenennen",
   "btnDelete": "Löschen",
-  "btnApply": "Anwenden",
   "prefSaveFailed": "Einstellungen konnten nicht gespeichert werden.",
   "btnStarGitHub": "Auf GitHub Sterne geben",
   "btnSponsor": "Unterstützen",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Genau",
   "prefDetailBalanced": "Ausgewogen",
   "prefDetailEndurance": "Ausdauer",
-  "prefMapControlsOnLeft": "Kartensteuerung links",
-  "prefMapControlsOnLeftSubtitle": "Verschiebt die Schaltflächen Folgen, Start, Pause und Stopp an den linken Rand für Linkshänder. Der Kartenhinweis wandert in die gegenüberliegende Ecke."
+  "prefMapControlsOnRight": "Kartensteuerung rechts",
+  "prefMapControlsOnRightSubtitle": "Die Schaltflächen Folgen, Start, Pause und Stopp sitzen am rechten Rand. Zum Verschieben nach links für Linkshänder ausschalten. Der Kartenhinweis wandert in die gegenüberliegende Ecke."
 }

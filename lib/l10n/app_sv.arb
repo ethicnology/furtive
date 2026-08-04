@@ -18,7 +18,6 @@
   "btnRetry": "Försök igen",
   "btnRename": "Byt namn",
   "btnDelete": "Ta bort",
-  "btnApply": "Tillämpa",
   "prefSaveFailed": "Kunde inte spara dina inställningar.",
   "btnStarGitHub": "Stjärna på GitHub",
   "btnSponsor": "Stötta",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Exakt",
   "prefDetailBalanced": "Balanserad",
   "prefDetailEndurance": "Uthållighet",
-  "prefMapControlsOnLeft": "Kartkontroller till vänster",
-  "prefMapControlsOnLeftSubtitle": "Flyttar knapparna följ, starta, pausa och stoppa till vänsterkanten, för vänsterhänt användning. Kartkrediten flyttas till motsatt hörn."
+  "prefMapControlsOnRight": "Kartkontroller till höger",
+  "prefMapControlsOnRightSubtitle": "Knapparna följ, starta, pausa och stoppa sitter på högerkanten. Stäng av för att flytta dem till vänster, för vänsterhänt användning. Kartkrediten flyttas till motsatt hörn."
 }

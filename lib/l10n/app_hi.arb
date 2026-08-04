@@ -18,7 +18,6 @@
   "btnRetry": "पुनः प्रयास करें",
   "btnRename": "नाम बदलें",
   "btnDelete": "हटाएँ",
-  "btnApply": "लागू करें",
   "prefSaveFailed": "आपकी प्राथमिकताएँ सहेजी नहीं जा सकीं।",
   "btnStarGitHub": "GitHub पर स्टार दें",
   "btnSponsor": "सहायता करें",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "सटीक",
   "prefDetailBalanced": "संतुलित",
   "prefDetailEndurance": "सहनशक्ति",
-  "prefMapControlsOnLeft": "मैप नियंत्रण बाईं ओर",
-  "prefMapControlsOnLeftSubtitle": "बाएं हाथ के उपयोग के लिए फ़ॉलो, शुरू, रोकें और बंद करें बटन बाएं किनारे पर ले जाता है। मैप श्रेय विपरीत कोने में चला जाता है।"
+  "prefMapControlsOnRight": "मैप नियंत्रण दाईं ओर",
+  "prefMapControlsOnRightSubtitle": "फ़ॉलो, शुरू, रोकें और बंद करें बटन दाएं किनारे पर हैं। बाएं हाथ के उपयोग के लिए बाईं ओर ले जाने हेतु बंद करें। मैप श्रेय विपरीत कोने में चला जाता है।"
 }

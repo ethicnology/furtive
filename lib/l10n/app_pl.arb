@@ -18,7 +18,6 @@
   "btnRetry": "Ponów",
   "btnRename": "Zmień nazwę",
   "btnDelete": "Usuń",
-  "btnApply": "Zastosuj",
   "prefSaveFailed": "Nie udało się zapisać preferencji.",
   "btnStarGitHub": "Gwiazdka na GitHub",
   "btnSponsor": "Wesprzyj",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Dokładnie",
   "prefDetailBalanced": "Zrównoważone",
   "prefDetailEndurance": "Wytrzymałość",
-  "prefMapControlsOnLeft": "Sterowanie mapą po lewej",
-  "prefMapControlsOnLeftSubtitle": "Przenosi przyciski śledzenia, start, pauza i stop na lewą krawędź, dla osób leworęcznych. Podpis mapy przechodzi do przeciwnego narożnika."
+  "prefMapControlsOnRight": "Sterowanie mapą po prawej",
+  "prefMapControlsOnRightSubtitle": "Przyciski śledzenia, start, pauza i stop są przy prawej krawędzi. Wyłącz, by przenieść je na lewo, dla osób leworęcznych. Podpis mapy przechodzi do przeciwnego narożnika."
 }

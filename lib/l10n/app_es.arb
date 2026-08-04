@@ -18,7 +18,6 @@
   "btnRetry": "Reintentar",
   "btnRename": "Renombrar",
   "btnDelete": "Eliminar",
-  "btnApply": "Aplicar",
   "prefSaveFailed": "No se pudieron guardar tus preferencias.",
   "btnStarGitHub": "Estrella en GitHub",
   "btnSponsor": "Patrocinar",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Preciso",
   "prefDetailBalanced": "Equilibrado",
   "prefDetailEndurance": "Resistencia",
-  "prefMapControlsOnLeft": "Controles del mapa a la izquierda",
-  "prefMapControlsOnLeftSubtitle": "Mueve los botones seguir, iniciar, pausar y detener al borde izquierdo, para zurdos. El crédito del mapa pasa a la esquina opuesta."
+  "prefMapControlsOnRight": "Controles del mapa a la derecha",
+  "prefMapControlsOnRightSubtitle": "Los botones seguir, iniciar, pausar y detener están en el borde derecho. Desactiva para moverlos a la izquierda, para zurdos. El crédito del mapa pasa a la esquina opuesta."
 }

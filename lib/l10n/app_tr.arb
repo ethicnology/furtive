@@ -18,7 +18,6 @@
   "btnRetry": "Tekrar dene",
   "btnRename": "Yeniden adlandır",
   "btnDelete": "Sil",
-  "btnApply": "Uygula",
   "prefSaveFailed": "Tercihleriniz kaydedilemedi.",
   "btnStarGitHub": "GitHub'da yıldız ver",
   "btnSponsor": "Sponsor ol",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Hassas",
   "prefDetailBalanced": "Dengeli",
   "prefDetailEndurance": "Dayanıklılık",
-  "prefMapControlsOnLeft": "Harita denetimleri solda",
-  "prefMapControlsOnLeftSubtitle": "Takip, başlat, duraklat ve durdur düğmelerini sol kenara taşır; sol elle kullanım için. Harita künyesi karşı köşeye geçer."
+  "prefMapControlsOnRight": "Harita denetimleri sağda",
+  "prefMapControlsOnRightSubtitle": "Takip, başlat, duraklat ve durdur düğmeleri sağ kenardadır. Sol elle kullanım için sola taşımak üzere kapatın. Harita künyesi karşı köşeye geçer."
 }

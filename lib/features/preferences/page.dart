@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/repositories/preferences_repository.dart';
-import 'package:furtive/core/global.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
@@ -64,17 +63,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
         return BlocProvider.value(
           value: snapshot.data!,
           child: BlocListener<PreferencesBloc, PreferencesState>(
-            // Pop only once the write has actually landed; surface a failure
-            // instead of pretending it succeeded. Before this, Apply popped in
-            // the same frame it dispatched, so a failed save vanished.
+            // Changes apply immediately — there is no Apply button — so a
+            // failed write has no spinner to hide behind: report it. The
+            // bloc rolls the control back to the persisted value itself.
             listenWhen: (previous, current) =>
                 previous.saveCompleted != current.saveCompleted &&
-                current.saveCompleted != null,
+                current.saveCompleted == false,
             listener: (context, state) {
-              if (state.saveCompleted == true) {
-                Navigator.of(context).pop();
-                return;
-              }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(AppLocalizations.of(context).prefSaveFailed),
@@ -92,83 +87,30 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  // Scrollable + IntrinsicHeight rather than a bare Column:
-                  // the Spacer below pushes Apply to the bottom when there is
-                  // room, but with five sections a short screen — or the same
-                  // screen at an accessibility font scale — overflowed the
-                  // Column and pushed Apply off the viewport entirely, making
-                  // the settings impossible to save. LayoutBuilder feeds the
-                  // viewport height in as a minimum so the Spacer keeps working
-                  // when it fits, and the whole thing scrolls when it doesn't.
-                  return LayoutBuilder(
-                    builder: (context, constraints) => SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            children: [
-                              _buildMapThemeSection(context, state),
-                              const SizedBox(height: 24),
-                              _buildAppLanguageSection(context, state),
-                              const SizedBox(height: 24),
-                              _buildMapTilesSection(context, state),
-                              const SizedBox(height: 24),
-                              _buildLockScreenSection(context, state),
-                              const SizedBox(height: 24),
-                              _buildMapControlsSideSection(context, state),
-                              const SizedBox(height: 24),
-                              _buildRecordingDetailSection(context, state),
-                              const Spacer(),
-                              SizedBox(
-                                width: double.infinity,
-                                child: Padding(
-                                  padding: EdgeInsets.all(
-                                    context.screenPadding,
-                                  ),
-                                  child: ElevatedButton(
-                                    // Disabled while the write is in flight so Apply
-                                    // can't be double-dispatched.
-                                    onPressed: state.isSaving
-                                        ? null
-                                        : () {
-                                            // Pass state.preferences directly —
-                                            // re-building a PreferencesEntity by hand
-                                            // drops fields that aren't edited on this
-                                            // page (e.g. hasCompletedOnboarding) and
-                                            // silently resets them to their constructor
-                                            // defaults.
-                                            //
-                                            // No pop() here: the page must outlive the
-                                            // write so a failure can be shown. The
-                                            // BlocListener above pops on success.
-                                            context.read<PreferencesBloc>().add(
-                                              UpdatePreferences(
-                                                state.preferences,
-                                              ),
-                                            );
-                                          },
-                                    child: state.isSaving
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(
-                                            AppLocalizations.of(
-                                              context,
-                                            ).btnApply,
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                  // Plain scrollable column: the page used to need a Spacer +
+                  // IntrinsicHeight to keep the Apply button reachable on
+                  // short viewports; without the button, scrolling alone
+                  // covers the accessibility font-scale case.
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildMapThemeSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildAppLanguageSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildMapTilesSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildLockScreenSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildMapControlsSideSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildRecordingDetailSection(context, state),
+                        const SizedBox(height: 24),
+                      ],
                     ),
                   );
                 },
@@ -255,15 +197,18 @@ Widget _buildMapControlsSideSection(
   return SwitchListTile(
     contentPadding: EdgeInsets.zero,
     title: Text(
-      l10n.prefMapControlsOnLeft,
+      l10n.prefMapControlsOnRight,
       style: Theme.of(
         context,
       ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     ),
-    subtitle: Text(l10n.prefMapControlsOnLeftSubtitle),
-    value: state.preferences.mapControlsOnLeft,
+    subtitle: Text(l10n.prefMapControlsOnRightSubtitle),
+    // The toggle presents the default-true direction (controls on the
+    // right); storage keeps the historical mapControlsOnLeft column, so the
+    // value is inverted at both ends. No migration needed.
+    value: !state.preferences.mapControlsOnLeft,
     onChanged: (v) =>
-        context.read<PreferencesBloc>().add(ChangeMapControlsOnLeft(v)),
+        context.read<PreferencesBloc>().add(ChangeMapControlsOnLeft(!v)),
   );
 }
 

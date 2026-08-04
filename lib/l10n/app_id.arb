@@ -18,7 +18,6 @@
   "btnRetry": "Coba lagi",
   "btnRename": "Ganti nama",
   "btnDelete": "Hapus",
-  "btnApply": "Terapkan",
   "prefSaveFailed": "Tidak dapat menyimpan preferensi Anda.",
   "btnStarGitHub": "Bintangi di GitHub",
   "btnSponsor": "Dukung",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Presisi",
   "prefDetailBalanced": "Seimbang",
   "prefDetailEndurance": "Daya tahan",
-  "prefMapControlsOnLeft": "Kontrol peta di kiri",
-  "prefMapControlsOnLeftSubtitle": "Memindahkan tombol ikuti, mulai, jeda dan berhenti ke sisi kiri untuk pengguna kiri. Kredit peta pindah ke sudut seberang."
+  "prefMapControlsOnRight": "Kontrol peta di kanan",
+  "prefMapControlsOnRightSubtitle": "Tombol ikuti, mulai, jeda dan berhenti ada di sisi kanan. Nonaktifkan untuk memindahkannya ke kiri untuk pengguna kiri. Kredit peta pindah ke sudut seberang."
 }

@@ -18,7 +18,6 @@
   "btnRetry": "重试",
   "btnRename": "重命名",
   "btnDelete": "删除",
-  "btnApply": "应用",
   "prefSaveFailed": "无法保存您的偏好设置。",
   "btnStarGitHub": "在 GitHub 上加星",
   "btnSponsor": "赞助",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "精确",
   "prefDetailBalanced": "均衡",
   "prefDetailEndurance": "耐力",
-  "prefMapControlsOnLeft": "地图控件靠左",
-  "prefMapControlsOnLeftSubtitle": "将跟随、开始、暂停和停止按钮移到左边缘,便于左手操作。地图署名会移到对角。"
+  "prefMapControlsOnRight": "地图控件靠右",
+  "prefMapControlsOnRightSubtitle": "跟随、开始、暂停和停止按钮位于右边缘。关闭可将它们移到左侧，便于左手操作。地图署名会移到对角。"
 }

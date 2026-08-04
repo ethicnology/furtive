@@ -18,7 +18,6 @@
   "btnRetry": "Zkusit znovu",
   "btnRename": "Přejmenovat",
   "btnDelete": "Smazat",
-  "btnApply": "Použít",
   "prefSaveFailed": "Nastavení se nepodařilo uložit.",
   "btnStarGitHub": "Hvězda na GitHubu",
   "btnSponsor": "Podpořit",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Přesné",
   "prefDetailBalanced": "Vyvážené",
   "prefDetailEndurance": "Vytrvalost",
-  "prefMapControlsOnLeft": "Ovládání mapy vlevo",
-  "prefMapControlsOnLeftSubtitle": "Přesune tlačítka sledovat, start, pauza a stop k levému okraji pro leváky. Popisek mapy se přesune do protilehlého rohu."
+  "prefMapControlsOnRight": "Ovládání mapy vpravo",
+  "prefMapControlsOnRightSubtitle": "Tlačítka sledovat, start, pauza a stop jsou u pravého okraje. Vypnutím je přesunete vlevo pro leváky. Popisek mapy se přesune do protilehlého rohu."
 }

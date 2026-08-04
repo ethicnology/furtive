@@ -18,7 +18,6 @@
   "btnRetry": "Réessayer",
   "btnRename": "Renommer",
   "btnDelete": "Effacer",
-  "btnApply": "Appliquer",
   "prefSaveFailed": "Impossible d'enregistrer vos préférences.",
   "btnStarGitHub": "Étoile sur GitHub",
   "btnSponsor": "Encourager",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Précis",
   "prefDetailBalanced": "Équilibré",
   "prefDetailEndurance": "Endurance",
-  "prefMapControlsOnLeft": "Commandes de la carte à gauche",
-  "prefMapControlsOnLeftSubtitle": "Déplace les boutons suivre, démarrer, pause et arrêt vers le bord gauche, pour les gauchers. Le crédit de la carte passe dans le coin opposé."
+  "prefMapControlsOnRight": "Commandes de la carte à droite",
+  "prefMapControlsOnRightSubtitle": "Les boutons suivre, démarrer, pause et arrêt sont sur le bord droit. Désactive pour les déplacer à gauche, pour les gauchers. Le crédit de la carte passe dans le coin opposé."
 }

@@ -1,4 +1,6 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/locale_cubit.dart';
@@ -19,7 +21,11 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
        _lockScreenFacade = lockScreen ?? LockScreenFacade(),
        super(initialState) {
     on<LoadPreferences>(_onLoadPreferences);
-    on<UpdatePreferences>(_onUpdatePreferences);
+    // Writes are serialised: every Change* handler auto-dispatches one, and
+    // concurrent processing could persist a stale snapshot over a newer one
+    // (two rapid toggles, second write landing first). sequential() queues
+    // them in dispatch order, so the last toggle always wins.
+    on<UpdatePreferences>(_onUpdatePreferences, transformer: sequential());
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeUiLocale>(_onChangeUiLocale);
     on<ChangeMapTilesEnabled>(_onChangeMapTilesEnabled);
@@ -68,61 +74,49 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     }
   }
 
-  void _onChangeMapTheme(ChangeMapTheme event, Emitter<PreferencesState> emit) {
-    final newPreferences = state.preferences.copyWith(mapTheme: event.theme);
+  /// Applies an edit optimistically, then persists it: there is no Apply
+  /// button — every change takes effect (and is stored) immediately. The
+  /// write itself runs in _onUpdatePreferences, serialised with every other
+  /// pending write; a failure rolls the control back to the persisted value
+  /// and surfaces a snackbar.
+  void _applyChange(
+    PreferencesEntity Function(PreferencesEntity) update,
+    Emitter<PreferencesState> emit,
+  ) {
+    final newPreferences = update(state.preferences);
     emit(state.copyWith(preferences: newPreferences));
+    add(UpdatePreferences(newPreferences));
   }
 
-  void _onChangeUiLocale(ChangeUiLocale event, Emitter<PreferencesState> emit) {
-    final newPreferences = state.preferences.copyWith(
-      uiLocale: event.languageCode,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
+  void _onChangeMapTheme(
+    ChangeMapTheme event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(mapTheme: event.theme), emit);
+
+  void _onChangeUiLocale(
+    ChangeUiLocale event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(uiLocale: event.languageCode), emit);
 
   void _onChangeMapTilesEnabled(
     ChangeMapTilesEnabled event,
     Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      mapTilesEnabled: event.enabled,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
+  ) => _applyChange((p) => p.copyWith(mapTilesEnabled: event.enabled), emit);
 
   void _onChangeShowOnLockScreen(
     ChangeShowOnLockScreen event,
     Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      showOnLockScreen: event.enabled,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
+  ) => _applyChange((p) => p.copyWith(showOnLockScreen: event.enabled), emit);
 
   void _onChangeMapControlsOnLeft(
     ChangeMapControlsOnLeft event,
     Emitter<PreferencesState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        preferences: state.preferences.copyWith(
-          mapControlsOnLeft: event.onLeft,
-        ),
-      ),
-    );
-  }
+  ) => _applyChange((p) => p.copyWith(mapControlsOnLeft: event.onLeft), emit);
 
   void _onChangeRecordingDetail(
     ChangeRecordingDetail event,
     Emitter<PreferencesState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        preferences: state.preferences.copyWith(recordingDetail: event.detail),
-      ),
-    );
-  }
+  ) => _applyChange((p) => p.copyWith(recordingDetail: event.detail), emit);
 
   Future<void> _onUpdatePreferences(
     UpdatePreferences event,
@@ -139,13 +133,16 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     try {
       await _preferences.store(event.preferences);
     } catch (e, s) {
-      // The page now STAYS MOUNTED until saveCompleted flips (it no longer pops
-      // in the same frame as dispatching Apply), so a failed write is actually
-      // reportable instead of being logged into the void while the user believes
-      // their settings were stored.
       logs.severe('$UpdatePreferences', error: e, trace: s);
       emit(
         state.copyWith(
+          // Roll the control back to the last-persisted value so the UI never
+          // shows a setting that isn't actually stored — unless a newer edit
+          // is already queued behind this write, in which case its own write
+          // settles the final value and rolling back would clobber it.
+          preferences: state.preferences == event.preferences
+              ? state.persisted
+              : state.preferences,
           isSaving: false,
           saveCompleted: false,
           error: e is AppError ? e : AppError(e.toString()),
@@ -156,7 +153,10 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
 
     emit(
       state.copyWith(
-        preferences: event.preferences,
+        // Do NOT write preferences: event.preferences here — a newer Change*
+        // may already have moved state.preferences past this write while it
+        // was queued, and stamping the older snapshot back would flicker the
+        // control. state.preferences is always >= this write's snapshot.
         persisted: event.preferences,
         isSaving: false,
         saveCompleted: true,

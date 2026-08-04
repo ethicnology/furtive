@@ -18,7 +18,6 @@
   "btnRetry": "Повторити",
   "btnRename": "Перейменувати",
   "btnDelete": "Видалити",
-  "btnApply": "Застосувати",
   "prefSaveFailed": "Не вдалося зберегти налаштування.",
   "btnStarGitHub": "Зірка на GitHub",
   "btnSponsor": "Підтримати",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Точно",
   "prefDetailBalanced": "Збалансовано",
   "prefDetailEndurance": "Витривалість",
-  "prefMapControlsOnLeft": "Керування картою ліворуч",
-  "prefMapControlsOnLeftSubtitle": "Переносить кнопки стеження, запуску, паузи та зупинки до лівого краю — для лівшів. Атрибуція карти переходить у протилежний кут."
+  "prefMapControlsOnRight": "Керування картою праворуч",
+  "prefMapControlsOnRightSubtitle": "Кнопки стеження, запуску, паузи та зупинки розташовані біля правого краю. Вимкніть, щоб перенести їх ліворуч — для лівшів. Атрибуція карти переходить у протилежний кут."
 }

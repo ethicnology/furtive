@@ -18,7 +18,6 @@
   "btnRetry": "Jaribu tena",
   "btnRename": "Badilisha jina",
   "btnDelete": "Futa",
-  "btnApply": "Tumia",
   "prefSaveFailed": "Imeshindwa kuhifadhi mapendeleo yako.",
   "btnStarGitHub": "Mpe nyota GitHub",
   "btnSponsor": "Saidia",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Sahihi",
   "prefDetailBalanced": "Uwiano",
   "prefDetailEndurance": "Uvumilivu",
-  "prefMapControlsOnLeft": "Vidhibiti vya ramani kushoto",
-  "prefMapControlsOnLeftSubtitle": "Huhamisha vitufe vya kufuata, kuanza, kusitisha na kusimamisha upande wa kushoto, kwa watumiaji wa mkono wa kushoto. Sifa ya ramani huenda pembe ya pili."
+  "prefMapControlsOnRight": "Vidhibiti vya ramani kulia",
+  "prefMapControlsOnRightSubtitle": "Vitufe vya kufuata, kuanza, kusitisha na kusimamisha viko upande wa kulia. Zima ili kuvihamisha kushoto, kwa watumiaji wa mkono wa kushoto. Sifa ya ramani huenda pembe ya pili."
 }

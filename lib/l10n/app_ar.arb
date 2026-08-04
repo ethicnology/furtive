@@ -18,7 +18,6 @@
   "btnRetry": "إعادة المحاولة",
   "btnRename": "إعادة تسمية",
   "btnDelete": "حذف",
-  "btnApply": "تطبيق",
   "prefSaveFailed": "تعذّر حفظ تفضيلاتك.",
   "btnStarGitHub": "نجمة على GitHub",
   "btnSponsor": "ادعم",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "دقيق",
   "prefDetailBalanced": "متوازن",
   "prefDetailEndurance": "تحمل",
-  "prefMapControlsOnLeft": "عناصر تحكم الخريطة على اليسار",
-  "prefMapControlsOnLeftSubtitle": "ينقل أزرار التتبع والبدء والإيقاف المؤقت والإيقاف إلى الحافة اليسرى لاستخدام اليد اليسرى. ينتقل حق الخريطة إلى الزاوية المقابلة."
+  "prefMapControlsOnRight": "عناصر تحكم الخريطة على اليمين",
+  "prefMapControlsOnRightSubtitle": "تقع أزرار التتبع والبدء والإيقاف المؤقت والإيقاف على الحافة اليمنى. أوقف الخيار لنقلها إلى اليسار لاستخدام اليد اليسرى. ينتقل حق الخريطة إلى الزاوية المقابلة."
 }

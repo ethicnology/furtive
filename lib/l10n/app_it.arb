@@ -18,7 +18,6 @@
   "btnRetry": "Riprova",
   "btnRename": "Rinomina",
   "btnDelete": "Elimina",
-  "btnApply": "Applica",
   "prefSaveFailed": "Impossibile salvare le preferenze.",
   "btnStarGitHub": "Stella su GitHub",
   "btnSponsor": "Sponsorizza",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Preciso",
   "prefDetailBalanced": "Bilanciato",
   "prefDetailEndurance": "Resistenza",
-  "prefMapControlsOnLeft": "Comandi mappa a sinistra",
-  "prefMapControlsOnLeftSubtitle": "Sposta i pulsanti segui, avvia, pausa e stop sul bordo sinistro, per i mancini. Il credito della mappa passa nell'angolo opposto."
+  "prefMapControlsOnRight": "Comandi mappa a destra",
+  "prefMapControlsOnRightSubtitle": "I pulsanti segui, avvia, pausa e stop sono sul bordo destro. Disattiva per spostarli a sinistra, per i mancini. Il credito della mappa passa nell'angolo opposto."
 }

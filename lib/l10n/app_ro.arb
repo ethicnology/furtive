@@ -18,7 +18,6 @@
   "btnRetry": "Reîncearcă",
   "btnRename": "Redenumește",
   "btnDelete": "Șterge",
-  "btnApply": "Aplică",
   "prefSaveFailed": "Preferințele nu au putut fi salvate.",
   "btnStarGitHub": "Stea pe GitHub",
   "btnSponsor": "Susține",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Precis",
   "prefDetailBalanced": "Echilibrat",
   "prefDetailEndurance": "Anduranță",
-  "prefMapControlsOnLeft": "Comenzile hărții în stânga",
-  "prefMapControlsOnLeftSubtitle": "Mută butoanele urmărire, start, pauză și stop pe marginea din stânga, pentru stângaci. Creditul hărții trece în colțul opus."
+  "prefMapControlsOnRight": "Comenzile hărții în dreapta",
+  "prefMapControlsOnRightSubtitle": "Butoanele urmărire, start, pauză și stop sunt pe marginea din dreapta. Dezactivează pentru a le muta în stânga, pentru stângaci. Creditul hărții trece în colțul opus."
 }

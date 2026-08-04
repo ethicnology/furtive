@@ -18,7 +18,6 @@
   "btnRetry": "Opnieuw proberen",
   "btnRename": "Hernoemen",
   "btnDelete": "Verwijderen",
-  "btnApply": "Toepassen",
   "prefSaveFailed": "Kan je voorkeuren niet opslaan.",
   "btnStarGitHub": "Ster geven op GitHub",
   "btnSponsor": "Sponsor",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Nauwkeurig",
   "prefDetailBalanced": "Gebalanceerd",
   "prefDetailEndurance": "Duurzaam",
-  "prefMapControlsOnLeft": "Kaartknoppen links",
-  "prefMapControlsOnLeftSubtitle": "Verplaatst de knoppen volgen, start, pauze en stop naar de linkerrand, voor linkshandig gebruik. De kaartvermelding gaat naar de tegenoverliggende hoek."
+  "prefMapControlsOnRight": "Kaartknoppen rechts",
+  "prefMapControlsOnRightSubtitle": "De knoppen volgen, start, pauze en stop zitten aan de rechterrand. Schakel uit om ze naar links te verplaatsen, voor linkshandig gebruik. De kaartvermelding gaat naar de tegenoverliggende hoek."
 }

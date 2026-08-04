@@ -18,7 +18,6 @@
   "btnRetry": "再試行",
   "btnRename": "名前を変更",
   "btnDelete": "削除",
-  "btnApply": "適用",
   "prefSaveFailed": "設定を保存できませんでした。",
   "btnStarGitHub": "GitHub でスター",
   "btnSponsor": "スポンサー",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "高精度",
   "prefDetailBalanced": "バランス",
   "prefDetailEndurance": "長時間",
-  "prefMapControlsOnLeft": "地図の操作を左に",
-  "prefMapControlsOnLeftSubtitle": "追従・開始・一時停止・停止のボタンを左端に移動し、左手で使いやすくします。地図のクレジットは反対の隅に移ります。"
+  "prefMapControlsOnRight": "地図の操作を右に",
+  "prefMapControlsOnRightSubtitle": "追従・開始・一時停止・停止のボタンは右端にあります。オフにすると左端に移動し、左手で使いやすくなります。地図のクレジットは反対の隅に移ります。"
 }

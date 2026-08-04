@@ -18,7 +18,6 @@
   "btnRetry": "다시 시도",
   "btnRename": "이름 변경",
   "btnDelete": "삭제",
-  "btnApply": "적용",
   "prefSaveFailed": "환경설정을 저장할 수 없습니다.",
   "btnStarGitHub": "GitHub에서 별 주기",
   "btnSponsor": "후원",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "정밀",
   "prefDetailBalanced": "균형",
   "prefDetailEndurance": "장시간",
-  "prefMapControlsOnLeft": "지도 컨트롤을 왼쪽에",
-  "prefMapControlsOnLeftSubtitle": "따라가기, 시작, 일시정지, 정지 버튼을 왼쪽 가장자리로 옮겨 왼손으로 쓰기 쉽게 합니다. 지도 저작자 표시는 반대쪽 모서리로 이동합니다."
+  "prefMapControlsOnRight": "지도 컨트롤을 오른쪽에",
+  "prefMapControlsOnRightSubtitle": "따라가기, 시작, 일시정지, 정지 버튼이 오른쪽 가장자리에 있습니다. 끄면 왼쪽으로 옮겨져 왼손으로 쓰기 쉽습니다. 지도 저작자 표시는 반대쪽 모서리로 이동합니다."
 }

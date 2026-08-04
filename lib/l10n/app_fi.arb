@@ -18,7 +18,6 @@
   "btnRetry": "Yritä uudelleen",
   "btnRename": "Nimeä uudelleen",
   "btnDelete": "Poista",
-  "btnApply": "Käytä",
   "prefSaveFailed": "Asetusten tallentaminen ei onnistunut.",
   "btnStarGitHub": "Tähti GitHubissa",
   "btnSponsor": "Tue",
@@ -139,6 +138,6 @@
   "prefDetailPrecise": "Tarkka",
   "prefDetailBalanced": "Tasapainoinen",
   "prefDetailEndurance": "Kestävyys",
-  "prefMapControlsOnLeft": "Kartan säätimet vasemmalla",
-  "prefMapControlsOnLeftSubtitle": "Siirtää seuraa-, aloita-, tauko- ja lopeta-painikkeet vasempaan reunaan vasenkätisille. Kartan lähdemerkintä siirtyy vastakkaiseen kulmaan."
+  "prefMapControlsOnRight": "Kartan säätimet oikealla",
+  "prefMapControlsOnRightSubtitle": "Seuraa-, aloita-, tauko- ja lopeta-painikkeet ovat oikeassa reunassa. Poista käytöstä siirtääksesi ne vasemmalle vasenkätisille. Kartan lähdemerkintä siirtyy vastakkaiseen kulmaan."
 }
