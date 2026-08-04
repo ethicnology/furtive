@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2026-08-03
 
 ### Added
 - **End-to-end encrypted live sharing.** While recording, share a browser link
@@ -37,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   touched mid-activity lives in that column, one-handed and often while
   moving. The attribution badge moves to the opposite corner with it — it is
   legally required to stay visible and the button column had already covered
-  it once.
+  it once. The preference is phrased as the default-on direction — "Map
+  controls on the right" — so the common case reads as the enabled state.
 - **The location puck is drawn by the app, from the position the app
   actually trusts.** Previously it came from MapLibre's native
   LocationComponent, which ran a *second* location engine: a
@@ -148,8 +149,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Preferences could silently fail to save.** The page dispatched Apply and
   popped in the same frame, so a failed write had no UI left to report to and was
-  only logged — the user believed their settings were stored. Apply now waits for
-  the write, reports failures, and only then closes.
+  only logged — the user believed their settings were stored. The Apply button
+  is gone entirely: every change is applied and persisted the moment the
+  control moves, writes are serialised so rapid toggles land in order, and a
+  failed write reports the failure and rolls the control back to the value
+  that is actually stored.
 - **The Preferences page overflowed** on a short viewport (and at large system
   font sizes), pushing the Apply button off screen and making the settings
   impossible to save. The page now scrolls.
@@ -165,6 +169,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bounds peak memory (the file is read to a String and then copied to the parse
   isolate). The old comment justified it as billion-laughs/XXE mitigation; both
   claims were wrong and are now pinned by tests instead.
+- Renaming an activity is now a single atomic write instead of a
+  check-then-write, closing a (never observed) window where a concurrent
+  delete could make the rename fail.
+- The activities list orders start-time ties deterministically — two GPX
+  imports of the same file share a start time to the second — so paged
+  fetches can no longer skip or repeat a row across pages.
 
 ### Removed
 - **The dead OpenStreetMap public-traces stack** (~600 lines). Its only trigger
@@ -193,12 +203,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ratios; nothing checked them.
 
 ### Internal
-- Test suite grown from 118 to 184; line coverage of hand-written code from
-  ~19% to ~57%, with a floor enforced in CI (`tool/coverage_threshold.py`).
+- Test suite grown from 118 to 312 (plus 79 for `furtive_share` and 13 for the
+  viewer); line coverage of hand-written code from ~19% to ~57%, with a floor
+  enforced in CI (`tool/coverage_threshold.py`).
 - Stricter analysis: `strict-casts`, `strict-raw-types`, `avoid_dynamic_calls`,
   `cancel_subscriptions`, `close_sinks` and others. These immediately surfaced
   unchecked `dynamic` casts in the third-party Protomaps style parsing, where a
   schema change would have broken the map for every user at once.
+- The database connection is wired to close if the service locator is ever
+  reset; on mobile the OS reclaims the process first, but the composition
+  root now owns the lifecycle it documents.
 
 ## [1.2.0] - 2026-07-15
 
@@ -396,4 +410,5 @@ and rationale behind the audit-related items below.
   file type, and any leftover from a previous session is also cleaned up at
   the next app launch instead of only at the next share/export.
 
+[1.3.0]: https://github.com/ethicnology/furtive/releases/tag/1.3.0
 [1.2.0]: https://github.com/ethicnology/furtive/releases/tag/1.2.0

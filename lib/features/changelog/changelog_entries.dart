@@ -15,18 +15,22 @@ class ChangelogRelease {
 /// CheckPermissionPage shows every entry strictly newer than the user's
 /// `lastShownChangelogVersion`, then stamps the current app version.
 ///
-/// DEVELOPMENT IS NOW ON 1.3.0+3, and there is deliberately NO 1.3.0 entry
-/// yet. Adding one before the release content is settled would be premature,
-/// and it is safe to omit: with only a 1.2.0 entry, a user upgrading from
-/// 1.2.0 matches nothing (`isNewerVersion('1.2.0', '1.2.0')` is false), sees
-/// no changelog, and still gets 1.3.0 stamped so the gate stops re-evaluating.
-/// Add the entry — with its ARB bullets across all 26 locales — as part of
-/// cutting the release.
-///
 /// On build numbers: the versionCode had stayed at 1 across every release up
 /// to 1.1.0+1, which F-Droid and Android both require to strictly increase
 /// between releases. It was bumped in place to 1.2.0+2, so 1.3.0 must be +3.
 List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
+  ChangelogRelease(
+    version: '1.3.0',
+    bullets: [
+      l10n.changelogV130LiveShare,
+      l10n.changelogV130Profiles,
+      l10n.changelogV130Map,
+      l10n.changelogV130Puck,
+      l10n.changelogV130Detail,
+      l10n.changelogV130Left,
+      l10n.changelogV130CarFix,
+    ],
+  ),
   ChangelogRelease(
     version: '1.2.0',
     bullets: [
