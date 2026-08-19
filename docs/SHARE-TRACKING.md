@@ -454,7 +454,15 @@ no identity to authenticate with, so NIP-42 is not available to this feature.
   no custom headers, and `frame-ancestors` is ignored in a `meta` element, so
   the clickjacking guard the hosting contract requires is simply absent there —
   which matters because the observer types the share password into that page.
-  HSTS still holds: `github.io` is on the browser preload list.
+  Moving to a host that sends headers closes that gap; the deployment lives on
+  a dedicated domain precisely so it can move without breaking emitted links.
+- **The viewer origin is a compiled-in constant, so the domain is the seam.**
+  Links are minted against `SHARE_VIEWER_URL`, published at
+  `https://furtive.ethicnology.com/share/`, and every APK carries that string
+  forever. Hosting is therefore free to change; the URL is not. The root of that
+  domain serves a script-free presentation page: a share key sits in the fragment
+  of a `/share/` URL, so no code outside the audited viewer bundle — analytics,
+  fonts, a router at the root — may ever be in a position to read one.
 
 ## Rejected alternatives
 

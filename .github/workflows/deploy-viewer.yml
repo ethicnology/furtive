@@ -1,20 +1,21 @@
 name: Deploy viewer to Pages
 
-# Pushes to the working branch, because that is the only trigger available here:
-# workflow_dispatch requires the workflow file to sit on the default branch, and
-# this one deliberately does not, so the manual entry below stays inert until it
-# lands there. A push event, by contrast, runs the definition from the ref that
-# was pushed.
-#
-# No paths filter on purpose. Dispatch being unavailable, a filter would remove
-# the only way to force a redeployment: an unrelated commit could not trigger
-# one, and an empty commit changes no path either. Add one once this file
-# reaches the default branch and manual runs become possible.
+# Deploys from the default branch, where releases land. Sitting there is also
+# what makes workflow_dispatch usable — it only appears once the workflow file
+# exists on the default branch — so forcing a redeployment no longer requires a
+# commit. That in turn makes the paths filter affordable: an unrelated commit no
+# longer needs to be able to trigger a run.
 on:
   workflow_dispatch:
   push:
     branches:
-      - furtive-1.3
+      - main
+    paths:
+      - .github/workflows/deploy-viewer.yml
+      - packages/furtive_share/**
+      - site/**
+      - tool/package_viewer.py
+      - viewer/**
 
 # contents stays read-only: the job reads the tree and publishes build/viewer.
 # The two Pages scopes are what actions/deploy-pages needs to mint its OIDC
@@ -65,16 +66,24 @@ jobs:
         env:
           VIEWER_TILE_URL: https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png
         run: |
-          mkdir -p build/viewer
+          mkdir -p build/site/share
           dart compile js -O4 -DTILE_URL="$VIEWER_TILE_URL" \
-            -o build/viewer/main.dart.js viewer/web/main.dart
-          python3 tool/package_viewer.py build/viewer --tile-url "$VIEWER_TILE_URL"
+            -o build/site/share/main.dart.js viewer/web/main.dart
+          python3 tool/package_viewer.py build/site/share --tile-url "$VIEWER_TILE_URL"
+
+      # The viewer is published under /share/ so the domain root can carry the
+      # presentation page instead. That page holds no script at all: a share key
+      # lives in the fragment of a /share/ URL, and only the audited viewer
+      # bundle should ever be able to read one. site/CNAME keeps the custom
+      # domain attached even if the repository setting is ever cleared.
+      - name: Add the site root
+        run: cp site/index.html site/CNAME build/site/
 
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: build/viewer
+          path: build/site
 
       - id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5

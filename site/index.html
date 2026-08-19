@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0d11">
+  <meta name="description" content="Furtive records GPS activities on your phone and can share one live through an end-to-end encrypted link.">
+  <meta name="referrer" content="no-referrer">
+  <!-- No script anywhere on this page: a share key lives in the URL fragment of
+       /share/, and nothing outside the audited viewer bundle should ever be in a
+       position to read one. default-src 'none' therefore also denies scripts. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+  <title>Furtive</title>
+  <style>
+    :root {
+      --background: #0a0d11;
+      --surface: #171c22;
+      --stroke: #303741;
+      --primary: #53e6cf;
+      --text: #f4f7f8;
+      --secondary: #a7b0bc;
+      --tertiary: #727d8c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2.5rem 1.25rem 3rem;
+      background: var(--background);
+      color: var(--text);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    main { max-width: 44rem; margin: 0 auto; }
+    .wordmark {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.36em;
+      color: var(--primary);
+    }
+    h1 { font-size: 1.9rem; line-height: 1.25; margin: 1.5rem 0 0.75rem; }
+    h2 { font-size: 1.1rem; margin: 2.25rem 0 0.5rem; }
+    p { color: var(--secondary); margin: 0 0 1rem; }
+    ul { color: var(--secondary); padding-left: 1.15rem; margin: 0 0 1rem; }
+    li { margin-bottom: 0.4rem; }
+    strong { color: var(--text); }
+    a { color: var(--primary); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 1.15rem 1.25rem;
+      margin: 1.75rem 0;
+    }
+    .card p:last-child { margin-bottom: 0; }
+    code {
+      background: rgb(255 255 255 / 7%);
+      border-radius: 4px;
+      padding: 0.1em 0.35em;
+      font-size: 0.9em;
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--stroke);
+      color: var(--tertiary);
+      font-size: 0.875rem;
+    }
+    footer a { color: var(--secondary); }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="wordmark">FURTIVE</span>
+    <h1>Record where you went, without telling anyone.</h1>
+    <p>
+      Furtive is a free and open-source GPS activity recorder for Android. Walks,
+      runs, rides, drives — the trace stays on the phone. There is no account, no
+      server collecting your history, and nothing to opt out of.
+    </p>
+
+    <div class="card">
+      <h2 style="margin-top:0">You received a Furtive link?</h2>
+      <p>
+        A live-share link follows one recording as it happens, and opens at
+        <code>/share/</code> on this domain. It only works complete: the part
+        after the <code>#</code> carries the decryption key, so a truncated link
+        cannot show anything. Open the link you were given rather than typing
+        this address by hand.
+      </p>
+    </div>
+
+    <h2>How live sharing works</h2>
+    <ul>
+      <li>
+        <strong>End-to-end encrypted.</strong> Positions are encrypted on the
+        phone and decrypted in your browser. The key travels in the URL fragment,
+        which browsers never send to a server — not to this one either.
+      </li>
+      <li>
+        <strong>Anonymous by construction.</strong> Each share uses a throwaway
+        identity on public Nostr relays. No account, no phone number, nothing to
+        link one share to another.
+      </li>
+      <li>
+        <strong>It ends when the activity ends.</strong> Stopping the recording
+        stops publication and tells the viewer explicitly, so a watcher is never
+        left guessing whether the phone simply lost signal.
+      </li>
+      <li>
+        <strong>Optionally password-protected.</strong> The password is sent
+        separately from the link and never leaves the browser.
+      </li>
+    </ul>
+
+    <h2>Get the app</h2>
+    <p>
+      Releases, source code and the full threat model are on GitHub:
+      <a href="https://github.com/ethicnology/furtive">github.com/ethicnology/furtive</a>.
+      Builds are reproducible, so the published APK can be verified against the
+      source rather than trusted.
+    </p>
+
+    <footer>
+      <p>
+        Transparency about this page: the map in <code>/share/</code> loads its
+        basemap tiles from CARTO, which therefore learns which area a watcher is
+        looking at — never a position, which stays encrypted. The basemap can be
+        turned off in the viewer, and a self-hosted deployment can serve tiles
+        first-party instead. See
+        <a href="https://github.com/ethicnology/furtive/blob/main/docs/SHARE-TRACKING.md">SHARE-TRACKING.md</a>.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>
