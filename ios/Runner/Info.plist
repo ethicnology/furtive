@@ -80,17 +80,19 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs to access your location to track your activity when you are running.</string>
+	<string>furtive uses your location to show you on the map and record your activities.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>While an activity is recording, furtive continues tracking your location in the background so your route keeps recording when the screen is off or the app is suspended.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
-	<!-- Export-compliance declaration: this app uses only the standard
-	     HTTPS / TLS provided by iOS, with no custom or non-exempt
-	     encryption. Without this key, TestFlight asks the question on
-	     every upload and may delay app review. -->
+	<!-- Export-compliance declaration: in addition to platform HTTPS/TLS, live
+	     sharing implements the published NIP-44 v2 standard (ChaCha20 and
+	     HMAC-SHA256). `false` records the project's determination that these
+	     uses are exempt encryption, not that the app uses only Apple-provided
+	     cryptography. Confirm the classification and any annual self-
+	     classification reporting before App Store distribution. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

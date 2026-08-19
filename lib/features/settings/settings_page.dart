@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/widgets/app_version_widget.dart';
 import 'package:furtive/core/widgets/support_developer_widget.dart';
-import 'package:furtive/features/permissions/presentation/pages/permissions_page.dart';
+import 'package:furtive/features/permissions/pages/permissions_page.dart';
 import 'package:furtive/features/preferences/page.dart';
 import 'package:furtive/features/logs/logs_page.dart';
 import 'package:furtive/l10n/app_localizations.dart';

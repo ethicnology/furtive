@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:executor_lib/executor_lib.dart' show CancellationException;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/facades/backup_exclusion_facade.dart';
@@ -8,11 +7,13 @@ import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/facades/process_exit_facade.dart';
 import 'package:furtive/core/global.dart';
 import 'package:furtive/core/locale_cubit.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
-import 'package:furtive/features/permissions/presentation/pages/check_permission_page.dart';
+import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
+import 'package:furtive/features/permissions/pages/check_permission_page.dart';
+import 'package:furtive/features/recording/bloc/recording_bloc.dart';
+import 'package:furtive/features/share/live_share_cubit.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:path/path.dart' as p;
@@ -69,7 +70,7 @@ void main() {
       Locale? storedLocale;
       var showOnLockScreen = true;
       try {
-        final prefs = await GetPreferencesUseCase()();
+        final prefs = await PreferencesRepository().fetch();
         if (prefs.uiLocale != null) {
           storedLocale = parseLocaleTag(prefs.uiLocale!);
         }
@@ -117,16 +118,6 @@ void main() {
       // throws, calling logs here would raise LateInitializationError and mask
       // the real error. Fall back to debugPrint.
       try {
-        if (error is CancellationException) {
-          // vector_map_tiles (via executor_lib) cancels superseded tile
-          // fetches whenever the map pans/zooms faster than tiles load —
-          // expected and harmless, not a real failure. Some of its internal
-          // code paths let this escape as an uncaught zone error instead of
-          // swallowing it, so without this it reads as a crash ("Cancelled")
-          // in the exported logs every time the map moves quickly.
-          logs.fine('Tile load cancelled (map panned/zoomed).');
-          return;
-        }
         logs.severe(error.toString(), error: error, trace: stack);
       } catch (_) {
         debugPrint('Unhandled startup error: $error\n$stack');
@@ -145,13 +136,14 @@ class MyApp extends StatelessWidget {
         // .value because the locator owns the bloc lifetimes — BlocProvider
         // must not close them on widget disposal.
         BlocProvider<LocaleCubit>.value(value: getIt<LocaleCubit>()),
+        BlocProvider<RecordingBloc>.value(value: getIt<RecordingBloc>()),
+        BlocProvider<LiveShareCubit>.value(value: getIt<LiveShareCubit>()),
         BlocProvider<MapBloc>.value(value: getIt<MapBloc>()),
         BlocProvider<ActivitiesBloc>.value(value: getIt<ActivitiesBloc>()),
         BlocProvider<PermissionsBloc>.value(value: getIt<PermissionsBloc>()),
       ],
       child: BlocBuilder<LocaleCubit, Locale?>(
         builder: (context, locale) => MaterialApp(
-          scaffoldMessengerKey: Global.scaffoldMessengerKey,
           // onGenerateTitle ensures the title in the OS task switcher is
           // localised every time the locale changes.
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,

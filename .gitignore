@@ -36,6 +36,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Test coverage output (`flutter test --coverage`)
+/coverage/
+
 # Symbolication related
 app.*.symbols
 

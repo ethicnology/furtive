@@ -1,0 +1,12 @@
+name: furtive_share
+description: Pure-Dart wire format and cryptography for Furtive live sharing.
+publish_to: none
+version: 0.1.0
+environment:
+  sdk: ^3.10.0
+dependencies:
+  nostr: ^2.0.0
+  pointycastle: ^4.0.0
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.31.0

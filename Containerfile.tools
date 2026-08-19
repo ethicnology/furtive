@@ -13,8 +13,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG USERNAME="furtive"
 ENV USER=$USERNAME
 ARG FVM_VERSION="4.1.0"
-ARG FLUTTER_VERSION="3.44.6"
+ARG FVM_INSTALL_SHA256="5fe3892efea5454822e148d4f768190e089f02fac2268b113d8098aec1128653"
+ARG FLUTTER_VERSION="3.44.9"
 ARG ANDROID_CMDLINE_TOOLS_VERSION="14742923"
+ARG ANDROID_CMDLINE_TOOLS_SHA1="48833c34b761c10cb20bcd16582129395d121b27"
 
 # Android versions (passed via --build-arg from makefile, defaults as fallback)
 ARG JVM_TARGET="21"
@@ -43,11 +45,14 @@ RUN apt-get update && apt-get install -y \
 # Create user
 RUN adduser --disabled-password --gecos '' $USER \
  && adduser $USER sudo \
- && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+ && mkdir -p ${ANDROID_HOME} \
+ && chown -R $USER:$USER ${ANDROID_HOME}
 USER $USER
 
 # Install FVM
 RUN curl -fsSL https://fvm.app/install.sh -o /tmp/fvm-install.sh \
+ && printf '%s  %s\n' "${FVM_INSTALL_SHA256}" /tmp/fvm-install.sh | sha256sum -c - \
  && bash /tmp/fvm-install.sh ${FVM_VERSION} \
  && rm /tmp/fvm-install.sh
 ENV PATH="/home/$USER/fvm/bin:${PATH}"
@@ -58,12 +63,12 @@ RUN fvm install ${FLUTTER_VERSION} \
 ENV PATH="/home/$USER/fvm/default/bin:${PATH}"
 
 # Download Android cmdline-tools
-RUN sudo mkdir -p ${ANDROID_HOME}/cmdline-tools \
- && sudo wget -q https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS_VERSION}_latest.zip -O /tmp/android-cmdline-tools.zip \
- && sudo unzip -q /tmp/android-cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools \
- && sudo mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest \
- && sudo rm /tmp/android-cmdline-tools.zip \
- && sudo chown -R $USER ${ANDROID_HOME}
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
+ && wget -q https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS_VERSION}_latest.zip -O /tmp/android-cmdline-tools.zip \
+ && printf '%s  %s\n' "${ANDROID_CMDLINE_TOOLS_SHA1}" /tmp/android-cmdline-tools.zip | sha1sum -c - \
+ && unzip -q /tmp/android-cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools \
+ && mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest \
+ && rm /tmp/android-cmdline-tools.zip
 
 # Install Android SDK components
 RUN yes | sdkmanager --sdk_root=${ANDROID_HOME} --licenses \

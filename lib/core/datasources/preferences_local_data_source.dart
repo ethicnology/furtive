@@ -5,9 +5,12 @@ import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/locator.dart';
 
 class PreferencesLocalDataSource {
-  final db = getIt.get<LocalDatabase>();
+  /// [db] defaults to the app-wide singleton so production call sites stay
+  /// `PreferencesLocalDataSource()`; tests inject an in-memory database.
+  PreferencesLocalDataSource({LocalDatabase? db})
+    : db = db ?? getIt.get<LocalDatabase>();
 
-  PreferencesLocalDataSource();
+  final LocalDatabase db;
 
   Future<void> store(PreferencesModel preferences) async {
     await db
@@ -16,16 +19,16 @@ class PreferencesLocalDataSource {
           PreferencesCompanion(
             id: const Value(1),
             mapTheme: Value(preferences.mapTheme),
-            mapLanguage: Value(preferences.mapLanguage),
-            accuracyInMeters: Value(preferences.accuracyInMeters),
             hasCompletedOnboarding: Value(preferences.hasCompletedOnboarding),
             uiLocale: Value(preferences.uiLocale),
             lastShownChangelogVersion: Value(
               preferences.lastShownChangelogVersion,
             ),
-            checkUpdates: Value(preferences.checkUpdates),
             mapTilesEnabled: Value(preferences.mapTilesEnabled),
             showOnLockScreen: Value(preferences.showOnLockScreen),
+            mapControlsOnLeft: Value(preferences.mapControlsOnLeft),
+            lastActivityType: Value(preferences.lastActivityType),
+            recordingDetail: Value(preferences.recordingDetail),
           ),
         );
   }
@@ -45,8 +48,6 @@ class PreferencesLocalDataSource {
             const PreferencesCompanion(
               id: Value(1),
               mapTheme: Value(MapThemeColumn.dark),
-              mapLanguage: Value(MapLanguageColumn.en),
-              accuracyInMeters: Value(0),
             ),
           );
       preferences = await (db.select(
@@ -56,14 +57,14 @@ class PreferencesLocalDataSource {
 
     return PreferencesModel(
       mapTheme: preferences.mapTheme,
-      mapLanguage: preferences.mapLanguage,
-      accuracyInMeters: preferences.accuracyInMeters,
       hasCompletedOnboarding: preferences.hasCompletedOnboarding,
       uiLocale: preferences.uiLocale,
       lastShownChangelogVersion: preferences.lastShownChangelogVersion,
-      checkUpdates: preferences.checkUpdates,
       mapTilesEnabled: preferences.mapTilesEnabled,
       showOnLockScreen: preferences.showOnLockScreen,
+      mapControlsOnLeft: preferences.mapControlsOnLeft,
+      lastActivityType: preferences.lastActivityType,
+      recordingDetail: preferences.recordingDetail,
     );
   }
 }

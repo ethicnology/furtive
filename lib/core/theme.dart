@@ -99,6 +99,14 @@ const kWarning = Color(0xFFFFB74D);
 /// separate `error` vs `errorContainer` roles).
 const kDestructive = Color(0xFFCC433A);
 
+/// The user's own position marker. Deliberately NOT the mint accent: the
+/// recorded track is drawn in mint, and colouring "where you are now" the same
+/// as "where you have been" makes the live position vanish into its own trail
+/// exactly when it matters. Blue also carries decades of convention for
+/// self-location on a map, and it reads against both the light and dark
+/// basemaps.
+const kLocationPuck = Color(0xFF1E88E5);
+
 /// Red for text/icons directly on a dark surface (an inline error caption,
 /// the "permanently denied" notice, a destructive icon in an AppBar) —
 /// kept at the original brighter coral, which reaches 5.36:1 on

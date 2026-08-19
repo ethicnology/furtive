@@ -1,7 +1,9 @@
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/database/tables/activity_points_table.dart';
+import 'package:furtive/core/database/tables/preferences_table.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/position_entity.dart';
+import 'package:furtive/core/models/preferences_model.dart';
 
 class ActivityModel {
   final String id;
@@ -10,6 +12,7 @@ class ActivityModel {
   final DateTime createdAt;
   final DateTime startedAt;
   final DateTime? stoppedAt;
+  final ActivityTypeColumn activityType;
 
   final List<ActivityPointModel> points;
 
@@ -21,6 +24,7 @@ class ActivityModel {
     required this.createdAt,
     required this.startedAt,
     required this.stoppedAt,
+    this.activityType = ActivityTypeColumn.unknown,
   });
 
   static ActivityModel fromEntity(ActivityEntity entity) {
@@ -31,6 +35,7 @@ class ActivityModel {
       createdAt: entity.createdAt,
       startedAt: entity.startedAt,
       stoppedAt: entity.stoppedAt,
+      activityType: ActivityTypeExtension.fromEntity(entity.activityType),
       points: entity.points
           .map(
             (point) => ActivityPointModel(
@@ -55,6 +60,7 @@ class ActivityModel {
       createdAt: model.createdAt,
       startedAt: model.startedAt,
       stoppedAt: model.stoppedAt,
+      activityType: model.activityType.toEntity(),
       points: model.points
           .map(
             (point) => ActivityPointEntity(
@@ -84,6 +90,7 @@ class ActivityModel {
       createdAt: row.createdAt,
       startedAt: row.startedAt,
       stoppedAt: row.stoppedAt,
+      activityType: row.activityType,
       points: points.map(ActivityPointModel.fromDatabase).toList(),
     );
   }

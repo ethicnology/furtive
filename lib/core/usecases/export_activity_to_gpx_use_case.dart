@@ -4,12 +4,13 @@ import 'package:furtive/core/facades/file_system_facade.dart';
 import 'package:furtive/core/repositories/activity_repository.dart';
 
 class ExportActivityToGpxUseCase {
-  final activityRepository = ActivityRepository();
+  ExportActivityToGpxUseCase({ActivityRepository? activities})
+    : _activities = activities ?? ActivityRepository();
 
-  ExportActivityToGpxUseCase();
+  final ActivityRepository _activities;
 
   Future<void> call(String activityId) async {
-    final activity = await activityRepository.fetchSingle(activityId);
+    final activity = await _activities.fetchSingle(activityId);
     final gpx = generateGpx(activity);
 
     final fileName =
@@ -49,6 +50,10 @@ class ExportActivityToGpxUseCase {
 
     for (final segment in activeSegments) {
       buffer.writeln('  <trk>');
+      // GPX 1.1 defines <type> as free text on a track. Furtive writes the
+      // stable storage spelling so export -> import preserves the profile that
+      // produced the recording; import also accepts common third-party names.
+      buffer.writeln('    <type>${activity.activityType.name}</type>');
       buffer.writeln('    <trkseg>');
 
       for (final point in segment.points) {

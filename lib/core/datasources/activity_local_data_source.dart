@@ -2,14 +2,22 @@ import 'package:drift/drift.dart';
 import 'package:furtive/core/database/local_database.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/entities/activity_summary.dart';
+import 'package:furtive/core/clock.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/models/activity_model.dart';
 
 class ActivityLocalDataSource {
-  final db = getIt.get<LocalDatabase>();
+  /// [db] and [clock] default to the app-wide singleton / real clock, so
+  /// production call sites stay `ActivityLocalDataSource()`. Tests inject an
+  /// in-memory database and a [FixedClock] to drive the stale-activity window
+  /// (see [ongoingStaleAfter]) without waiting 12 real hours.
+  ActivityLocalDataSource({LocalDatabase? db, Clock? clock})
+    : db = db ?? getIt.get<LocalDatabase>(),
+      _clock = clock ?? const SystemClock();
 
-  ActivityLocalDataSource();
+  final LocalDatabase db;
+  final Clock _clock;
 
   // Compute the denormalised aggregates the way the entity does (active
   // segments only, non-finite points filtered), so the list's stored values
@@ -52,10 +60,9 @@ class ActivityLocalDataSource {
     // One transaction so a crash between the header insert and the point batch
     // can't leave a pointless header row (matters most for a large GPX import).
     // Completed/imported activities (stoppedAt set) store real aggregates.
-    // An in-progress activity (just-started recording, stoppedAt null) stores
-    // the -1 sentinel so fetchSummaries recomputes its stats live from points
-    // until it's ceased — otherwise the list would show 0 km / 0:00 for the
-    // active activity (and for any activity whose cease never ran after a crash).
+    // A just-started recording stores the -1 sentinel until its first fix.
+    // RecordingBloc writes live aggregates after every accepted fix, keeping the
+    // activities list summary-only even while a long recording is in progress.
     final agg = activity.stoppedAt != null
         ? _aggregates(activity.points)
         : (distanceMeters: -1.0, durationMs: -1);
@@ -70,6 +77,7 @@ class ActivityLocalDataSource {
               createdAt: Value(activity.createdAt),
               startedAt: Value(activity.startedAt),
               stoppedAt: Value(activity.stoppedAt),
+              activityType: Value(activity.activityType),
               distanceMeters: Value(agg.distanceMeters),
               activeDurationMs: Value(agg.durationMs),
             ),
@@ -165,6 +173,33 @@ class ActivityLocalDataSource {
     });
   }
 
+  /// Persists already-computed live aggregates without reading the point table.
+  ///
+  /// The recording state has the complete in-memory trace and computes these
+  /// values for the map anyway. Reusing them avoids loading thousands of points
+  /// when the Activities tab asks for summaries during a long recording.
+  Future<void> updateLiveAggregates(
+    String activityId, {
+    required double distanceMeters,
+    required Duration activeDuration,
+  }) async {
+    if (!distanceMeters.isFinite ||
+        distanceMeters < 0 ||
+        activeDuration.isNegative) {
+      throw ArgumentError('live activity aggregates must be non-negative');
+    }
+    await (db.update(db.activities)..where(
+          (activity) =>
+              activity.id.equals(activityId) & activity.stoppedAt.isNull(),
+        ))
+        .write(
+          ActivitiesCompanion(
+            distanceMeters: Value(distanceMeters),
+            activeDurationMs: Value(activeDuration.inMilliseconds),
+          ),
+        );
+  }
+
   /// Stamps [activityId] as stopped and persists its final aggregates.
   ///
   /// [stoppedAt] defaults to now — the deliberate-stop path (user taps Stop)
@@ -213,7 +248,7 @@ class ActivityLocalDataSource {
         db.activities,
       )..where((t) => t.id.equals(activityId))).write(
         ActivitiesCompanion(
-          stoppedAt: Value(stoppedAt ?? DateTime.now().toUtc()),
+          stoppedAt: Value(stoppedAt ?? _clock.nowUtc()),
           distanceMeters: Value(agg.distanceMeters),
           activeDurationMs: Value(agg.durationMs),
         ),
@@ -226,7 +261,7 @@ class ActivityLocalDataSource {
   /// crashed, or a kill so old the user has moved on. Resuming it would show a
   /// bogus multi-hour/day "live" run with a runaway timer. Such activities are
   /// auto-ceased (finalised with real aggregates) instead of resumed.
-  static const _ongoingStaleAfter = Duration(hours: 12);
+  static const ongoingStaleAfter = Duration(hours: 12);
 
   /// The most recently started activity that was never ceased
   /// (`stoppedAt == null`), with its points — or null if none resumable. Used
@@ -240,7 +275,7 @@ class ActivityLocalDataSource {
   /// auto-ceased so it stops being "in progress" forever (and stops forcing
   /// fetchSummaries to recompute its aggregates on every list open). The
   /// newest candidate is itself auto-ceased (and null returned) when its last
-  /// fix is older than [_ongoingStaleAfter].
+  /// fix is older than [ongoingStaleAfter].
   Future<ActivityModel?> fetchOngoing() async {
     final ongoing =
         await (db.select(db.activities)
@@ -279,8 +314,7 @@ class ActivityLocalDataSource {
     final lastFix = points.isEmpty
         ? candidate.startedAt
         : points.map((p) => p.time).reduce((a, b) => a.isAfter(b) ? a : b);
-    if (DateTime.now().toUtc().difference(lastFix.toUtc()) >
-        _ongoingStaleAfter) {
+    if (_clock.nowUtc().difference(lastFix.toUtc()) > ongoingStaleAfter) {
       await cease(candidate.id, stoppedAt: lastFix);
       return null;
     }
@@ -306,13 +340,31 @@ class ActivityLocalDataSource {
   /// Lightweight list query: activities only (no point join), newest first,
   /// using the idx_activities_started_at index. Reads the denormalised
   /// distance/duration columns; for rows still at the -1 sentinel (legacy
-  /// pre-v4 activities, or an in-progress activity) it computes from points
-  /// once and — for ceased activities — persists the result so later loads
-  /// stay cheap.
-  Future<List<ActivitySummary>> fetchSummaries() async {
-    final rows = await (db.select(
-      db.activities,
-    )..orderBy([(t) => OrderingTerm.desc(t.startedAt)])).get();
+  /// pre-v4 activities, or an activity with no accepted fix yet) it computes
+  /// from points once and — for ceased activities — persists the result so
+  /// later loads stay cheap.
+  ///
+  /// [limit]/[offset] page the query. Unbounded by default for callers that
+  /// genuinely want everything, but the activities list passes a page size:
+  /// without one, every open of that screen read EVERY activity row, and
+  /// re-materialised every point of any row still on the sentinel — for an
+  /// in-progress 24 h recording that is ~17k rows rebuilt on each visit,
+  /// because an in-progress row deliberately never persists its aggregates.
+  Future<List<ActivitySummary>> fetchSummaries({
+    int? limit,
+    int offset = 0,
+  }) async {
+    // desc(id) as tie-break: two activities can share a startedAt (a GPX
+    // import stamps startedAt from the file, so importing the same file
+    // twice produces exact ties), and an unstable order would make paged
+    // fetches skip or repeat rows across pages.
+    final query = db.select(db.activities)
+      ..orderBy([
+        (t) => OrderingTerm.desc(t.startedAt),
+        (t) => OrderingTerm.desc(t.id),
+      ]);
+    if (limit != null) query.limit(limit, offset: offset);
+    final rows = await query.get();
 
     final summaries = <ActivitySummary>[];
     for (final row in rows) {
@@ -359,14 +411,15 @@ class ActivityLocalDataSource {
   }
 
   Future<void> updateName(String activityId, String newName) async {
-    final activity = await (db.select(
-      db.activities,
-    )..where((t) => t.id.equals(activityId))).getSingleOrNull();
+    // Single UPDATE with a rowcount check rather than SELECT-then-UPDATE:
+    // atomic, and one round-trip shorter. write() returns the number of
+    // affected rows, so an unknown id surfaces as the same AppError the
+    // check-then-write version threw.
+    final updated =
+        await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
+            .write(ActivitiesCompanion(name: Value(newName)));
 
-    if (activity == null) throw AppError('Activity not found');
-
-    await (db.update(db.activities)..where((t) => t.id.equals(activityId)))
-        .write(ActivitiesCompanion(name: Value(newName)));
+    if (updated == 0) throw AppError('Activity not found');
   }
 
   Future<void> delete(String activityId) async {

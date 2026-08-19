@@ -11,14 +11,26 @@ class ChangelogRelease {
 /// Per-release changelog entries, newest first. Keep only the last few
 /// versions on disk; rotate older ones out as they become irrelevant.
 ///
-/// This release ships as 1.2.0+2 rather than 1.2.0+1: the versionCode had
-/// stayed at 1 across every prior release (1.0.0+1, 1.1.0+1), which F-Droid
-/// and Android both require to strictly increase between releases, so the
-/// build number was bumped in this pass (see the `com.ethicnology.furtive`
-/// applicationId rename commit). The `version:` value below is what
-/// actually gates and labels the in-app changelog, and it must match
-/// pubspec.yaml's `1.2.0+2`.
+/// The `version:` values here are what gate and label the in-app changelog:
+/// CheckPermissionPage shows every entry strictly newer than the user's
+/// `lastShownChangelogVersion`, then stamps the current app version.
+///
+/// On build numbers: the versionCode had stayed at 1 across every release up
+/// to 1.1.0+1, which F-Droid and Android both require to strictly increase
+/// between releases. It was bumped in place to 1.2.0+2, so 1.3.0 must be +3.
 List<ChangelogRelease> changelogReleases(AppLocalizations l10n) => [
+  ChangelogRelease(
+    version: '1.3.0',
+    bullets: [
+      l10n.changelogV130LiveShare,
+      l10n.changelogV130Profiles,
+      l10n.changelogV130Map,
+      l10n.changelogV130Puck,
+      l10n.changelogV130Detail,
+      l10n.changelogV130Left,
+      l10n.changelogV130CarFix,
+    ],
+  ),
   ChangelogRelease(
     version: '1.2.0',
     bullets: [

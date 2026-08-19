@@ -35,12 +35,10 @@ The Obtainium button opens on a device with [Obtainium](https://github.com/Imran
 
 - `PROTOMAPS_KEY` / `PROTOMAPS_URL` — map tiles, see "Reproducible builds"
   below.
-- `DISABLE_UPDATE_CHECK=true` — disables the opt-out GitHub release check
-  entirely at compile time (no code path, no network call ever made),
-  independent of the in-app preference. Off by default. Intended for
-  distribution channels that already manage updates themselves (e.g.
-  F-Droid), where an app also phoning GitHub — even opt-out — is typically
-  flagged as an anti-feature.
+- `SHARE_VIEWER_URL` — canonical HTTPS origin of the deployed live viewer. Live
+  sharing stays hidden when this is absent, rather than minting unusable links.
+- `SHARE_RELAYS` — optional comma-separated `wss://` relay list. Defaults to
+  `nos.lol` and `relay.primal.net`.
 
 ## GPS signal loss
 
@@ -61,6 +59,19 @@ The path travelled during an outage is unknowable after the fact — for long
 indoor breaks, pausing the recording manually remains the most accurate
 option.
 
+## Live tracking
+
+Builds configured with `SHARE_VIEWER_URL` expose a live-share control while an
+activity is recording. It creates an end-to-end encrypted browser link and
+publishes sampled, already-accepted recording points to the configured Nostr
+relays. No account or long-term Nostr key is created. An optional password is
+derived with Argon2id and must be sent separately from the link.
+
+The viewer and threat model live in [`viewer/`](viewer/) and
+[`docs/SHARE-TRACKING.md`](docs/SHARE-TRACKING.md). A full process kill ends a
+share because its ephemeral keys are deliberately never persisted; recording
+resume remains independent.
+
 ## Releases
 
 Release artifacts are produced unsigned by Flutter (`signingConfig = null`
@@ -70,18 +81,24 @@ not add a `key.properties` or wire signing into Gradle.
 
 ## Reproducible builds
 
-`make apk` produces byte-identical output for the same source on any
-host. The toolchain is pinned end-to-end:
+`make verify-reproducible` verifies that two clean APK builds in the same pinned
+container produce byte-identical output. The repository pins the major inputs:
 
 - `debian:trixie@sha256:…` (multi-arch index digest, in `Containerfile.tools`)
-- Flutter `3.44.6` via `.fvmrc`
+- Flutter `3.44.9` via `.fvmrc`
 - Android NDK / SDK / build-tools / JVM in `android/gradle.properties`
 - `pubspec.lock` enforced via `flutter pub get --enforce-lockfile`
+- Gradle distribution, FVM installer, and Android command-line tools checksums
 - `SOURCE_DATE_EPOCH = $(git log -1 --format=%ct)` passed to the container
   so Gradle/AGP/Kotlin emit deterministic timestamps
 
 Verify locally with `make verify-reproducible` (builds twice, compares
 SHA-256, fails with a diffoscope hint on mismatch).
+
+This is not a timeless guarantee across arbitrary future package mirrors:
+Debian and Android SDK repositories can replace the versions selected by their
+package managers. Release hashes remain the authority, and a third-party
+verification should use the release's documented container image and inputs.
 
 Empty/missing `PROTOMAPS_KEY` produces the FOSS path (no map tiles, but
 otherwise functional) — that's the variant anyone in the world can

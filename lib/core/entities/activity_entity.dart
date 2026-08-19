@@ -1,9 +1,7 @@
 import 'package:collection/collection.dart' show mergeSort;
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:furtive/core/theme.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 
 part 'activity_entity.mapper.dart';
@@ -18,6 +16,14 @@ class ActivityEntity with ActivityEntityMappable {
   final DateTime? stoppedAt;
   final List<ActivityPointEntity> points;
 
+  /// What the user selected before recording. Fixed for the life of the
+  /// activity: it is what sized the sampling interval and the quality gate
+  /// that produced these points, so changing the current preference must not
+  /// retroactively restate an old recording. Defaults to
+  /// [ActivityTypeEntity.unknown] for rows predating the column and for GPX
+  /// imports with no usable type.
+  final ActivityTypeEntity activityType;
+
   ActivityEntity({
     required this.id,
     required this.name,
@@ -26,6 +32,7 @@ class ActivityEntity with ActivityEntityMappable {
     required this.startedAt,
     required this.stoppedAt,
     this.points = const [],
+    this.activityType = ActivityTypeEntity.unknown,
   });
 }
 
@@ -399,15 +406,17 @@ extension ActivityStatisticsExtension on ActivityEntity {
 /// activity. Position is interpolated linearly on the segment that crossed
 /// the threshold so the marker lands on the exact km, not on the next GPS
 /// fix that happened to be past it.
+///
+/// Deliberately carries no timestamp: the crossing time used to be
+/// interpolated here too, but nothing ever read it, and it was built with
+/// `DateTime.fromMillisecondsSinceEpoch(ms)` — i.e. flagged LOCAL while every
+/// other timestamp in this app is UTC. A latent trap for whoever wired up the
+/// first consumer. Per-kilometre timing lives in [KmSplit], which is what the
+/// splits chart actually uses.
 class KmMilestone {
   final int km;
   final PositionEntity position;
-  final DateTime time;
-  const KmMilestone({
-    required this.km,
-    required this.position,
-    required this.time,
-  });
+  const KmMilestone({required this.km, required this.position});
 }
 
 /// One per-kilometre split for the active portion. The last split may be
@@ -485,11 +494,6 @@ extension ActivityKmExtension on ActivityEntity {
           final elev =
               a.position.elevation +
               (b.position.elevation - a.position.elevation) * t;
-          final tMs =
-              a.time.millisecondsSinceEpoch +
-              ((b.time.millisecondsSinceEpoch - a.time.millisecondsSinceEpoch) *
-                      t)
-                  .round();
           // Skip the milestone if any computed value is non-finite. The
           // segment filter already drops NaN inputs, but if a future code
           // path introduces another NaN source this prevents propagation
@@ -503,7 +507,6 @@ extension ActivityKmExtension on ActivityEntity {
                   longitude: lon,
                   elevation: elev.isFinite ? elev : 0,
                 ),
-                time: DateTime.fromMillisecondsSinceEpoch(tMs),
               ),
             );
           }
@@ -588,32 +591,5 @@ extension ActivityKmExtension on ActivityEntity {
       );
     }
     return splits;
-  }
-}
-
-extension ActivityPathExtension on ActivityEntity {
-  Widget toPolylineLayer() {
-    if (points.isEmpty) return PolylineLayer(polylines: <Polyline>[]);
-
-    return PolylineLayer(
-      polylines: segments.map(_polylineFromSegment).toList(),
-    );
-  }
-
-  Polyline _polylineFromSegment(ActivitySegment segment) {
-    // signalLost segments render as a discreet dashed straight line: the
-    // path through the gap is unknown, so a solid line (implying a recorded
-    // trace) would lie — but a bare hole reads as a rendering bug. Dashes
-    // communicate "we don't know what happened here".
-    return Polyline(
-      points: segment.points.map((p) => p.position.toLatLng()).toList(),
-      color: segment.isActive
-          ? AppColors.primary.background
-          : AppColors.secondary.background,
-      pattern: segment.isSignalLost
-          ? StrokePattern.dashed(segments: const [8, 10])
-          : const StrokePattern.solid(),
-      strokeWidth: 4.0,
-    );
   }
 }

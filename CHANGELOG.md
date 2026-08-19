@@ -5,6 +5,230 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-19
+
+### Added
+- **End-to-end encrypted live sharing.** While recording, share a browser link
+  that follows the accepted trace through anonymous Nostr relays. Every share
+  uses an ephemeral identity and NIP-44 v2 encryption; the key remains in the
+  URL fragment, an optional password is sent separately, and stopping the
+  recording stops publication. A lightweight Dart Web + Leaflet viewer verifies
+  event signatures, rejects stale positions and bootstraps late joiners from a
+  fixed-size ten-minute encrypted snapshot.
+
+  The link can be created before starting the activity: it waits, then follows
+  the first recording that begins. When that recording ends, the viewer is told
+  so explicitly and shows `ENDED`, instead of leaving a watcher guessing whether
+  the phone simply lost signal.
+- **Activity profiles.** Furtive is no longer implicitly a running app: pick
+  what you are about to do — walk, run, bike, drive, swim, fly or another
+  activity — from the record screen, next to Start. The last choice is
+  remembered, so the common case costs no interaction.
+
+  The type is not a label. It sizes the GPS sampling interval, the horizontal
+  accuracy tolerance, the implied-speed ceiling, and the iOS Core Location
+  activity type, and it is stored on the activity so a later preference change
+  cannot retroactively restate what an old recording meant.
+
+  The list deliberately starts short. `Other` uses a permissive profile for
+  activities that do not yet deserve their own label, while new labels can be
+  added later without rewriting existing database rows.
+- **Map controls can move to the left**, for left-handed use. Every control
+  touched mid-activity lives in that column, one-handed and often while
+  moving. The attribution badge moves to the opposite corner with it — it is
+  legally required to stay visible and the button column had already covered
+  it once. The preference is phrased as the default-on direction — "Map
+  controls on the right" — so the common case reads as the enabled state.
+- **The location puck is drawn by the app, from the position the app
+  actually trusts.** Previously it came from MapLibre's native
+  LocationComponent, which ran a *second* location engine: a
+  `PRIORITY_HIGH_ACCURACY` request at a hardcoded 750 ms that also subscribed
+  to Android's `network` provider — wifi and cell positioning, tens to
+  thousands of metres out — and never passed through the app's quality filter.
+
+  The result was visible on screen: Follow centred the camera on the filtered
+  fix while the dot wandered off on a wifi-derived one. The plugin exposes no
+  way to point that engine at our own stream, so the component is gone. The
+  puck now reads the same value the Follow button does, which makes the two
+  incapable of disagreeing.
+
+  It shows a plain dot at a standstill and a chevron along the direction of
+  travel once moving, since a course over ground derived from no movement is
+  meaningless. The accuracy circle is drawn as a real polygon in metres rather
+  than MapLibre's pixel-radius circle, which is only correct at one zoom level.
+  Being a Flutter widget, it also renders identically on iOS, where the native
+  component ignored most of its options.
+
+  Android device orientation now comes from the fused rotation-vector sensor,
+  corrected to true north. The puck no longer interpolates between GPS fixes.
+- **Recording detail** (precise / balanced / endurance) scales the sampling
+  interval around whatever the chosen activity already implies. Expressed as
+  an intent rather than a number of seconds on purpose: iOS exposes no
+  interval knob at all and Android's is a *requested* rate, so a literal
+  "every N seconds" field would promise something neither platform delivers.
+
+### Fixed
+- **A car above 126 km/h recorded nothing at all.** The quality gate rejected
+  any fix implying more than 35 m/s, and — by design, to avoid chaining off an
+  untrusted fix — a rejection did not advance the comparison anchor. Above
+  that speed every subsequent fix was therefore measured against an
+  ever-more-distant point and kept failing, so the trace froze at the last
+  accepted position until the vehicle slowed below 126 km/h. A legal French
+  motorway speed is 130.
+
+  Three changes, not one. Ceilings now come from the activity. Reported
+  accuracy is subtracted before judging speed, so two vague fixes of a
+  stationary phone stop looking like a teleport. And no rejection is permanent
+  any more: after a few consecutive suspicions the filter accepts and
+  re-anchors, so even a wildly wrong profile degrades the trace instead of
+  erasing it.
+- **Dropped fixes are logged with a reason.** They were discarded silently,
+  which made "the filter is rejecting everything" (urban canyon, wrong
+  profile) indistinguishable from "the foreground service died" — the single
+  biggest obstacle to explaining a hole in a recorded trace after the fact.
+- **iOS was told every activity was a workout.** `ActivityType.fitness` was
+  hardcoded, including for vehicles and boats; Core Location now gets the
+  right hint per profile.
+- The stream-stall watchdog derived "no fix for 20 s" from the old hardcoded
+  5 s cadence. It now scales with the active profile's interval, so a sparse
+  profile is not mistaken for a dead service and torn down in a loop.
+- **Resuming a killed recording could misread the pause state.** The state was
+  read from the point with the latest timestamp, but SQLite truncates
+  `DateTime` to whole seconds, so the boundary pair bracketing a GPS outage
+  routinely ties with the fix next to it — and the wrong point won. The state
+  is now read from the last point, ties included.
+- **Devices in a traditional-Chinese locale got simplified-Chinese map
+  labels.** Only the bare `zh` prefix was mapped, to `zh-Hans`; `zh-TW`,
+  `zh-HK` and `zh-MO` now request `zh-Hant` tiles.
+
+### Removed
+- The dead `accuracy_in_meters` preferences column (schema v12): always
+  written as 0, threaded through the entity, model and data source, never read
+  to drive anything. It was the residue of a user-facing GPS precision setting
+  removed some versions ago as "confusing more than it helped" — which is
+  precisely why sampling is now exposed as an intent instead of a number.
+
+### Changed
+- **The map is rendered by MapLibre Native** instead of
+  `flutter_map` + `vector_map_tiles`. Protomaps remains the tile provider and
+  the tile opt-out is unchanged. Zoom was the one interaction that janked
+  consistently, because the old renderer rasterises per zoom level; measured on
+  a Pixel 5 in profile, a zoom sweep went from 5 frames over budget to none.
+  An idle map and the recording loop already dropped no frames in either stack,
+  so this was not a fix for the app's central use case.
+
+  The larger half of the case is structural: Protomaps' styles are now used
+  verbatim. The old renderer cannot parse MapLibre `format` expressions and a
+  real Protomaps style nests 91 of them in its label logic, so the app rewrote
+  every `text-field`, replacing Protomaps' multi-script fallback with a flat
+  coalesce. No third-party style document is parsed in Dart any more. Dropping
+  the old renderer also lifts the `protobuf ^3` ceiling that made `pmtiles` 2.x
+  unresolvable, which is a prerequisite for offline maps.
+
+  Costs taken on knowingly: a ~13 MB opaque native library per ABI in a project
+  whose premise is auditability; glyphs and sprites are fetched from
+  `protomaps.github.io`, a host the old stack contacted for sprites only;
+  the native SDK version must stay pinned because upstream declares a dynamic
+  `13.0.+` range that does not exclude pre-releases; and R8/minify must stay
+  off, upstream having had two release-only rendering bugs tied to it.
+  Panning horizontally on the map no longer swipes between tabs — a platform
+  view has to claim the gesture outright, or the bottom navigation takes it.
+- **Toolchain** — Flutter 3.44.9; dependencies refreshed to their newest
+  resolvable versions. `build_runner` / `drift_dev` / `dart_mappable_builder`
+  are pinned behind their latest because every newer release requires
+  `analyzer ^13`, which no Flutter stable ships yet — see the note in
+  `pubspec.yaml`.
+- **Architecture** — dependencies are now injected through constructors (with
+  real defaults) instead of being constructed in place, and `get_it` is confined
+  to the composition root. The four-layer bloc → use case → repository →
+  datasource chain had no injection point anywhere, which is why most of the app
+  was untestable; 11 pass-through use cases and 2 alias repositories were
+  removed, and the `permissions` feature was flattened to match the structure
+  every other feature uses.
+- **Recording** — the recording state machine moved out of `MapBloc` into a
+  dedicated `RecordingBloc`, and the GPS stream lifecycle into
+  `PositionStreamController`. `MapBloc` is now map presentation only. Behaviour
+  is unchanged; the map subtree no longer rebuilds on the 1 s elapsed tick by
+  construction rather than by a `buildWhen` allowlist.
+- **Time** — every wall-clock read goes through an injectable `Clock`, making the
+  12 h abandoned-recording window, the 20 s stale-stream threshold and the
+  pause/elapsed bookkeeping directly testable.
+- **The map no longer waits for the first GPS fix.** It opens on a neutral
+  world view and centres on the first valid fix; later fixes move the camera
+  only while follow mode is on, so a user who panned keeps their view.
+
+### Fixed
+- **Preferences could silently fail to save.** The page dispatched Apply and
+  popped in the same frame, so a failed write had no UI left to report to and was
+  only logged — the user believed their settings were stored. The Apply button
+  is gone entirely: every change is applied and persisted the moment the
+  control moves, writes are serialised so rapid toggles land in order, and a
+  failed write reports the failure and rolls the control back to the value
+  that is actually stored.
+- **The Preferences page overflowed** on a short viewport (and at large system
+  font sizes), pushing the Apply button off screen and making the settings
+  impossible to save. The page now scrolls.
+- **The share card ignored the system font scale**, so a user with large
+  accessibility text exported a visibly broken PNG they never saw before sharing.
+  The card is pinned to `TextScaler.noScaling` and covered by golden tests.
+- **`activity_points` → `activities` foreign key now cascades** (schema v10). It
+  previously declared a reference with no `ON DELETE` action, so nothing at the
+  SQLite level prevented orphan point rows; only the app's own transaction did.
+- Indexed `activities.stopped_at`, used by the resume-after-kill lookup on every
+  cold start.
+- The GPX import size cap was lowered from 50 MB to 10 MB, which is what actually
+  bounds peak memory (the file is read to a String and then copied to the parse
+  isolate). The old comment justified it as billion-laughs/XXE mitigation; both
+  claims were wrong and are now pinned by tests instead.
+- Renaming an activity is now a single atomic write instead of a
+  check-then-write, closing a (never observed) window where a concurrent
+  delete could make the rename fail.
+- The activities list orders start-time ties deterministically — two GPX
+  imports of the same file share a start time to the second — so paged
+  fetches can no longer skip or repeat a row across pages.
+- **The lock-screen privacy toggle lied on Android API 24–26.**
+  `setShowWhenLocked` exists only from API 27, and the manifest default kept
+  showing the map on the lock screen whatever the preference said. The
+  deprecated window flag now carries the setting on those versions.
+
+### Removed
+- **The dead OpenStreetMap public-traces stack** (~600 lines). Its only trigger
+  had been commented out and its tables dropped in schema v8, but the code — and
+  its call to `api.openstreetmap.org` carrying the user's map viewport — was
+  still compiled in. For an app whose premise is "no network calls beyond what
+  you can see in the source", that was the worst possible place to keep dead
+  code.
+- The dead `map_language` preferences column (schema v9) and the unused
+  `KmMilestone.time` field, which was also the only non-UTC timestamp in the app.
+- Six direct dependencies, with the old renderer: `flutter_map`,
+  `flutter_map_location_marker`, `vector_map_tiles`, `vector_tile_renderer`,
+  `executor_lib` and `latlong2`. Sixteen resolved packages left and thirteen
+  arrived, so the dependency graph is barely smaller (185 → 182) — the saving is
+  in the code the app no longer owns, not in its footprint.
+
+### Accessibility
+- `HoldToConfirmButton` — the only way to stop a recording — now exposes a button
+  role, label, hint and tap/long-press actions, and announces its countdown. It
+  was a bare `GestureDetector`, i.e. invisible to screen readers.
+- Hardcoded font sizes across the UI now derive from the theme's text scale, so
+  the app honours the system font size. Fixed sizes are retained only where the
+  canvas itself is fixed (share card, map markers) and pinned explicitly.
+- Contrast, tap-target size and label presence are now verified by tests using
+  Flutter's accessibility guidelines. The palette already documented its WCAG
+  ratios; nothing checked them.
+
+### Internal
+- Test suite grown from 118 to 312 (plus 79 for `furtive_share` and 13 for the
+  viewer); line coverage of hand-written code from ~19% to ~57%, with a floor
+  enforced in CI (`tool/coverage_threshold.py`).
+- Stricter analysis: `strict-casts`, `strict-raw-types`, `avoid_dynamic_calls`,
+  `cancel_subscriptions`, `close_sinks` and others. These immediately surfaced
+  unchecked `dynamic` casts in the third-party Protomaps style parsing, where a
+  schema change would have broken the map for every user at once.
+- The database connection is wired to close if the service locator is ever
+  reset; on mobile the OS reclaims the process first, but the composition
+  root now owns the lifecycle it documents.
+
 ## [1.2.0] - 2026-07-15
 
 Ships as 1.2.0+2 rather than 1.2.0+1: the Android versionCode had stayed at 1
@@ -191,17 +415,15 @@ and rationale behind the audit-related items below.
 - Removed the (already unused) local storage of third-party OSM traces
   fetched while panning the map; any residual data from before this fix is
   purged from the database on upgrade.
-- Added a build-time switch (`DISABLE_UPDATE_CHECK`) to disable the
-  opt-out GitHub update check entirely for distribution channels — such as
-  F-Droid — that already manage updates themselves. See the README.
+- Removed the GitHub update check entirely. Obtainium and F-Droid already
+  track releases, so the app no longer contacts `api.github.com` or needs an
+  update-check preference/build flag.
 - Hardened error logging around the (currently unused) public-traces search
   so a future re-enable can't leak a precise map viewport into the log file.
-- The opt-out GitHub update check no longer runs before the first-launch
-  wizard — a fresh install used to phone home before you had any chance to
-  see or decline the Preferences toggle that controls it.
 - Exported GPX files and shared activity-card images no longer risk deleting
   each other out from under an in-flight share; each now purges only its own
   file type, and any leftover from a previous session is also cleaned up at
   the next app launch instead of only at the next share/export.
 
+[1.3.0]: https://github.com/ethicnology/furtive/releases/tag/1.3.0
 [1.2.0]: https://github.com/ethicnology/furtive/releases/tag/1.2.0

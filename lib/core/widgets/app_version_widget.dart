@@ -14,7 +14,6 @@ class AppVersionWidget extends StatelessWidget {
           "version ${Global.app.version}+${Global.app.buildNumber}",
           style: const TextStyle(
             color: kTextMuted,
-            fontSize: 12,
             fontFeatures: kTabularFigures,
           ),
         ),

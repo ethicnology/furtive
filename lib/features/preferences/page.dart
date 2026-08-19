@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
-import 'package:furtive/core/global.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
+import 'package:furtive/core/theme.dart';
 import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/preferences/bloc/preferences_bloc.dart';
@@ -10,7 +12,12 @@ import 'package:furtive/features/preferences/bloc/preferences_state.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 
 class PreferencesPage extends StatefulWidget {
-  const PreferencesPage({super.key});
+  const PreferencesPage({super.key, this.repository});
+
+  /// Injectable storage, defaulting to the real one. Only set in tests — it is
+  /// what makes the failed-save path (which must keep the page mounted and show
+  /// an error) reachable at all.
+  final PreferencesRepository? repository;
 
   @override
   State<PreferencesPage> createState() => _PreferencesPageState();
@@ -28,7 +35,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
   @override
   void initState() {
     super.initState();
-    _blocFuture = PreferencesBloc.create().then((bloc) {
+    _blocFuture = PreferencesBloc.create(repository: widget.repository).then((
+      bloc,
+    ) {
       _bloc = bloc;
       return bloc;
     });
@@ -53,51 +62,59 @@ class _PreferencesPageState extends State<PreferencesPage> {
 
         return BlocProvider.value(
           value: snapshot.data!,
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text(AppLocalizations.of(context).preferencesTitle),
-            ),
-            body: BlocBuilder<PreferencesBloc, PreferencesState>(
-              builder: (context, state) {
-                if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          child: BlocListener<PreferencesBloc, PreferencesState>(
+            // Changes apply immediately — there is no Apply button — so a
+            // failed write has no spinner to hide behind: report it. The
+            // bloc rolls the control back to the persisted value itself.
+            listenWhen: (previous, current) =>
+                previous.saveCompleted != current.saveCompleted &&
+                current.saveCompleted == false,
+            listener: (context, state) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).prefSaveFailed),
+                  backgroundColor: AppColors.destructive.background,
+                ),
+              );
+            },
+            child: Scaffold(
+              appBar: AppBar(
+                title: Text(AppLocalizations.of(context).preferencesTitle),
+              ),
+              body: BlocBuilder<PreferencesBloc, PreferencesState>(
+                builder: (context, state) {
+                  if (state.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                return Column(
-                  children: [
-                    _buildMapThemeSection(context, state),
-                    const SizedBox(height: 24),
-                    _buildAppLanguageSection(context, state),
-                    const SizedBox(height: 24),
-                    _buildCheckUpdatesSection(context, state),
-                    const SizedBox(height: 24),
-                    _buildMapTilesSection(context, state),
-                    const SizedBox(height: 24),
-                    _buildLockScreenSection(context, state),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Padding(
-                        padding: EdgeInsets.all(context.screenPadding),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Pass state.preferences directly — re-building
-                            // a PreferencesEntity by hand drops fields that
-                            // aren't edited on this page (e.g.
-                            // hasCompletedOnboarding) and silently resets
-                            // them to their constructor defaults.
-                            context.read<PreferencesBloc>().add(
-                              UpdatePreferences(state.preferences),
-                            );
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(AppLocalizations.of(context).btnApply),
-                        ),
-                      ),
+                  // Plain scrollable column: the page used to need a Spacer +
+                  // IntrinsicHeight to keep the Apply button reachable on
+                  // short viewports; without the button, scrolling alone
+                  // covers the accessibility font-scale case.
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ],
-                );
-              },
+                    child: Column(
+                      children: [
+                        _buildMapThemeSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildAppLanguageSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildMapTilesSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildLockScreenSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildMapControlsSideSection(context, state),
+                        const SizedBox(height: 24),
+                        _buildRecordingDetailSection(context, state),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         );
@@ -112,7 +129,9 @@ Widget _buildMapThemeSection(BuildContext context, PreferencesState state) {
     children: [
       Text(
         AppLocalizations.of(context).prefMapTheme,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
       LabeledDropdown<MapThemeEntity>(
@@ -136,28 +155,15 @@ String mapThemeName(AppLocalizations l10n, MapThemeEntity theme) =>
       MapThemeEntity.black => l10n.prefThemeBlack,
     };
 
-Widget _buildCheckUpdatesSection(BuildContext context, PreferencesState state) {
-  final l10n = AppLocalizations.of(context);
-  return SwitchListTile(
-    contentPadding: EdgeInsets.zero,
-    title: Text(
-      l10n.prefCheckUpdates,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-    ),
-    subtitle: Text(l10n.prefCheckUpdatesSubtitle),
-    value: state.preferences.checkUpdates,
-    onChanged: (v) =>
-        context.read<PreferencesBloc>().add(ChangeCheckUpdates(v)),
-  );
-}
-
 Widget _buildMapTilesSection(BuildContext context, PreferencesState state) {
   final l10n = AppLocalizations.of(context);
   return SwitchListTile(
     contentPadding: EdgeInsets.zero,
     title: Text(
       l10n.prefMapTiles,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     ),
     subtitle: Text(l10n.prefMapTilesSubtitle),
     value: state.preferences.mapTilesEnabled,
@@ -172,7 +178,9 @@ Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
     contentPadding: EdgeInsets.zero,
     title: Text(
       l10n.prefShowOnLockScreen,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     ),
     subtitle: Text(l10n.prefShowOnLockScreenSubtitle),
     value: state.preferences.showOnLockScreen,
@@ -181,6 +189,73 @@ Widget _buildLockScreenSection(BuildContext context, PreferencesState state) {
   );
 }
 
+Widget _buildMapControlsSideSection(
+  BuildContext context,
+  PreferencesState state,
+) {
+  final l10n = AppLocalizations.of(context);
+  return SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      l10n.prefMapControlsOnRight,
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(l10n.prefMapControlsOnRightSubtitle),
+    // The toggle presents the default-true direction (controls on the
+    // right); storage keeps the historical mapControlsOnLeft column, so the
+    // value is inverted at both ends. No migration needed.
+    value: !state.preferences.mapControlsOnLeft,
+    onChanged: (v) =>
+        context.read<PreferencesBloc>().add(ChangeMapControlsOnLeft(!v)),
+  );
+}
+
+/// Sampling density. Deliberately three named intents rather than a number of
+/// seconds: the right interval depends on the activity (which the recorder
+/// already knows) and no user can reason about it, while a wrong value
+/// silently degrades the trace. The app has been here before — a
+/// user-facing GPS precision setting was removed years ago as confusing more
+/// than helping, leaving a dead column behind.
+Widget _buildRecordingDetailSection(
+  BuildContext context,
+  PreferencesState state,
+) {
+  final l10n = AppLocalizations.of(context);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        l10n.prefRecordingDetail,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        l10n.prefRecordingDetailSubtitle,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 8),
+      LabeledDropdown<RecordingDetailEntity>(
+        value: state.preferences.recordingDetail,
+        items: RecordingDetailEntity.values,
+        labelFor: (d) => recordingDetailName(l10n, d),
+        onChanged: (v) =>
+            context.read<PreferencesBloc>().add(ChangeRecordingDetail(v)),
+      ),
+    ],
+  );
+}
+
+String recordingDetailName(AppLocalizations l10n, RecordingDetailEntity d) =>
+    switch (d) {
+      RecordingDetailEntity.precise => l10n.prefDetailPrecise,
+      RecordingDetailEntity.balanced => l10n.prefDetailBalanced,
+      RecordingDetailEntity.endurance => l10n.prefDetailEndurance,
+    };
+
 Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
   final l10n = AppLocalizations.of(context);
   return Column(
@@ -188,7 +263,9 @@ Widget _buildAppLanguageSection(BuildContext context, PreferencesState state) {
     children: [
       Text(
         l10n.prefAppLanguage,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
       LabeledDropdown<String?>(

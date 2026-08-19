@@ -8,18 +8,17 @@ import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/ui_languages.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
-import 'package:furtive/core/usecases/update_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/core/widgets/bottom_navigation_widget.dart';
 import 'package:furtive/core/widgets/labeled_dropdown.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/preferences/page.dart' show mapThemeName;
-import 'package:furtive/features/permissions/domain/entities/permission_entity.dart';
+import 'package:furtive/features/permissions/permission_entity.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_bloc.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_event.dart';
-import 'package:furtive/features/permissions/presentation/bloc/permissions_state.dart';
+import 'package:furtive/features/permissions/bloc/permissions_bloc.dart';
+import 'package:furtive/features/permissions/bloc/permissions_event.dart';
+import 'package:furtive/features/permissions/bloc/permissions_state.dart';
 import 'package:furtive/l10n/app_localizations.dart';
 
 /// First-launch wizard:
@@ -37,8 +36,8 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage>
     with WidgetsBindingObserver {
   final _pageController = PageController();
-  final _getPreferences = GetPreferencesUseCase();
-  final _updatePreferences = UpdatePreferencesUseCase();
+  final _preferences = PreferencesRepository();
+
   late final PermissionsBloc _permissionsBloc;
 
   MapThemeEntity _theme = MapThemeEntity.dark;
@@ -95,8 +94,8 @@ class _OnboardingPageState extends State<OnboardingPage>
       // DB defaults), but this path is also hit if onboarding is ever
       // re-entered (e.g. a future "reset onboarding" support flow), where it
       // would silently clobber preferences the user had already changed.
-      final current = await _getPreferences();
-      await _updatePreferences(
+      final current = await _preferences.fetch();
+      await _preferences.store(
         current.copyWith(
           mapTheme: _theme,
           hasCompletedOnboarding: true,
@@ -252,13 +251,15 @@ class _StepShell extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
               color: AppColors.tertiary.foreground,
             ),
           ),
@@ -313,7 +314,10 @@ class _SettingsStep extends StatelessWidget {
           children: [
             Text(
               l10n.settingsThemeLabel,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             LabeledDropdown<MapThemeEntity>(
@@ -325,7 +329,10 @@ class _SettingsStep extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               l10n.settingsUiLanguageLabel,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             LabeledDropdown<String?>(

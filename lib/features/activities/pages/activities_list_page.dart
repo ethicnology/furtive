@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:furtive/core/entities/activity_entity.dart';
 import 'package:furtive/core/extensions.dart';
 import 'package:furtive/core/theme.dart';
-import 'package:furtive/core/usecases/get_activities_use_case.dart';
+import 'package:furtive/core/repositories/activity_repository.dart';
 import 'package:furtive/core/widgets/stat_block.dart';
 import 'package:furtive/features/activities/bloc/activities_bloc.dart';
 import 'package:furtive/features/activities/bloc/activities_event.dart';
@@ -23,12 +23,8 @@ class ActivitiesListPage extends StatefulWidget {
 }
 
 class _ActivitiesListPageState extends State<ActivitiesListPage> {
-  // Set true the moment we dispatch ImportActivityFromGpx so the
-  // BlocListener can distinguish an import's success transition from any
-  // other isLoading=true→false transition (e.g. FetchActivities). Cleared
-  // when the listener fires.
-  bool _importPending = false;
-  final _getActivity = GetActivityUseCase();
+  final _activities = ActivityRepository();
+  final _scrollController = ScrollController();
   // Guards against a double-tap on a list item pushing the detail page
   // twice while the first tap's DB fetch is still in flight. See L-U6 in
   // docs/REVIEW-2026-07-FULL-APP.md.
@@ -37,7 +33,26 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_loadMoreNearEnd);
     context.read<ActivitiesBloc>().add(const FetchActivities());
+  }
+
+  void _loadMoreNearEnd() {
+    final bloc = context.read<ActivitiesBloc>();
+    if (_scrollController.position.extentAfter < 400 &&
+        !bloc.state.isLoading &&
+        !bloc.state.isLoadingMore &&
+        bloc.state.hasMore) {
+      bloc.add(const FetchMoreActivities());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_loadMoreNearEnd)
+      ..dispose();
+    super.dispose();
   }
 
   Future<void> _pickAndImportGpx() async {
@@ -51,7 +66,6 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
       ],
     );
     if (file == null || !mounted) return;
-    _importPending = true;
     context.read<ActivitiesBloc>().add(
       ImportActivityFromGpx(filePath: file.path),
     );
@@ -70,30 +84,32 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
     final l10n = AppLocalizations.of(context);
     return BlocListener<ActivitiesBloc, ActivitiesState>(
       listenWhen: (prev, curr) =>
-          prev.isLoading != curr.isLoading || prev.error != curr.error,
+          prev.importStatus != curr.importStatus || prev.error != curr.error,
       listener: (context, state) {
         if (state.error != null) {
-          _importPending = false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 state.error!.message,
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white),
               ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
           );
+          context.read<ActivitiesBloc>().add(const ClearActivitiesFeedback());
           return;
         }
-        if (_importPending && !state.isLoading) {
-          _importPending = false;
+        if (state.importStatus == ActivityImportStatus.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.importSuccess),
               duration: const Duration(seconds: 2),
             ),
           );
+          context.read<ActivitiesBloc>().add(const ClearActivitiesFeedback());
         }
       },
       child: Scaffold(
@@ -108,9 +124,19 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
           ],
         ),
         body: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+          // Only rebuild the list when something it actually renders changed.
+          // Without this the whole ListView was rebuilt on every emit, including
+          // ones that touched neither the activities nor the loading/error
+          // state — an omission rather than a choice, since the rest of the app
+          // applies buildWhen rigorously.
+          buildWhen: (previous, current) =>
+              previous.activities != current.activities ||
+              previous.isLoading != current.isLoading ||
+              previous.isLoadingMore != current.isLoadingMore ||
+              previous.error != current.error,
           builder: (context, state) {
-            // B31: read state from the builder param, not via context.watch
-            // (which would cause a second rebuild on every emit).
+            // Read state from the builder param, not via context.watch (which
+            // would cause a second rebuild on every emit).
             final activities = state.activities;
 
             // Loading state ONLY when there's nothing to show yet — an error
@@ -150,7 +176,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
                 child: Text(
                   AppLocalizations.of(context).activitiesEmpty,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: Theme.of(context).textTheme.titleLarge?.fontSize,
                     color: AppColors.tertiary.foreground,
                   ),
                 ),
@@ -162,8 +188,15 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
             final localeName = Localizations.localeOf(context).toString();
             final dateFormat = DateFormat.yMMMd(localeName).add_Hm();
             return ListView.builder(
-              itemCount: activities.length,
+              controller: _scrollController,
+              itemCount: activities.length + (state.isLoadingMore ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index == activities.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 final activity = activities[index];
                 var title = dateFormat.format(activity.startedAt.toLocal());
                 if (activity.name.isNotEmpty &&
@@ -235,7 +268,7 @@ class _ActivitiesListPageState extends State<ActivitiesListPage> {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
     try {
-      final activity = await _getActivity(id);
+      final activity = await _activities.fetchSingle(id);
       if (!mounted) return;
       unawaited(
         navigator.push(

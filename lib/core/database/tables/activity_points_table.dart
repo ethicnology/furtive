@@ -10,7 +10,13 @@ class ActivityPoints extends Table {
   RealColumn get longitude => real()();
   RealColumn get elevation => real()();
   DateTimeColumn get time => dateTime()();
-  TextColumn get activityId => text().references(Activities, #id)();
+  // onDelete: cascade so the constraint actually enforces the invariant instead
+  // of only documenting it. delete() still wraps both statements in a
+  // transaction (belt and braces, and it predates this), but until v10 the FK
+  // was inert metadata: nothing at the SQLite level stopped an orphan point row
+  // outliving its activity.
+  TextColumn get activityId =>
+      text().references(Activities, #id, onDelete: KeyAction.cascade)();
   TextColumn get status => textEnum<ActivityPointsStatusColumn>()();
   // GPS fix quality (v5). Nullable: null for points recorded before this
   // column existed, for GPX imports, and for any provider/platform that

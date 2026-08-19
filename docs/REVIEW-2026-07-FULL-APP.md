@@ -8,10 +8,13 @@
 > boucle continue), impact bien moindre que l'estimation initiale ; à
 > reprendre si un besoin concret se présente (nécessiterait de faire de
 > `ActivityLocalDataSource` un singleton pour mémoïser, ou de brancher la
-> liste sur l'état live du `MapBloc`). La section **LOW** ci-dessous n'a
-> **pas** été traitée dans cette passe (hors quelques items résolus en
-> chemin : L-G1 à L-G8, L-U2, L-U6, L-J1) — reste un backlog pour une
-> prochaine session.
+> liste sur l'état live du `MapBloc`).
+>
+> **Statut LOW (2026-08-03, passe 1.3) :** L-D1, L-D2, L-D3, L-D7 et
+> L-G1 à L-G8, L-U2 sont corrigés et marqués ✅ ci-dessous (vérifiés dans le
+> code, pas seulement déclarés). Restent ouverts : L-D4 à L-D6, L-D8 (dette
+> de test), L-G6, et les items UI/accessibilité L-U1, L-U3 à L-U11 — backlog
+> pour une prochaine session.
 >
 > Document destiné à guider un **agent correcteur dédié**, distinct de
 > `AUDIT-2026-07.md` (qui portait spécifiquement sur le pipeline de
@@ -383,14 +386,14 @@ Regroupées par thème ; chacune reste factuelle et vérifiée mais à impact
 limité ou rare.
 
 ### Données / DB
-- **L-D1.** Colonnes préférences mortes (`accuracyInMeters`, `mapLanguage`
-  legacy) traversant encore 4 couches avec une incohérence de nullabilité
-  entité vs modèle (`preferences_table.dart:8`, `preferences_model.dart:7,18`).
-- **L-D2.** `updateName` : check-then-write non atomique + `SELECT`
-  redondant (`activity_local_data_source.dart:313-323`) — simplifiable en
-  un `UPDATE` avec vérification du rowcount.
-- **L-D3.** `GpsQualityFilter` : l'ancre `_lastAccepted` recule sur un fix
-  hors-ordre au lieu de rester inchangée (`gps_quality_filter.dart:63-80`).
+- **L-D1.** ✅ FIXED (1.3) — `mapLanguage` supprimée (schéma v9) et
+  `accuracyInMeters` (schéma v12) ; plus aucune colonne morte ne traverse
+  les couches.
+- **L-D2.** ✅ FIXED (1.3) — `updateName` est désormais un `UPDATE` unique
+  avec vérification du rowcount (`AppError` si 0 ligne), atomique et sans
+  `SELECT` redondant.
+- **L-D3.** ✅ FIXED (1.3) — un fix hors-ordre est rejeté
+  (`GpsRejectionReason.outOfOrder`) **sans** déplacer `_lastAccepted`.
 - **L-D4.** Mélange UTC/local des `DateTime` selon la provenance (écriture
   UTC explicite, lecture Drift en heure locale par défaut) — pas de bug
   d'instant aujourd'hui mais fragile pour tout code futur inspectant
@@ -400,8 +403,9 @@ limité ou rare.
   champ se recopie à 6 endroits.
 - **L-D6.** `TraceRemoteDataSource._getCapped` discrimine une exception par
   `toString().contains(...)` — fragile, préférer un type dédié.
-- **L-D7.** Tri des summaries sans tie-break (`ORDER BY started_at DESC`
-  seul) — ajouter `desc(id)` en second critère.
+- **L-D7.** ✅ FIXED (1.3) — `fetchSummaries` trie par `started_at DESC,
+  id DESC` : les ex æquo (double import du même GPX) ont un ordre stable,
+  la pagination ne peut plus sauter ni répéter une ligne.
 - **L-D8.** Dette de test DB : migration testée seulement depuis
   `from=2` (jamais `from=1`), round-trip incomplet de `mapTilesEnabled`/
   `showOnLockScreen`, chemins non couverts (`updateName`/`delete` sur id
@@ -409,29 +413,25 @@ limité ou rare.
   `fetchSummaries` sur une ligne legacy avec `stoppedAt` non-null).
 
 ### GPX / export-import
-- **L-G1.** Notation scientifique possible pour lat/lon/ele dans l'export
-  (`double.toString()` bascule en exponentiel sous 1e-6) — invalide pour
-  le XSD GPX (`export_activity_to_gpx_use_case.dart:51,54`). Utiliser
-  `toStringAsFixed`.
-- **L-G2.** `_escapeXml` ne filtre pas les caractères de contrôle
-  (illégaux en XML même échappés) — un nom importé tel quel d'un GPX tiers
-  peut en contenir (`export_activity_to_gpx_use_case.dart:80-87`).
-- **L-G3.** Annulation utilisateur du sélecteur de fichier traitée comme
-  erreur d'export (`file_system_facade.dart:15,27`) — distinguer
-  l'annulation d'un échec réel.
-- **L-G4.** `startedAt`/`stoppedAt` importés sans tri chronologique
-  (`points.first/.last` suivent l'ordre du document, pas le temps) —
-  `import_activity_from_gpx_use_case.dart:152-153`.
-- **L-G5.** `<time>` sans fuseau interprété en heure locale au lieu d'UTC
-  (spec GPX) — `lib/core/utils/gpx.dart:38-39`.
+- **L-G1.** ✅ FIXED (1.3) — export via `_decimal()`/`toStringAsFixed`
+  (7 décimales lat/lon, 2 pour ele) ; plus de notation scientifique.
+- **L-G2.** ✅ FIXED (1.3) — `_escapeXml` supprime les caractères de
+  contrôle C0 en plus d'échapper les entités prédéfinies.
+- **L-G3.** ✅ FIXED (1.3) — `FileSaveCancelled` distingue l'annulation
+  d'un échec réel ; les appelants la traitent comme un no-op silencieux.
+- **L-G4.** ✅ FIXED (1.3) — `startedAt`/`stoppedAt` importés = min/max
+  sur les temps des fixes actifs, pas first/last du document.
+- **L-G5.** ✅ FIXED (1.3) — un `<time>` sans fuseau est interprété en
+  UTC, conformément à la spec GPX.
 - **L-G6.** Deux formes de fichiers GPX silencieusement mal gérées :
   `<trkpt>` orphelins hors `<trkseg>` ignorés si un autre `<trk>` du
   fichier a des segments ; espaces de noms préfixés (`<x:trkpt>`) donnant
   un faux `GpxNoPointsError` — `lib/core/utils/gpx.dart:52-73`.
-- **L-G7.** Nom de fichier d'export sans limite de longueur (risque
-  `ENAMETOOLONG`) — `export_activity_to_gpx_use_case.dart:74-78`.
-- **L-G8.** Commentaire XXE inexact : `package:xml` ne résout ni entités
-  externes ni entités internes custom — le risque billion-laughs décrit en
+- **L-G7.** ✅ FIXED (1.3) — nom de fichier d'export tronqué à 100
+  caractères après passage en liste blanche.
+- **L-G8.** ✅ FIXED (1.3) — commentaire XXE/billion-laughs retiré ; le
+  plafond de 10 MB est désormais justifié (mémoire pic) et épinglé par
+  des tests.
   commentaire ne s'applique pas tel quel (le plafond de taille reste une
   bonne défense en profondeur, juste corriger le commentaire).
 
@@ -439,9 +439,8 @@ limité ou rare.
 - **L-U1.** `_mapController.camera` accédé sur un contrôleur potentiellement
   non attaché si la carte se démonte pendant un listener actif
   (`map_page.dart:196-209,226-245`).
-- **L-U2.** Commentaire obsolète et trompeur : « InitMap cancels any prior
-  position stream » — c'est l'inverse depuis le fix B38/H1
-  (`map_page.dart:60-61`).
+- **L-U2.** ✅ FIXED (1.3) — le commentaire obsolète a disparu avec la
+  réorganisation MapBloc/RecordingBloc/PositionStreamController.
 - **L-U3.** FAB à largeur fixe 115px risquant l'overflow avec des libellés
   localisés longs (el/de/ar vérifiés) — `map_page.dart:42,351-352`.
 - **L-U4.** `PermissionsState.errorMessage`/`PreferencesState.error` émis

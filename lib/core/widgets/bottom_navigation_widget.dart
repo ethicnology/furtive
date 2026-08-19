@@ -13,24 +13,27 @@ class BottomNavigationWidget extends StatefulWidget {
 
 class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
   late final PageController _pageController;
+  late final ValueNotifier<int> _selectedTab;
+  late final List<Widget> _pages;
 
   int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    const MapPage(),
-    const ActivitiesListPage(),
-    const SettingsPage(),
-  ];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _selectedTab = ValueNotifier(0);
+    _pages = [
+      MapPage(selectedTab: _selectedTab),
+      const ActivitiesListPage(),
+      const SettingsPage(),
+    ];
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _selectedTab.dispose();
     super.dispose();
   }
 
@@ -39,12 +42,16 @@ class _BottomNavigationWidgetState extends State<BottomNavigationWidget> {
     return Scaffold(
       body: PageView(
         controller: _pageController,
-        onPageChanged: (index) => setState(() => _currentIndex = index),
+        onPageChanged: (index) {
+          _selectedTab.value = index;
+          setState(() => _currentIndex = index);
+        },
         children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          _selectedTab.value = index;
           setState(() => _currentIndex = index);
           _pageController.animateToPage(
             index,

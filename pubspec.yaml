@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.2.0+2
+version: 1.3.0+3
 
 environment:
   sdk: ^3.10.0
@@ -35,15 +35,20 @@ dependencies:
   intl: any # version pinned by flutter_localizations
   collection: ^1.19.1 # stable mergeSort, used directly by activity_entity.dart
 
-  flutter_map: ^8.3.1
-  flutter_map_location_marker: ^10.3.0
-  vector_map_tiles: ^9.0.0-beta.9 # 10.0.0-beta.2 available, holding off until vector_map_tiles leaves beta on the 10.x line
-  vector_tile_renderer: ^6.1.0 # transitive of vector_map_tiles, imported directly for ThemeReader / SpriteIndexReader
-  executor_lib: ^1.1.2 # transitive of vector_map_tiles, imported directly to recognise its benign CancellationException
+  # Map rendering, via MapLibre Native. Replaced the flutter_map +
+  # vector_map_tiles stack, which janked on zoom and could not parse the
+  # `format` expressions Protomaps uses for its labels — see the rationale in
+  # lib/core/map/maplibre_map_view.dart.
+  #
+  # The native SDK version this pulls is pinned in android/app/build.gradle.kts;
+  # upstream publishes pre-releases into the `13.0.+` range, so leaving it open
+  # is a reproducibility hazard. Two further constraints live in that file's
+  # comments: R8/minify must stay off, and the GMS exclusion stays as a guard.
+  maplibre: ^0.3.5
+
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0 # sequential()/droppable() transformers for MapBloc
   get_it: ^9.2.1
-  latlong2: ^0.9.1 # pinned by vector_map_tiles 9.x
   geolocator: ^14.0.2
   permission_handler: ^12.0.3
   http: ^1.6.0
@@ -57,7 +62,14 @@ dependencies:
   url_launcher: ^6.3.2
   device_info_plus: ^13.2.0
   file_selector: ^1.1.0
-  share_plus: ^13.2.1
+  share_plus: ^13.3.0
+  web_socket_channel: ^3.0.3
+
+  # Shared live-tracking format and cryptography. Kept in a pure-Dart package so
+  # the mobile app and the sensor-free web viewer compile the same source.
+  furtive_share:
+    path: packages/furtive_share
+  nostr: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -69,11 +81,42 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  # ---------------------------------------------------------------------
+  # THE ANALYZER-13 WALL — why the three codegen packages below are pinned
+  # to older versions even though newer ones exist.
+  #
+  # Every newer release of build_runner (>=2.15.2), drift_dev (>2.34.0) and
+  # dart_mappable_builder (>=4.9.0) requires analyzer ^13.0.0 (build_runner
+  # additionally needs meta ^1.18.3). Flutter 3.44.9 ships Dart 3.12.2, which
+  # caps analyzer at 12.1.0 and pins meta 1.18.0; flutter_test additionally
+  # pins test_api 0.7.11 and matcher 0.12.19, so pulling analyzer 13 drags in
+  # a `test` version that conflicts with bloc_test.
+  #
+  # These bumps resolve cleanly in a bare Dart project — they fail HERE
+  # specifically because of the Flutter SDK's own pins. Nothing to fix on our
+  # side: re-attempt all three together the first time a Flutter stable ships
+  # analyzer >= 13 / meta >= 1.18.3.
+  # ---------------------------------------------------------------------
   build_runner: ^2.15.1
+  # Blocked by the analyzer-13 wall above — and this pin has a visible cost:
+  # against drift 2.34.2, drift_dev 2.34.0's CLI does not compile, so
+  # `dart run drift_dev schema <dump|export|generate|steps>` dies on
+  # `allSchemaEntities` (removed from drift3_preview's GeneratedDatabase).
+  # The whole schema-migration verification toolchain (SchemaVerifier,
+  # step-by-step migration tests) is therefore unavailable. build_runner
+  # codegen is unaffected, which is why it goes unnoticed day to day.
+  # Until the wall lifts, migrations are covered only by the hand-written
+  # tests in test/database_test.dart.
   drift_dev: ^2.34.0
-  sqlite3: ^3.4.0 # already a drift transitive; declared for the migration test
+  sqlite3: ^3.5.0 # already a drift transitive; declared for the migration test
+  # Both are already path_provider transitives; declared explicitly because
+  # test/file_system_facade_test.dart imports them directly to substitute a fake
+  # temp directory, which is what makes the location-bearing-temp-file purge
+  # testable at all.
+  path_provider_platform_interface: ^2.1.3
+  plugin_platform_interface: ^2.1.8
   bloc_test: ^10.0.0
-  dart_mappable_builder: ^4.8.0
+  dart_mappable_builder: ^4.8.0 # blocked by the analyzer-13 wall above
   flutter_launcher_icons: "^0.14.4"
 
 flutter_launcher_icons:

@@ -1,3 +1,4 @@
+import 'package:furtive/core/entities/activity_profile.dart';
 import 'package:furtive/core/entities/preferences_entity.dart';
 
 sealed class PreferencesEvent {
@@ -27,12 +28,6 @@ class ChangeUiLocale extends PreferencesEvent {
   const ChangeUiLocale(this.languageCode);
 }
 
-class ChangeCheckUpdates extends PreferencesEvent {
-  final bool enabled;
-
-  const ChangeCheckUpdates(this.enabled);
-}
-
 class ChangeMapTilesEnabled extends PreferencesEvent {
   final bool enabled;
 
@@ -43,4 +38,16 @@ class ChangeShowOnLockScreen extends PreferencesEvent {
   final bool enabled;
 
   const ChangeShowOnLockScreen(this.enabled);
+}
+
+class ChangeMapControlsOnLeft extends PreferencesEvent {
+  final bool onLeft;
+
+  const ChangeMapControlsOnLeft(this.onLeft);
+}
+
+class ChangeRecordingDetail extends PreferencesEvent {
+  final RecordingDetailEntity detail;
+
+  const ChangeRecordingDetail(this.detail);
 }

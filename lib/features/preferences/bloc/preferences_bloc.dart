@@ -1,40 +1,58 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:furtive/core/entities/preferences_entity.dart';
 import 'package:furtive/core/errors.dart';
 import 'package:furtive/core/facades/lock_screen_facade.dart';
 import 'package:furtive/core/locale_cubit.dart';
 import 'package:furtive/core/locator.dart';
 import 'package:furtive/core/logs.dart';
-import 'package:furtive/core/usecases/get_preferences_use_case.dart';
-import 'package:furtive/core/usecases/update_preferences_use_case.dart';
+import 'package:furtive/core/repositories/preferences_repository.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_event.dart';
 import 'package:furtive/features/preferences/bloc/preferences_state.dart';
 
 class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
-  final _getPreferencesUseCase = GetPreferencesUseCase();
-  final _updatePreferencesUseCase = UpdatePreferencesUseCase();
-  final _lockScreenFacade = LockScreenFacade();
-
-  PreferencesBloc._({required PreferencesState initialState})
-    : super(initialState) {
+  PreferencesBloc._({
+    required PreferencesState initialState,
+    PreferencesRepository? preferences,
+    LockScreenFacade? lockScreen,
+  }) : _preferences = preferences ?? PreferencesRepository(),
+       _lockScreenFacade = lockScreen ?? LockScreenFacade(),
+       super(initialState) {
     on<LoadPreferences>(_onLoadPreferences);
-    on<UpdatePreferences>(_onUpdatePreferences);
+    // Writes are serialised: every Change* handler auto-dispatches one, and
+    // concurrent processing could persist a stale snapshot over a newer one
+    // (two rapid toggles, second write landing first). sequential() queues
+    // them in dispatch order, so the last toggle always wins.
+    on<UpdatePreferences>(_onUpdatePreferences, transformer: sequential());
     on<ChangeMapTheme>(_onChangeMapTheme);
     on<ChangeUiLocale>(_onChangeUiLocale);
-    on<ChangeCheckUpdates>(_onChangeCheckUpdates);
     on<ChangeMapTilesEnabled>(_onChangeMapTilesEnabled);
     on<ChangeShowOnLockScreen>(_onChangeShowOnLockScreen);
+    on<ChangeMapControlsOnLeft>(_onChangeMapControlsOnLeft);
+    on<ChangeRecordingDetail>(_onChangeRecordingDetail);
   }
 
-  static Future<PreferencesBloc> create() async {
-    final getPreferencesUseCase = GetPreferencesUseCase();
-    final preferences = await getPreferencesUseCase();
-    final initialState = PreferencesState(
-      preferences: preferences,
-      persisted: preferences,
+  final PreferencesRepository _preferences;
+  final LockScreenFacade _lockScreenFacade;
+
+  /// Async factory: the initial state needs a storage read, which a constructor
+  /// cannot await. [repository]/[lockScreen] are injectable for tests.
+  static Future<PreferencesBloc> create({
+    PreferencesRepository? repository,
+    LockScreenFacade? lockScreen,
+  }) async {
+    final repo = repository ?? PreferencesRepository();
+    final preferences = await repo.fetch();
+    return PreferencesBloc._(
+      initialState: PreferencesState(
+        preferences: preferences,
+        persisted: preferences,
+      ),
+      preferences: repo,
+      lockScreen: lockScreen,
     );
-    return PreferencesBloc._(initialState: initialState);
   }
 
   Future<void> _onLoadPreferences(
@@ -43,7 +61,7 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
   ) async {
     emit(state.copyWith(isLoading: true));
     try {
-      final preferences = await _getPreferencesUseCase();
+      final preferences = await _preferences.fetch();
       emit(
         state.copyWith(
           preferences: preferences,
@@ -56,47 +74,49 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     }
   }
 
-  void _onChangeMapTheme(ChangeMapTheme event, Emitter<PreferencesState> emit) {
-    final newPreferences = state.preferences.copyWith(mapTheme: event.theme);
-    emit(state.copyWith(preferences: newPreferences));
-  }
-
-  void _onChangeUiLocale(ChangeUiLocale event, Emitter<PreferencesState> emit) {
-    final newPreferences = state.preferences.copyWith(
-      uiLocale: event.languageCode,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
-
-  void _onChangeCheckUpdates(
-    ChangeCheckUpdates event,
+  /// Applies an edit optimistically, then persists it: there is no Apply
+  /// button — every change takes effect (and is stored) immediately. The
+  /// write itself runs in _onUpdatePreferences, serialised with every other
+  /// pending write; a failure rolls the control back to the persisted value
+  /// and surfaces a snackbar.
+  void _applyChange(
+    PreferencesEntity Function(PreferencesEntity) update,
     Emitter<PreferencesState> emit,
   ) {
-    final newPreferences = state.preferences.copyWith(
-      checkUpdates: event.enabled,
-    );
+    final newPreferences = update(state.preferences);
     emit(state.copyWith(preferences: newPreferences));
+    add(UpdatePreferences(newPreferences));
   }
+
+  void _onChangeMapTheme(
+    ChangeMapTheme event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(mapTheme: event.theme), emit);
+
+  void _onChangeUiLocale(
+    ChangeUiLocale event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(uiLocale: event.languageCode), emit);
 
   void _onChangeMapTilesEnabled(
     ChangeMapTilesEnabled event,
     Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      mapTilesEnabled: event.enabled,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
+  ) => _applyChange((p) => p.copyWith(mapTilesEnabled: event.enabled), emit);
 
   void _onChangeShowOnLockScreen(
     ChangeShowOnLockScreen event,
     Emitter<PreferencesState> emit,
-  ) {
-    final newPreferences = state.preferences.copyWith(
-      showOnLockScreen: event.enabled,
-    );
-    emit(state.copyWith(preferences: newPreferences));
-  }
+  ) => _applyChange((p) => p.copyWith(showOnLockScreen: event.enabled), emit);
+
+  void _onChangeMapControlsOnLeft(
+    ChangeMapControlsOnLeft event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(mapControlsOnLeft: event.onLeft), emit);
+
+  void _onChangeRecordingDetail(
+    ChangeRecordingDetail event,
+    Emitter<PreferencesState> emit,
+  ) => _applyChange((p) => p.copyWith(recordingDetail: event.detail), emit);
 
   Future<void> _onUpdatePreferences(
     UpdatePreferences event,
@@ -109,45 +129,60 @@ class PreferencesBloc extends Bloc<PreferencesEvent, PreferencesState> {
     // would silently no-op until the next app restart. See
     // docs/REVIEW-2026-07-FULL-APP.md C1.
     final previous = state.persisted;
+    emit(state.copyWith(isSaving: true, error: null, saveCompleted: null));
     try {
-      await _updatePreferencesUseCase(event.preferences);
+      await _preferences.store(event.preferences);
     } catch (e, s) {
-      // PreferencesPage pops immediately after dispatching Apply, so by the
-      // time this settles there is very likely no UI left to show an error
-      // on. Logging at least makes a failed save discoverable in the
-      // exported logs instead of vanishing into the bloc's global error
-      // handler silently. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
       logs.severe('$UpdatePreferences', error: e, trace: s);
+      emit(
+        state.copyWith(
+          // Roll the control back to the last-persisted value so the UI never
+          // shows a setting that isn't actually stored — unless a newer edit
+          // is already queued behind this write, in which case its own write
+          // settles the final value and rolling back would clobber it.
+          preferences: state.preferences == event.preferences
+              ? state.persisted
+              : state.preferences,
+          isSaving: false,
+          saveCompleted: false,
+          error: e is AppError ? e : AppError(e.toString()),
+        ),
+      );
       return;
     }
 
-    // The page pops (and closes this bloc) right after dispatching Apply; the
-    // DB write above can outlive it. emit() would throw on a closed bloc, so
-    // it alone is guarded — but the side effects below (locale, map re-init,
-    // lock-screen) don't touch bloc state at all and must run regardless of
-    // isClosed. Previously the single `if (isClosed) return;` above skipped
-    // them too whenever the write outlived the pop, leaving settings
-    // persisted to disk but never actually applied until the next app
-    // restart. See M5 in docs/REVIEW-2026-07-FULL-APP.md.
-    if (!isClosed) {
-      emit(
-        state.copyWith(
-          preferences: event.preferences,
-          persisted: event.preferences,
-        ),
-      );
-    }
+    emit(
+      state.copyWith(
+        // Do NOT write preferences: event.preferences here — a newer Change*
+        // may already have moved state.preferences past this write while it
+        // was queued, and stamping the older snapshot back would flicker the
+        // control. state.preferences is always >= this write's snapshot.
+        persisted: event.preferences,
+        isSaving: false,
+        saveCompleted: true,
+      ),
+    );
 
     // Re-init the map only when something the map style actually depends on
-    // changed. Re-firing InitMap for an unrelated toggle (e.g. "check for
-    // updates") needlessly re-localises, reloads the map config and flashes
-    // the loading UI. The position stream is preserved either way (InitMap is
-    // idempotent on it), so a live recording is never disturbed.
+    // changed. Re-firing InitMap for an unrelated toggle (the lock-screen one)
+    // needlessly re-resolves the style and flashes the loading UI. The position
+    // stream is preserved either way (InitMap is idempotent on it), so a live
+    // recording is never disturbed.
     final mapChanged =
         previous.mapTheme != event.preferences.mapTheme ||
-        previous.mapLanguage != event.preferences.mapLanguage ||
         previous.mapTilesEnabled != event.preferences.mapTilesEnabled;
     if (mapChanged) getIt<MapBloc>().add(InitMap());
+
+    // The recording preferences reach the map by a lighter path: they move
+    // buttons and change the sampling rate, neither of which needs the style
+    // re-resolved. Without this the map keeps whatever it read at startup, so
+    // flipping the control side appeared to do nothing until an app restart.
+    final recordingChanged =
+        previous.mapControlsOnLeft != event.preferences.mapControlsOnLeft ||
+        previous.recordingDetail != event.preferences.recordingDetail;
+    if (recordingChanged) {
+      getIt<MapBloc>().add(const RefreshRecordingPreferences());
+    }
 
     // Apply the locale override immediately so the UI reflects the change
     // without requiring an app restart.

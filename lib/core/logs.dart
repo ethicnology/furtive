@@ -41,7 +41,7 @@ class MyLogs {
       final (:String error, :String trace) = record.stringifyErrorAndTrace();
       content.addAll([error, trace]);
 
-      final sanitizedContent = content.map((e) => logger.sanitize(e)).toList();
+      final sanitizedContent = content.map(logger.sanitize).toList();
       final tsvLine = sanitizedContent.join('\t');
 
       _queueWrite(tsvLine);
