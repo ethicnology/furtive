@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-08-03
+## [1.3.0] - 2026-08-19
 
 ### Added
 - **End-to-end encrypted live sharing.** While recording, share a browser link
@@ -92,6 +92,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The stream-stall watchdog derived "no fix for 20 s" from the old hardcoded
   5 s cadence. It now scales with the active profile's interval, so a sparse
   profile is not mistaken for a dead service and torn down in a loop.
+- **Resuming a killed recording could misread the pause state.** The state was
+  read from the point with the latest timestamp, but SQLite truncates
+  `DateTime` to whole seconds, so the boundary pair bracketing a GPS outage
+  routinely ties with the fix next to it — and the wrong point won. The state
+  is now read from the last point, ties included.
+- **Devices in a traditional-Chinese locale got simplified-Chinese map
+  labels.** Only the bare `zh` prefix was mapped, to `zh-Hans`; `zh-TW`,
+  `zh-HK` and `zh-MO` now request `zh-Hant` tiles.
 
 ### Removed
 - The dead `accuracy_in_meters` preferences column (schema v12): always
@@ -145,6 +153,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Time** — every wall-clock read goes through an injectable `Clock`, making the
   12 h abandoned-recording window, the 20 s stale-stream threshold and the
   pause/elapsed bookkeeping directly testable.
+- **The map no longer waits for the first GPS fix.** It opens on a neutral
+  world view and centres on the first valid fix; later fixes move the camera
+  only while follow mode is on, so a user who panned keeps their view.
 
 ### Fixed
 - **Preferences could silently fail to save.** The page dispatched Apply and
@@ -175,6 +186,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The activities list orders start-time ties deterministically — two GPX
   imports of the same file share a start time to the second — so paged
   fetches can no longer skip or repeat a row across pages.
+- **The lock-screen privacy toggle lied on Android API 24–26.**
+  `setShowWhenLocked` exists only from API 27, and the manifest default kept
+  showing the map on the lock screen whatever the preference said. The
+  deprecated window flag now carries the setting on those versions.
 
 ### Removed
 - **The dead OpenStreetMap public-traces stack** (~600 lines). Its only trigger
