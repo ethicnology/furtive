@@ -31,6 +31,19 @@ String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
       LoadingStatus.loadingMap => l10n.mapLoadingMap,
     };
 
+@visibleForTesting
+bool shouldRenderMap(MapState state) {
+  final stillLoadingStyle =
+      state.styleUrl == null && state.loadingStatus != null;
+  return !stillLoadingStyle;
+}
+
+@visibleForTesting
+bool shouldMoveToLocation(MapState previous, MapState current) =>
+    current.userLocation != null &&
+    previous.userLocation != current.userLocation &&
+    (previous.userLocation == null || current.isFollowingUser);
+
 class MapPage extends StatefulWidget {
   const MapPage({super.key, this.selectedTab});
 
@@ -389,15 +402,19 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           },
         ),
         BlocListener<MapBloc, MapState>(
-          listenWhen: (previous, current) =>
-              current.isFollowingUser &&
-              current.userLocation != null &&
-              previous.userLocation != current.userLocation,
+          listenWhen: shouldMoveToLocation,
           listener: (context, state) {
             final loc = state.userLocation!;
             if (!loc.latitude.isFinite || !loc.longitude.isFinite) return;
-            // Keep whatever zoom the user chose; only the centre follows.
-            _mapView.moveTo(loc, _mapView.currentZoom ?? Global.defaultZoom);
+            // The first fix should leave the neutral world view and centre at a
+            // useful zoom. Later fixes preserve the user's zoom, but only while
+            // follow-mode is active.
+            _mapView.moveTo(
+              loc,
+              state.isFollowingUser
+                  ? _mapView.currentZoom ?? Global.defaultZoom
+                  : Global.defaultZoom,
+            );
           },
         ),
       ],
@@ -426,15 +443,19 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           // LocationRepository drops these at source, but if any path ever lets a
           // NaN through, passing it as initialCenter sets the camera to
           // LatLng(NaN,NaN) and every subsequent gesture throws.
-          final loc = state.userLocation;
-          final hasFiniteLocation =
-              loc != null && loc.latitude.isFinite && loc.longitude.isFinite;
-          // Wait for a location to centre on. A null style only blocks while the
-          // tile config is still loading; once init has finished with no style
-          // (keyless FOSS build) render a functional tileless map.
-          final stillLoadingStyle =
-              state.styleUrl == null && state.loadingStatus != null;
-          if (!hasFiniteLocation || stillLoadingStyle) {
+          final rawLoc = state.userLocation;
+          final loc =
+              rawLoc != null &&
+                  rawLoc.latitude.isFinite &&
+                  rawLoc.longitude.isFinite
+              ? rawLoc
+              : null;
+          // A null style only blocks while the tile config is still loading;
+          // once init has finished with no style (keyless FOSS build), render a
+          // functional tileless map. A GPS fix is not a prerequisite: show a
+          // neutral world view instead of an endless spinner, then centre on the
+          // first valid fix when it arrives.
+          if (!shouldRenderMap(state)) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -477,14 +498,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                         track: activity == null || activity.points.isEmpty
                             ? null
                             : activity,
-                        initialCentre: state.userLocation,
-                        initialZoom: Global.defaultZoom,
+                        initialCentre: loc,
+                        initialZoom: loc == null ? 1 : Global.defaultZoom,
                         maxZoom: Global.maxZoom,
                         showUserLocation: true,
                         // The same value the Follow button centres on, so the
                         // puck and the camera cannot point at different
                         // places.
-                        userPosition: state.userLocation,
+                        userPosition: loc,
                         deviceHeading: state.deviceHeading,
                         controlsOnLeft: state.mapControlsOnLeft,
                         // Panning by hand means the user wants to look somewhere
