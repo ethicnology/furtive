@@ -40,6 +40,10 @@ The HTML carries a baseline CSP and `no-referrer` policy. The production server
 must additionally send `frame-ancestors 'none'`, `Permissions-Policy`, HSTS and
 the same CSP as headers; `frame-ancestors` is ignored in a meta element.
 
+The current Pages deployment sends none of them — measured, not assumed, in
+`docs/SHARE-TRACKING.md`. Enforcing HTTPS there yields the redirect but no HSTS
+header, and no `x-frame-options` fallback covers the missing `frame-ancestors`.
+
 The local Python tile proxy used while developing is a spike server, not a
 production deployment component.
 

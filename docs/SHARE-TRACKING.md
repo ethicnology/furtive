@@ -450,12 +450,28 @@ no identity to authenticate with, so NIP-42 is not available to this feature.
   which the same-origin default exists to avoid. The route itself stays
   end-to-end encrypted — CARTO sees tile coordinates, never a position. The
   packager grants exactly that one origin in `img-src`, never a wildcard.
-- **That deployment is for verification, not production.** A static host sends
-  no custom headers, and `frame-ancestors` is ignored in a `meta` element, so
-  the clickjacking guard the hosting contract requires is simply absent there —
-  which matters because the observer types the share password into that page.
-  Moving to a host that sends headers closes that gap; the deployment lives on
-  a dedicated domain precisely so it can move without breaking emitted links.
+- **That deployment is for verification, not production, and the gap is wider
+  than the CSP alone.** Measured on `https://furtive.ethicnology.com/share/`
+  (2026-08-19), Pages returns `server`, `content-type`, `etag`, `cache-control`,
+  `access-control-allow-origin: *` and its cache telemetry — and none of
+  `content-security-policy`, `x-frame-options`, `strict-transport-security`,
+  `referrer-policy`, `permissions-policy` or `x-content-type-options`. Two
+  consequences are worth naming rather than implying:
+  - **No clickjacking guard at all.** `frame-ancestors` is ignored in a `meta`
+    element, and the legacy `x-frame-options` fallback is not sent either, so
+    nothing stops the page from being framed — on the page where the observer
+    types the share password.
+  - **No HSTS, even with Enforce HTTPS on.** Enforcing HTTPS buys the 301 from
+    `http://`, which is measured and works, but no `Strict-Transport-Security`
+    header is sent for a custom domain, and a custom domain does not inherit the
+    preload entry `github.io` has. First-contact downgrade therefore rests on
+    the browser's own HTTPS-first behaviour, not on anything this deployment
+    asserts.
+
+  The `meta` CSP still applies, so script, style, image and `wss:` origins stay
+  constrained; it is the header-only directives that are missing. Moving to a
+  host that sends headers closes both gaps, and the deployment lives on a
+  dedicated domain precisely so it can move without breaking emitted links.
 - **The viewer origin is a compiled-in constant, so the domain is the seam.**
   Links are minted against `SHARE_VIEWER_URL`, published at
   `https://furtive.ethicnology.com/share/`, and every APK carries that string
