@@ -87,7 +87,7 @@ dev_dependencies:
   #
   # Every newer release of build_runner (>=2.15.2), drift_dev (>2.34.0) and
   # dart_mappable_builder (>=4.9.0) requires analyzer ^13.0.0 (build_runner
-  # additionally needs meta ^1.18.3). Flutter 3.44.8 ships Dart 3.12.2, which
+  # additionally needs meta ^1.18.3). Flutter 3.44.9 ships Dart 3.12.2, which
   # caps analyzer at 12.1.0 and pins meta 1.18.0; flutter_test additionally
   # pins test_api 0.7.11 and matcher 0.12.19, so pulling analyzer 13 drags in
   # a `test` version that conflicts with bloc_test.

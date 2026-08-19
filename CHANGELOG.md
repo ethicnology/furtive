@@ -133,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   off, upstream having had two release-only rendering bugs tied to it.
   Panning horizontally on the map no longer swipes between tabs — a platform
   view has to claim the gesture outright, or the bottom navigation takes it.
-- **Toolchain** — Flutter 3.44.8; dependencies refreshed to their newest
+- **Toolchain** — Flutter 3.44.9; dependencies refreshed to their newest
   resolvable versions. `build_runner` / `drift_dev` / `dart_mappable_builder`
   are pinned behind their latest because every newer release requires
   `analyzer ^13`, which no Flutter stable ships yet — see the note in
