@@ -5,9 +5,12 @@ import 'package:furtive/core/database/tables/preferences_table.dart';
 import 'package:furtive/core/logs.dart';
 import 'package:http/http.dart' as http;
 
-// Secrets are injected at build time via --dart-define so they never get
-// bundled into the APK as a plain asset (which a .env file would be).
-// See README for the build command.
+// Build-time configuration, injected via --dart-define rather than shipped as
+// a .env asset. Configuration, not confidentiality: a --dart-define becomes a
+// compile-time constant inside libapp.so, and `strings` recovers it from any
+// published APK. A tile key the client must present to the provider cannot be
+// secret in the first place — restrict it provider-side instead. An empty key
+// yields the tileless FOSS build. See README for the build command.
 const _protomapsUrl = String.fromEnvironment(
   'PROTOMAPS_URL',
   defaultValue: 'https://api.protomaps.com/styles/v5',
