@@ -15,6 +15,7 @@ import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
 import 'package:furtive/features/map/bloc/map_event.dart';
 import 'package:furtive/features/map/map_navigation.dart';
+import 'package:furtive/features/map/pages/map_page_logic.dart';
 import 'package:furtive/features/recording/bloc/recording_bloc.dart';
 import 'package:furtive/features/recording/bloc/recording_event.dart';
 import 'package:furtive/features/recording/bloc/recording_state.dart';
@@ -30,19 +31,6 @@ String _loadingMessage(AppLocalizations l10n, LoadingStatus status) =>
       LoadingStatus.localizing => l10n.mapLoadingLocalizing,
       LoadingStatus.loadingMap => l10n.mapLoadingMap,
     };
-
-@visibleForTesting
-bool shouldRenderMap(MapState state) {
-  final stillLoadingStyle =
-      state.styleUrl == null && state.loadingStatus != null;
-  return !stillLoadingStyle;
-}
-
-@visibleForTesting
-bool shouldMoveToLocation(MapState previous, MapState current) =>
-    current.userLocation != null &&
-    previous.userLocation != current.userLocation &&
-    (previous.userLocation == null || current.isFollowingUser);
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key, this.selectedTab});

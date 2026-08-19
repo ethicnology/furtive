@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:furtive/core/entities/position_entity.dart';
 import 'package:furtive/features/map/bloc/map_bloc.dart';
 import 'package:furtive/features/map/bloc/map_state.dart';
-import 'package:furtive/features/map/pages/map_page.dart';
+import 'package:furtive/features/map/pages/map_page_logic.dart';
 
 void main() {
   group('shouldRenderMap', () {
