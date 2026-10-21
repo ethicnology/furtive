@@ -33,19 +33,38 @@ SOURCE_DATE_EPOCH ?= $(shell git log -1 --format=%ct)
 # `read -rs` is bash, and make would otherwise use /bin/sh.
 SHELL := /bin/bash
 
+# Asks once, at the top of a build, and exports the answer for everything the
+# recipe then runs. A terminal that cannot be read from is not an error: it is
+# the keyless build, announced as such.
+define ask_key
+if [ -n "$${PROTOMAPS_KEY:-}" ]; then \
+	echo "Tile key: taken from the environment."; \
+elif [ -t 0 ] && read -rsp 'Protomaps key (hidden, empty for the tileless build): ' PROTOMAPS_KEY; then \
+	echo; \
+else \
+	PROTOMAPS_KEY=''; \
+	echo "Tile key: none — building the tileless variant."; \
+fi; \
+export PROTOMAPS_KEY;
+endef
+
 CONTAINER_NAME := furtive-build
 
 .PHONY: apk aab clean images
 
-apk: FORMAT := apk
-apk: images
-	@$(MAKE) --no-print-directory artefact FORMAT=apk \
+# The key is asked for first and carried into the sub-makes through the
+# environment: a recipe line is its own shell, so a prompt in a later target
+# could not hand anything back, and asking after the image build would mean
+# waiting out a download to answer one question.
+apk:
+	@$(call ask_key) $(MAKE) --no-print-directory images && \
+	$(MAKE) --no-print-directory artefact FORMAT=apk \
 		BUILD_CMD="fvm flutter build apk --$(MODE)" \
 		IN_CONTAINER=/app/apps/app/build/app/outputs/flutter-apk/app-$(MODE).apk
 
-aab: FORMAT := aab
-aab: images
-	@$(MAKE) --no-print-directory artefact FORMAT=aab \
+aab:
+	@$(call ask_key) $(MAKE) --no-print-directory images && \
+	$(MAKE) --no-print-directory artefact FORMAT=aab \
 		BUILD_CMD="fvm flutter build appbundle --$(MODE)" \
 		IN_CONTAINER=/app/apps/app/build/app/outputs/bundle/$(MODE)/app-$(MODE).aab
 
@@ -63,16 +82,6 @@ images:
 # IN_CONTAINER for it.
 artefact:
 	@-$(CONTAINER) rm -f $(CONTAINER_NAME) >/dev/null 2>&1
-	@set -euo pipefail; \
-	if [ -n "$${PROTOMAPS_KEY:-}" ]; then \
-		echo "Tile key: taken from the environment."; \
-	elif [ -t 0 ]; then \
-		read -rsp 'Protomaps key (hidden, empty for the tileless build): ' PROTOMAPS_KEY; echo; \
-	else \
-		echo "Tile key: none, and no terminal to ask on — building the tileless variant."; \
-		PROTOMAPS_KEY=''; \
-	fi; \
-	export PROTOMAPS_KEY; \
 	$(CONTAINER) run --name $(CONTAINER_NAME) --ulimit nofile=65536:65536 \
 		-e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-e PROTOMAPS_KEY -e PROTOMAPS_URL -e SHARE_VIEWER_URL -e SHARE_RELAYS \
@@ -80,8 +89,7 @@ artefact:
 			$${PROTOMAPS_KEY:+--dart-define=PROTOMAPS_KEY=$$PROTOMAPS_KEY} \
 			$${PROTOMAPS_URL:+--dart-define=PROTOMAPS_URL=$$PROTOMAPS_URL} \
 			$${SHARE_VIEWER_URL:+--dart-define=SHARE_VIEWER_URL=$$SHARE_VIEWER_URL} \
-			$${SHARE_RELAYS:+--dart-define=SHARE_RELAYS=$$SHARE_RELAYS}'; \
-	unset PROTOMAPS_KEY
+			$${SHARE_RELAYS:+--dart-define=SHARE_RELAYS=$$SHARE_RELAYS}'
 	$(CONTAINER) cp $(CONTAINER_NAME):$(IN_CONTAINER) ./app-$(MODE).$(FORMAT)
 	$(CONTAINER) rm $(CONTAINER_NAME)
 	@shasum -a 256 ./app-$(MODE).$(FORMAT) 2>/dev/null || sha256sum ./app-$(MODE).$(FORMAT)
